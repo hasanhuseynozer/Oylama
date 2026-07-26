@@ -10,7 +10,6 @@
     "deploy:worker": "wrangler deploy",
     "db:local": "wrangler d1 migrations apply DB --local",
     "db:remote": "wrangler d1 migrations apply DB --remote"
-    "build": "echo \"Build tamamlandı\"",
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
