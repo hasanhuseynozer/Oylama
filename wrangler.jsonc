@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sro-oylama",
+  "main": "src/index.js",
+  "compatibility_date": "2026-07-26",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*",
+      "/admin",
+      "/admin/*"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sro-oylama-db",
+      "database_id": "45d93bf2-ac85-4cec-84a4-ec341e3a774a",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "SITE_NAME": "SRO Sunucu Oylama",
+    "TURNSTILE_SITE_KEY": ""
+  }
+}
