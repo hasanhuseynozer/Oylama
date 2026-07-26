@@ -1,0 +1,17 @@
+{
+  "name": "sro-oylama",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Silkroad Online sunucu oylama ve yorum platformu",
+  "scripts": {
+    "build": "node --check src/index.js && node --check public/app.js && node --check public/admin.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy",
+    "deploy:worker": "wrangler deploy",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "db:remote": "wrangler d1 migrations apply DB --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

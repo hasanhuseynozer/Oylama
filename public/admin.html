@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Özel Yönetim — SRO Oylama</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <section id="loginView" class="login-card">
+      <a href="/" class="brand">SRO<span>OY</span></a>
+      <p class="eyebrow">YÖNETİCİ PANELİ</p>
+      <h1>Giriş yap</h1>
+      <form id="loginForm">
+        <label>Yönetici şifresi<input id="password" type="password" required autocomplete="current-password"></label>
+        <button class="primary-btn full" type="submit">Giriş Yap</button>
+        <p id="loginMessage" class="form-message"></p>
+      </form>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <header class="dashboard-head">
+        <div><a href="/" class="brand">SRO<span>OY</span></a><p>Yönetim Paneli</p></div>
+        <div><a href="/" class="outline-btn">Siteyi Gör</a><button id="logout" class="outline-btn">Çıkış</button></div>
+      </header>
+
+      <div id="adminMessage" class="form-message"></div>
+      <section class="admin-grid">
+        <form id="serverForm" class="admin-panel">
+          <p class="eyebrow">SUNUCU</p><h2 id="formTitle">Yeni sunucu ekle</h2>
+          <input type="hidden" id="editId">
+          <label>Sunucu adı<input id="serverName" required maxlength="80"></label>
+          <label>Açıklama<textarea id="serverDescription" required maxlength="600" rows="5"></textarea></label>
+          <label class="check"><input id="serverActive" type="checkbox" checked> Sitede göster</label>
+          <div class="button-row"><button class="primary-btn" type="submit">Kaydet</button><button id="cancelEdit" class="outline-btn hidden" type="button">Vazgeç</button></div>
+        </form>
+        <div class="admin-panel"><p class="eyebrow">ÖZET</p><h2>Durum</h2><div id="stats" class="stats"></div></div>
+      </section>
+
+      <section class="admin-panel"><p class="eyebrow">SUNUCULAR</p><h2>Eklediğiniz sunucular</h2><div id="serverTable" class="table-wrap"></div></section>
+      <section class="admin-panel"><p class="eyebrow">YORUMLAR</p><h2>Son yorumlar</h2><div id="reviewTable" class="table-wrap"></div></section>
+    </section>
+  </main>
+  <script src="/admin.js" defer></script>
+</body>
+</html>
