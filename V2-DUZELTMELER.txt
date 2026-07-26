@@ -1,0 +1,17 @@
+DÜZELTİLENLER
+
+1. Sunucu yorumlarını yüklerken oluşan:
+   #comments-[object Object] is not a valid selector
+   hatası düzeltildi.
+
+2. Ana sayfadaki Yönetici bağlantısı kaldırıldı.
+
+3. /admin adresi artık 404 döndürür.
+
+4. Yeni yönetici adresi:
+   /sro-yonetim-9f4k2
+
+Önemli:
+Yönetici sayfasının adresi gizlenebilir ama internette var olan bir adresin
+ziyaret edilmesi teknik olarak tamamen engellenemez. Güvenliği sağlayan esas
+şey ADMIN_PASSWORD ile korunan oturum sistemidir.
