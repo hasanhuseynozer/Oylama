@@ -215,3 +215,9 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
 .footer-icon,th,.eyebrow,.user-link,.owner-reply strong{color:#8fc7bf!important}
 .footer-brand p,.footer-box p,.footer-bottom{color:#9eaeab!important}
 .modal,.auth-card,.settings-grid label,.owner-form-sections section,.server-picker{background:#0f191d!important;border-color:#294047!important}
+
+/* Wider primary brand */
+.header-inner{grid-template-columns:340px minmax(460px,1fr) auto!important}
+.site-logo{width:330px!important;height:88px!important}
+@media(max-width:1400px){.header-inner{grid-template-columns:280px minmax(360px,1fr) auto!important}.site-logo{width:270px!important;height:82px!important}}
+@media(max-width:900px){.header-inner{grid-template-columns:210px 1fr!important}.site-logo{width:205px!important;height:74px!important}}
