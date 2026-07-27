@@ -297,3 +297,11 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
 }
 .reaction-button:not(.dislike){color:#87cba2!important;border-color:#416f57!important}
 .reaction-button.dislike{color:#e49398!important;border-color:#74474c!important}
+.detail-actions{
+  border-radius:12px;
+  transition:background-color .25s ease,box-shadow .25s ease
+}
+.detail-actions.review-target{
+  background:rgba(107,185,175,.1);
+  box-shadow:0 0 0 3px rgba(107,185,175,.22),0 0 28px rgba(107,185,175,.12)
+}

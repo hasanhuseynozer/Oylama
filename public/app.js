@@ -53,7 +53,7 @@ function renderReviewList(reviews,mode){
   document.querySelectorAll("[data-profile]").forEach(b=>b.onclick=()=>openProfile(b.dataset.profile));
 }
 
-async function openServer(id){
+async function openServer(id,focusReview=false){
   state.openServerId=id;
   const s=state.servers.find(x=>Number(x.id)===id),d=await api(`/api/servers/${id}`),rating=Number(s.average_rating||0),[statusClass,statusText]=statusInfo(s);
   $("#serverDetailName").textContent=s.name;$("#serverDetailDescription").textContent=compactDescription(s.description,300);
@@ -68,6 +68,16 @@ async function openServer(id){
   renderReviewList(d.reviews,"ratingDesc");$("#commentSort").onchange=e=>renderReviewList(d.reviews,e.target.value);
   const mine=d.reviews.find(r=>Number(r.user_id)===Number(state.user?.id));$("#detailReviewButton").textContent=mine?"Puanımı / Yorumumu Düzenle":"Oy Ver / Yorum Yap";$("#detailReviewButton").onclick=()=>{$("#serverDialog").close();openReview(id,mine)};
   if(!$("#serverDialog").open)$("#serverDialog").showModal();
+  if(focusReview){
+    const reviewArea=$(".detail-actions");
+    reviewArea.classList.remove("review-target");
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      reviewArea.classList.add("review-target");
+      reviewArea.scrollIntoView({behavior:"smooth",block:"center"});
+      (form?.querySelector("textarea")||reviewArea.querySelector("a,button"))?.focus({preventScroll:true});
+      setTimeout(()=>reviewArea.classList.remove("review-target"),1400);
+    }));
+  }
 }
 
 async function openProfile(id){
@@ -158,7 +168,7 @@ function renderServers(){
   const pagination=$("#serverPagination");if(pagination){pagination.innerHTML=pageCount>1?Array.from({length:pageCount},(_,index)=>`<button type="button" data-page="${index+1}" class="${state.page===index+1?"active":""}">${index+1}</button>`).join(""):"";pagination.querySelectorAll("[data-page]").forEach(button=>button.onclick=()=>{state.page=Number(button.dataset.page);renderServers();$(".toolbar").scrollIntoView({behavior:"smooth",block:"start"})})}
   document.querySelectorAll("[data-server]").forEach(item=>item.onclick=event=>{if(!event.target.closest("button"))openServer(Number(item.dataset.server))});
   document.querySelectorAll("[data-detail]").forEach(item=>item.onclick=()=>openServer(Number(item.dataset.detail)));
-  document.querySelectorAll("[data-review]").forEach(item=>item.onclick=()=>openServer(Number(item.dataset.review)));
+  document.querySelectorAll("[data-review]").forEach(item=>item.onclick=()=>openServer(Number(item.dataset.review),true));
   document.querySelectorAll("[data-favorite]").forEach(item=>item.onclick=async()=>{if(!state.user)return location.href="/giris/";const result=await api(`/api/servers/${item.dataset.favorite}/favorite`,{method:"POST"}),server=state.servers.find(x=>Number(x.id)===Number(item.dataset.favorite));server.is_favorite=result.favorite?1:0;renderServers()});
 }
 
