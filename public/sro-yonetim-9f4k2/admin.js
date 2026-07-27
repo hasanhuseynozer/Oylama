@@ -1,57 +1,378 @@
-const $=s=>document.querySelector(s);let data={servers:[],reviews:[],users:[],settings:{}};
-async function api(u,o={}){const r=await fetch(u,o),d=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(d.error||"İşlem başarısız.");e.status=r.status;throw e}return d}
-$("#adminLogin").onsubmit=async e=>{e.preventDefault();try{await api("/api/admin/login",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({password:$("#adminPassword").value})});await load()}catch(e){$("#loginMessage").textContent=e.message}};
-$("#adminLogout").onclick=async()=>{await api("/api/admin/logout",{method:"POST"});location.reload()};
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".tab-content").forEach(x=>x.classList.add("hidden"));$(`#tab-${b.dataset.tab}`).classList.remove("hidden")});
-async function load(){try{data=await api("/api/admin/dashboard");$("#loginView").classList.add("hidden");$("#dashboard").classList.remove("hidden");render()}catch(e){if(e.status!==401)show(e.message,"bad")}}
-function render(){const votes=data.servers.reduce((a,s)=>a+Number(s.vote_count),0);$("#stats").innerHTML=`<div class="stat"><strong>${data.servers.length}</strong>Sunucu</div><div class="stat"><strong>${votes}</strong>Oy</div><div class="stat"><strong>${data.users.length}</strong>Kullanıcı</div><div class="stat"><strong>${(data.changes||[]).filter(x=>x.status==="pending").length}</strong>Değişiklik Onayı</div><div class="stat"><strong>${(data.reports||[]).filter(x=>x.status==="pending").length}</strong>Bildirim</div>`;renderServers();renderReviews();renderUsers();renderRequests();renderChanges();renderReports();renderSuggestions();renderSettings()}
-function renderServers(){$("#serversTable").innerHTML=`<table><thead><tr><th>Sunucu</th><th>Özellikler</th><th>Durum</th><th>Puan/Oy</th><th>İşlem</th></tr></thead><tbody>${data.servers.map(s=>`<tr><td><b>${esc(s.name)}</b><br><small>${esc(s.description)}</small></td><td>${esc(s.server_type)} · CAP ${s.cap}${s.is_verified?" · ✓":""}</td><td>${s.is_active?"Yayında":"Gizli"}</td><td>${Number(s.average_rating).toFixed(1)} / ${s.vote_count}</td><td><button class="tiny" onclick="editServer(${s.id})">Düzenle</button><button class="tiny" onclick="resetServer(${s.id})">Sıfırla</button><button class="tiny danger" onclick="deleteServer(${s.id})">Sil</button></td></tr>`).join("")}</tbody></table>`}
-function renderReviews(){$("#reviewsTable").innerHTML=`<table><thead><tr><th>Sunucu</th><th>Kullanıcı</th><th>Puan</th><th>Yorum</th><th></th></tr></thead><tbody>${data.reviews.map(r=>`<tr><td>${esc(r.server_name)}</td><td>${esc(r.display_name)}</td><td>${"★".repeat(r.rating)}</td><td>${esc(r.comment)}</td><td><button class="tiny danger" onclick="deleteReview(${r.id})">Sil</button></td></tr>`).join("")}</tbody></table>`}
-function renderUsers(){$("#usersTable").innerHTML=`<table><thead><tr><th>Kullanıcı</th><th>E-posta</th><th>Durum</th><th>Kayıt</th><th>İşlem</th></tr></thead><tbody>${data.users.map(u=>`<tr><td>${esc(u.display_name)}</td><td>${esc(u.email)}</td><td>${u.status}</td><td>${new Date(u.created_at+"Z").toLocaleDateString("tr-TR")}</td><td><button class="tiny" onclick="toggleUser(${u.id},'${u.status==="active"?"blocked":"active"}')">${u.status==="active"?"Engelle":"Aç"}</button><button class="tiny danger" onclick="deleteUser(${u.id})">Sil</button></td></tr>`).join("")}</tbody></table>`}
-function renderRequests(){$("#requestsTable").innerHTML=data.requests?.length?data.requests.map(x=>`<article class="request-card"><span class="status ${x.status}">${x.status}</span><small>${esc(x.display_name)} · ${esc(x.email)}</small><h3>${esc(x.server_name)}</h3><p>${esc(x.description)}</p>${x.website_url?`<a href="${esc(x.website_url)}" target="_blank" rel="noopener">Web sitesi ↗</a>`:""}${x.status==="pending"?`<div class="card-actions"><button class="primary" onclick="requestAction(${x.id},'approved')">Onayla</button><button class="outline danger" onclick="requestAction(${x.id},'rejected')">Reddet</button></div>`:""}</article>`).join(""):"Bekleyen başvuru yok."}
-function renderSuggestions(){$("#suggestionsTable").innerHTML=data.suggestions?.length?data.suggestions.map(x=>`<article class="request-card"><span class="status ${x.status}">${x.status}</span><small>${esc(x.display_name)} · ${esc(x.email)}</small><h3>${esc(x.subject)}</h3><p>${esc(x.message)}</p>${x.status==="new"?`<button class="primary" onclick="suggestionAction(${x.id},'reviewed')">İncelendi İşaretle</button>`:""}</article>`).join(""):"Henüz öneri yok."}
-function renderChanges(){$("#changesTable").innerHTML=data.changes?.length?data.changes.map(x=>`<article class="request-card"><span class="status ${x.status}">${x.status}</span><small>${esc(x.display_name)}</small><h3>${esc(x.server_name)}</h3><p>${esc(x.description)}</p><div class="server-links">${x.website_url?`<a class="outline" href="${esc(x.website_url)}" target="_blank">Web</a>`:""}${x.discord_url?`<a class="outline" href="${esc(x.discord_url)}" target="_blank">Discord</a>`:""}${x.promo_url?`<a class="outline" href="${esc(x.promo_url)}" target="_blank">Tanıtım</a>`:""}</div>${x.image_url?`<img class="media-preview" src="${esc(x.image_url)}" alt="Yeni görsel">`:""}${x.status==="pending"?`<div class="card-actions"><button class="primary" onclick="changeAction(${x.id},'approved')">Onayla</button><button class="outline danger" onclick="changeAction(${x.id},'rejected')">Reddet</button></div>`:""}</article>`).join(""):"Değişiklik isteği yok."}
-function renderReports(){$("#reportsTable").innerHTML=data.reports?.length?data.reports.map(x=>`<article class="request-card"><span class="status ${x.status}">${x.status}</span><small>${esc(x.reporter_name)} · ${esc(x.server_name)}</small><h3>${esc(x.reason)}</h3><blockquote>${esc(x.comment)}</blockquote>${x.status==="pending"?`<div class="card-actions"><button class="primary danger" onclick="reportAction(${x.id},'approved')">Yorumu ve Puanı Sil</button><button class="outline" onclick="reportAction(${x.id},'rejected')">Bildirimi Reddet</button></div>`:""}</article>`).join(""):"Bekleyen bildirim yok."}
-function renderSettings(){Object.entries(data.settings).forEach(([k,v])=>{const e=document.getElementById(k);if(e)e.value=v;preview(k,v)})}
-$("#serverForm").onsubmit=async e=>{e.preventDefault();const id=$("#serverId").value,p={name:$("#serverName").value,description:$("#serverDescription").value,cap:Number($("#serverCap").value),server_type:$("#serverType").value,opened_at:$("#serverOpenedAt").value,website_url:$("#serverWebsite").value,discord_url:$("#serverDiscord").value,promo_url:$("#serverPromo").value,is_verified:$("#serverVerified").checked,is_active:$("#serverActive").checked,image_url:$("#serverImage").value};await api(id?`/api/admin/servers/${id}`:"/api/admin/servers",{method:id?"PUT":"POST",headers:{"content-type":"application/json"},body:JSON.stringify(p)});resetServerForm();await load();show("Kaydedildi.","good")};
-$("#serverCancel").onclick=resetServerForm;function resetServerForm(){$("#serverForm").reset();$("#serverId").value="";$("#serverCap").value=110;$("#serverType").value="EU/CH";$("#serverVerified").checked=false;$("#serverActive").checked=true;$("#serverImage").value="";previewServer("");$("#serverFormTitle").textContent="Sunucu Ekle";$("#serverCancel").classList.add("hidden")}
-window.editServer=id=>{const s=data.servers.find(x=>Number(x.id)===id);$("#serverId").value=s.id;$("#serverName").value=s.name;$("#serverDescription").value=s.description;$("#serverCap").value=s.cap;$("#serverType").value=s.server_type;$("#serverOpenedAt").value=s.opened_at||"";$("#serverWebsite").value=s.website_url||"";$("#serverDiscord").value=s.discord_url||"";$("#serverPromo").value=s.promo_url||"";$("#serverVerified").checked=!!s.is_verified;$("#serverImage").value=s.image_url||"";previewServer(s.image_url||"");$("#serverActive").checked=!!s.is_active;$("#serverFormTitle").textContent="Sunucu Düzenle";$("#serverCancel").classList.remove("hidden")};
-window.deleteServer=async id=>{if(confirm("Sunucu ve yorumları silinsin mi?")){await api(`/api/admin/servers/${id}`,{method:"DELETE"});await load()}};
-window.resetServer=async id=>{if(confirm("Oylar ve yorumlar sıfırlansın mı?")){await api(`/api/admin/servers/${id}/reset`,{method:"POST"});await load()}};
-window.deleteReview=async id=>{if(confirm("Yorum silinsin mi?")){await api(`/api/admin/reviews/${id}`,{method:"DELETE"});await load()}};
-window.toggleUser=async(id,status)=>{await api(`/api/admin/users/${id}/status`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({status})});await load()};
-window.deleteUser=async id=>{if(confirm("Kullanıcı silinsin mi?")){await api(`/api/admin/users/${id}`,{method:"DELETE"});await load()}};
-window.requestAction=async(id,status)=>{if(!confirm(status==="approved"?"Sunucu yayınlansın ve kullanıcıya sahip paneli açılsın mı?":"Başvuru reddedilsin mi?"))return;await api(`/api/admin/server-requests/${id}`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({status})});await load();show("Başvuru güncellendi.","good")};
-window.suggestionAction=async(id,status)=>{await api(`/api/admin/suggestions/${id}`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({status})});await load();show("Öneri güncellendi.","good")};
-window.changeAction=async(id,status)=>{await api(`/api/admin/server-changes/${id}`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({status})});await load();show(status==="approved"?"Değişiklik yayına alındı.":"Değişiklik reddedildi.","good")};
-window.reportAction=async(id,status)=>{if(status==="approved"&&!confirm("Yorum ve verdiği puan kalıcı olarak silinsin mi?"))return;await api(`/api/admin/reports/${id}`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({status})});await load();show(status==="approved"?"Yorum ve puan silindi.":"Bildirim reddedildi.","good")};
-$("#settingsForm").onsubmit=async e=>{e.preventDefault();const keys=["logo_image","banner_text","banner_url","banner_image","left_ad_text","left_ad_url","left_ad_image","right_ad_text","right_ad_url","right_ad_image","contact_text","disclaimer_text","footer_tagline","twitch_url","kick_url","youtube_url"],p={};keys.forEach(k=>p[k]=document.getElementById(k).value);await api("/api/admin/settings",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(p)});show("Site ayarları kaydedildi.","good");await load()};
-async function imageData(file){if(!file)return"";if(!["image/png","image/jpeg","image/webp","image/gif"].includes(file.type))throw new Error("PNG, JPG, WebP veya GIF seçin.");const read=()=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=no;r.readAsDataURL(file)});if(file.type==="image/gif"){if(file.size>307200)throw new Error("Animasyonlu GIF en fazla 300 KB olabilir.");return read()}const source=await read(),img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=source});const scale=Math.min(1,1200/Math.max(img.width,img.height)),canvas=document.createElement("canvas");canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);for(const quality of [.82,.7,.58,.46]){const out=canvas.toDataURL("image/webp",quality);if(out.length<400000)return out}throw new Error("Görsel küçültülemedi. Daha küçük bir dosya seçin.")}
-function preview(k,url){const img=document.querySelector(`[data-preview="${k}"]`);if(!img)return;img.src=url||"";img.classList.toggle("hidden",!url)}function previewServer(url){const img=$("#serverImagePreview");img.src=url||"";img.classList.toggle("hidden",!url)}
-document.querySelectorAll("[data-upload]").forEach(input=>input.onchange=async()=>{try{show("Görsel hazırlanıyor…","good");const url=await imageData(input.files[0]);document.getElementById(input.dataset.upload).value=url;preview(input.dataset.upload,url);$("#settingsForm").requestSubmit();show("Görsel kaydediliyor…","good")}catch(e){show(e.message,"bad")}});$("#serverImageFile").onchange=async()=>{try{const url=await imageData($("#serverImageFile").files[0]);$("#serverImage").value=url;previewServer(url);show("Sunucu görseli hazır.","good")}catch(e){show(e.message,"bad")}};
-function show(t,c){$("#adminMessage").className=`message admin-toast ${c}`;$("#adminMessage").textContent=t}function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-const ownerLabel=document.createElement("label");ownerLabel.innerHTML='Sunucu sahibi<select id="serverOwner"><option value="">Atanmamış</option></select>';document.querySelector(".server-meta-form").append(ownerLabel);
-function renderUsers(){$("#usersTable").innerHTML=`<table><thead><tr><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>Durum</th><th>İşlem</th></tr></thead><tbody>${data.users.map(u=>`<tr><td><b>${esc(u.display_name)}</b></td><td>${esc(u.email)}</td><td><span class="role-pill ${esc(u.account_role||"user")}">${u.account_role==="owner"?"Sunucu Sahibi":"Kullanıcı"}</span></td><td>${u.status==="active"?"Aktif":"Engelli"}</td><td><button class="tiny" onclick="setRole(${u.id},'${u.account_role==="owner"?"user":"owner"}')">${u.account_role==="owner"?"Kullanıcı Yap":"Sunucu Sahibi Yap"}</button><button class="tiny" onclick="toggleUser(${u.id},'${u.status==="active"?"blocked":"active"}')">${u.status==="active"?"Engelle":"Aç"}</button><button class="tiny danger" onclick="deleteUser(${u.id})">Sil</button></td></tr>`).join("")}</tbody></table>`;const select=$("#serverOwner"),value=select.value;select.innerHTML='<option value="">Atanmamış</option>'+data.users.filter(u=>u.status==="active").map(u=>`<option value="${u.id}">${esc(u.display_name)} · ${esc(u.email)}</option>`).join("");select.value=value}
-window.setRole=async(id,role)=>{await api(`/api/admin/users/${id}/role`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({role})});await load();show(role==="owner"?"Sunucu sahibi rolü atandı.":"Kullanıcı rolüne geçirildi.","good")};
-$("#serverForm").onsubmit=async e=>{e.preventDefault();const id=$("#serverId").value,p={name:$("#serverName").value,description:$("#serverDescription").value,cap:Number($("#serverCap").value),server_type:$("#serverType").value,opened_at:$("#serverOpenedAt").value,website_url:$("#serverWebsite").value,discord_url:$("#serverDiscord").value,promo_url:$("#serverPromo").value,is_verified:false,is_active:$("#serverActive").checked,image_url:$("#serverImage").value,owner_user_id:$("#serverOwner").value?Number($("#serverOwner").value):null};await api(id?`/api/admin/servers/${id}`:"/api/admin/servers",{method:id?"PUT":"POST",headers:{"content-type":"application/json"},body:JSON.stringify(p)});resetServerForm();$("#serverOwner").value="";await load();show("Sunucu ve sahip ataması kaydedildi.","good")};
-const originalEditServer=window.editServer;window.editServer=id=>{originalEditServer(id);const s=data.servers.find(x=>Number(x.id)===id);$("#serverOwner").value=s.owner_user_id||""};
-const scheduleBox=document.createElement("div");scheduleBox.className="admin-schedule-fields";scheduleBox.innerHTML='<label>Beta tarih ve saati<input id="serverBetaAt" type="datetime-local"></label><label>Açılış tarih ve saati<input id="serverLaunchAt" type="datetime-local"></label><label>Sunucu durumu<select id="serverOperationalStatus"><option value="online">Çevrimiçi</option><option value="maintenance">Bakımda</option><option value="offline">Kapalı</option></select></label><label>Durum açıklaması<input id="serverStatusNote" maxlength="120" placeholder="Örn. Planlı bakım"></label>';document.querySelector("#serverDescription").parentElement.before(scheduleBox);
-$("#serverForm").onsubmit=async e=>{e.preventDefault();const id=$("#serverId").value,p={name:$("#serverName").value,description:$("#serverDescription").value,cap:Number($("#serverCap").value),server_type:$("#serverType").value,opened_at:$("#serverOpenedAt").value,beta_at:$("#serverBetaAt").value,launch_at:$("#serverLaunchAt").value,operational_status:$("#serverOperationalStatus").value,status_note:$("#serverStatusNote").value,website_url:$("#serverWebsite").value,discord_url:$("#serverDiscord").value,promo_url:$("#serverPromo").value,is_active:$("#serverActive").checked,image_url:$("#serverImage").value,owner_user_id:$("#serverOwner").value?Number($("#serverOwner").value):null};await api(id?`/api/admin/servers/${id}`:"/api/admin/servers",{method:id?"PUT":"POST",headers:{"content-type":"application/json"},body:JSON.stringify(p)});resetServerForm();$("#serverOwner").value="";$("#serverBetaAt").value="";$("#serverLaunchAt").value="";await load();show("Sunucu, takvim ve sahip ataması kaydedildi.","good")};
-const editServerWithSchedule=window.editServer;window.editServer=id=>{editServerWithSchedule(id);const s=data.servers.find(x=>Number(x.id)===id);$("#serverBetaAt").value=s.beta_at||"";$("#serverLaunchAt").value=s.launch_at||"";$("#serverOperationalStatus").value=s.operational_status||"offline";$("#serverStatusNote").value=s.status_note||""};
-document.querySelectorAll(".brand").forEach(x=>x.innerHTML='<img class="admin-brand-logo" src="/sro-rating-header.png" alt="SRO RATING">');
-load();
+const $=selector=>document.querySelector(selector);
+let data={servers:[],reviews:[],users:[],settings:{},requests:[],changes:[],reports:[],suggestions:[]};
 
-function renderUsers(){
-  const serverOptions='<option value="">Sunucu seçin</option>'+data.servers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
-  $("#usersTable").innerHTML=`<table><thead><tr><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>Durum</th><th>Sunucu Sahipliği</th><th>Hesap</th></tr></thead><tbody>${data.users.map(u=>`<tr><td><b>${esc(u.display_name)}</b></td><td>${esc(u.email)}</td><td><span class="role-pill ${esc(u.account_role||"user")}">${u.account_role==="owner"?"Sunucu Sahibi":"Kullanıcı"}</span></td><td>${u.status==="active"?"Aktif":"Engelli"}</td><td><div class="owner-assign-control"><select id="owner-server-${u.id}">${serverOptions}</select><button class="tiny primary" onclick="assignServerOwner(${u.id})">Sahipliği Ata</button></div></td><td><div class="user-actions"><button class="tiny" onclick="setRole(${u.id},'${u.account_role==="owner"?"user":"owner"}')">${u.account_role==="owner"?"Normal Kullanıcı Yap":"Yalnızca Rol Ver"}</button><button class="tiny" onclick="toggleUser(${u.id},'${u.status==="active"?"blocked":"active"}')">${u.status==="active"?"Engelle":"Aç"}</button><button class="tiny danger" onclick="deleteUser(${u.id})">Sil</button></div></td></tr>`).join("")}</tbody></table>`;
-  const select=$("#serverOwner"),value=select.value;
-  select.innerHTML='<option value="">Atanmamış</option>'+data.users.filter(u=>u.status==="active").map(u=>`<option value="${u.id}">${esc(u.display_name)} · ${esc(u.email)}</option>`).join("");
-  select.value=value;
+async function api(url,options={}){
+  const response=await fetch(url,options);
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok){
+    const error=new Error(payload.error||"İşlem başarısız.");
+    error.status=response.status;
+    throw error;
+  }
+  return payload;
 }
 
-window.assignServerOwner=async userId=>{
-  const serverId=Number($(`#owner-server-${userId}`).value);
-  if(!serverId)return show("Önce bir sunucu seçin.","bad");
-  await api(`/api/admin/users/${userId}/assign-server`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({serverId})});
-  await load();show("Sunucu sahipliği ve panel yetkisi birlikte atandı.","good");
+$("#adminLogin").onsubmit=async event=>{
+  event.preventDefault();
+  try{
+    await api("/api/admin/login",{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify({password:$("#adminPassword").value})
+    });
+    $("#loginMessage").textContent="";
+    await load();
+  }catch(error){
+    $("#loginMessage").textContent=error.message;
+  }
 };
+
+$("#adminLogout").onclick=async()=>{
+  await api("/api/admin/logout",{method:"POST"});
+  location.reload();
+};
+
+document.querySelectorAll(".tab").forEach(button=>button.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(item=>item.classList.toggle("active",item===button));
+  document.querySelectorAll(".tab-content").forEach(section=>section.classList.add("hidden"));
+  $(`#tab-${button.dataset.tab}`).classList.remove("hidden");
+});
+
+async function load(){
+  try{
+    const dashboard=await api("/api/admin/dashboard");
+    data={
+      ...dashboard,
+      servers:dashboard.servers||[],
+      reviews:dashboard.reviews||[],
+      users:dashboard.users||[],
+      settings:dashboard.settings||{},
+      requests:dashboard.requests||[],
+      changes:dashboard.changes||[],
+      reports:dashboard.reports||[],
+      suggestions:dashboard.suggestions||[]
+    };
+    $("#loginView").classList.add("hidden");
+    $("#dashboard").classList.remove("hidden");
+    render();
+  }catch(error){
+    if(error.status!==401)show(error.message,"bad");
+  }
+}
+
+function render(){
+  renderStats();
+  renderServers();
+  renderReviews();
+  renderUsers();
+  renderRequests();
+  renderChanges();
+  renderReports();
+  renderSuggestions();
+  renderSettings();
+}
+
+function renderStats(){
+  const votes=data.servers.reduce((total,server)=>total+Number(server.vote_count||0),0);
+  const items=[
+    [data.servers.length,"Sunucu"],
+    [votes,"Oy"],
+    [data.users.length,"Kullanıcı"],
+    [data.changes.filter(item=>item.status==="pending").length,"Değişiklik Onayı"],
+    [data.reports.filter(item=>item.status==="pending").length,"Bildirim"]
+  ];
+  $("#stats").innerHTML=items.map(([value,label])=>`<div class="stat"><strong>${value}</strong>${label}</div>`).join("");
+}
+
+function renderServers(){
+  $("#serversTable").innerHTML=`<table><thead><tr><th>Sunucu</th><th>Özellikler</th><th>Durum</th><th>Puan/Oy</th><th>İşlem</th></tr></thead><tbody>${data.servers.map(server=>`
+    <tr>
+      <td><b>${esc(server.name)}</b><br><small>${esc(server.description)}</small></td>
+      <td>${esc(server.server_type)} · CAP ${server.cap}</td>
+      <td>${server.is_active?"Yayında":"Gizli"} · ${statusText(server.operational_status)}</td>
+      <td>${Number(server.average_rating||0).toFixed(1)} / ${server.vote_count||0}</td>
+      <td><div class="table-actions">
+        <button class="tiny" data-action="edit-server" data-id="${server.id}">Düzenle</button>
+        <button class="tiny" data-action="reset-server" data-id="${server.id}">Sıfırla</button>
+        <button class="tiny danger" data-action="delete-server" data-id="${server.id}">Sil</button>
+      </div></td>
+    </tr>`).join("")}</tbody></table>`;
+}
+
+function renderReviews(){
+  $("#reviewsTable").innerHTML=data.reviews.length?`<table><thead><tr><th>Sunucu</th><th>Kullanıcı</th><th>Puan</th><th>Yorum</th><th>İşlem</th></tr></thead><tbody>${data.reviews.map(review=>`
+    <tr><td>${esc(review.server_name)}</td><td>${esc(review.display_name)}</td><td class="stars">${"★".repeat(review.rating)}</td><td>${esc(review.comment)}</td>
+    <td><button class="tiny danger" data-action="delete-review" data-id="${review.id}">Sil</button></td></tr>`).join("")}</tbody></table>`:"<div class=\"empty-state\">Henüz yorum yok.</div>";
+}
+
+function renderUsers(){
+  const serverOptions='<option value="">Sunucu seçin</option>'+data.servers.map(server=>`<option value="${server.id}">${esc(server.name)}</option>`).join("");
+  $("#usersTable").innerHTML=`<table><thead><tr><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>Durum</th><th>Sunucu Sahipliği</th><th>Hesap</th></tr></thead><tbody>${data.users.map(user=>`
+    <tr data-user-row="${user.id}">
+      <td><b>${esc(user.display_name)}</b></td>
+      <td>${esc(user.email)}</td>
+      <td><span class="role-pill ${esc(user.account_role||"user")}">${user.account_role==="owner"?"Sunucu Sahibi":"Kullanıcı"}</span></td>
+      <td>${user.status==="active"?"Aktif":"Engelli"}</td>
+      <td><div class="owner-assign-control"><select data-owner-server>${serverOptions}</select><button class="tiny primary" data-action="assign-owner" data-id="${user.id}">Sahipliği Ata</button></div></td>
+      <td><div class="user-actions">
+        <button class="tiny" data-action="set-role" data-id="${user.id}" data-role="${user.account_role==="owner"?"user":"owner"}">${user.account_role==="owner"?"Normal Kullanıcı Yap":"Yalnızca Rol Ver"}</button>
+        <button class="tiny" data-action="toggle-user" data-id="${user.id}" data-status="${user.status==="active"?"blocked":"active"}">${user.status==="active"?"Engelle":"Aç"}</button>
+        <button class="tiny danger" data-action="delete-user" data-id="${user.id}">Sil</button>
+      </div></td>
+    </tr>`).join("")}</tbody></table>`;
+
+  const ownerSelect=$("#serverOwner");
+  const selected=ownerSelect.value;
+  ownerSelect.innerHTML='<option value="">Atanmamış</option>'+data.users.filter(user=>user.status==="active").map(user=>`<option value="${user.id}">${esc(user.display_name)} · ${esc(user.email)}</option>`).join("");
+  ownerSelect.value=selected;
+}
+
+function renderRequests(){
+  $("#requestsTable").innerHTML=data.requests.length?data.requests.map(request=>`
+    <article class="request-card"><span class="status ${esc(request.status)}">${esc(request.status)}</span>
+      <small>${esc(request.display_name)} · ${esc(request.email)}</small><h3>${esc(request.server_name)}</h3><p>${esc(request.description)}</p>
+      ${request.website_url?`<a href="${esc(request.website_url)}" target="_blank" rel="noopener">Web sitesi ↗</a>`:""}
+      ${request.status==="pending"?`<div class="card-actions"><button class="primary" data-action="request" data-id="${request.id}" data-status="approved">Onayla</button><button class="outline danger" data-action="request" data-id="${request.id}" data-status="rejected">Reddet</button></div>`:""}
+    </article>`).join(""):"<div class=\"empty-state\">Bekleyen başvuru yok.</div>";
+}
+
+function renderChanges(){
+  $("#changesTable").innerHTML=data.changes.length?data.changes.map(change=>`
+    <article class="request-card"><span class="status ${esc(change.status)}">${esc(change.status)}</span>
+      <small>${esc(change.display_name)}</small><h3>${esc(change.server_name)}</h3><p>${esc(change.description)}</p>
+      <div class="server-links">${externalLink("Web",change.website_url)}${externalLink("Discord",change.discord_url)}${externalLink("Tanıtım",change.promo_url)}</div>
+      ${change.image_url?`<img class="media-preview" src="${esc(change.image_url)}" alt="Yeni görsel">`:""}
+      ${change.status==="pending"?`<div class="card-actions"><button class="primary" data-action="change" data-id="${change.id}" data-status="approved">Onayla</button><button class="outline danger" data-action="change" data-id="${change.id}" data-status="rejected">Reddet</button></div>`:""}
+    </article>`).join(""):"<div class=\"empty-state\">Değişiklik isteği yok.</div>";
+}
+
+function renderReports(){
+  $("#reportsTable").innerHTML=data.reports.length?data.reports.map(report=>`
+    <article class="request-card"><span class="status ${esc(report.status)}">${esc(report.status)}</span>
+      <small>${esc(report.reporter_name)} · ${esc(report.server_name)}</small><h3>${esc(report.reason)}</h3><blockquote>${esc(report.comment)}</blockquote>
+      ${report.status==="pending"?`<div class="card-actions"><button class="primary danger" data-action="report" data-id="${report.id}" data-status="approved">Yorumu ve Puanı Sil</button><button class="outline" data-action="report" data-id="${report.id}" data-status="rejected">Bildirimi Reddet</button></div>`:""}
+    </article>`).join(""):"<div class=\"empty-state\">Bekleyen bildirim yok.</div>";
+}
+
+function renderSuggestions(){
+  $("#suggestionsTable").innerHTML=data.suggestions.length?data.suggestions.map(suggestion=>`
+    <article class="request-card"><span class="status ${esc(suggestion.status)}">${esc(suggestion.status)}</span>
+      <small>${esc(suggestion.display_name)} · ${esc(suggestion.email)}</small><h3>${esc(suggestion.subject)}</h3><p>${esc(suggestion.message)}</p>
+      ${suggestion.status==="new"?`<button class="primary" data-action="suggestion" data-id="${suggestion.id}" data-status="reviewed">İncelendi İşaretle</button>`:""}
+    </article>`).join(""):"<div class=\"empty-state\">Henüz öneri yok.</div>";
+}
+
+function renderSettings(){
+  Object.entries(data.settings).forEach(([key,value])=>{
+    const element=document.getElementById(key);
+    if(element)element.value=value||"";
+    preview(key,value);
+  });
+}
+
+document.addEventListener("click",async event=>{
+  const button=event.target.closest("[data-action]");
+  if(!button)return;
+  const action=button.dataset.action,id=Number(button.dataset.id);
+  try{
+    button.disabled=true;
+    if(action==="edit-server"){editServer(id);return}
+    if(action==="delete-server"&&confirm("Sunucu ve yorumları silinsin mi?"))await api(`/api/admin/servers/${id}`,{method:"DELETE"});
+    else if(action==="reset-server"&&confirm("Oylar ve yorumlar sıfırlansın mı?"))await api(`/api/admin/servers/${id}/reset`,{method:"POST"});
+    else if(action==="delete-review"&&confirm("Yorum silinsin mi?"))await api(`/api/admin/reviews/${id}`,{method:"DELETE"});
+    else if(action==="toggle-user")await api(`/api/admin/users/${id}/status`,jsonPut({status:button.dataset.status}));
+    else if(action==="set-role")await api(`/api/admin/users/${id}/role`,jsonPut({role:button.dataset.role}));
+    else if(action==="assign-owner"){
+      const serverId=Number(button.closest("[data-user-row]").querySelector("[data-owner-server]").value);
+      if(!serverId)throw new Error("Önce bir sunucu seçin.");
+      await api(`/api/admin/users/${id}/assign-server`,jsonPost({serverId}));
+    }else if(action==="delete-user"&&confirm("Kullanıcı silinsin mi?"))await api(`/api/admin/users/${id}`,{method:"DELETE"});
+    else if(action==="request"){
+      if(!confirm(button.dataset.status==="approved"?"Sunucu başvurusu onaylansın mı?":"Başvuru reddedilsin mi?"))return;
+      await api(`/api/admin/server-requests/${id}`,jsonPut({status:button.dataset.status}));
+    }else if(action==="change")await api(`/api/admin/server-changes/${id}`,jsonPut({status:button.dataset.status}));
+    else if(action==="report"){
+      if(button.dataset.status==="approved"&&!confirm("Yorum ve verdiği puan kalıcı olarak silinsin mi?"))return;
+      await api(`/api/admin/reports/${id}`,jsonPut({status:button.dataset.status}));
+    }else if(action==="suggestion")await api(`/api/admin/suggestions/${id}`,jsonPut({status:button.dataset.status}));
+    else return;
+    await load();
+    show(action==="assign-owner"?"Sunucu sahipliği ve panel yetkisi birlikte atandı.":"İşlem tamamlandı.","good");
+  }catch(error){
+    show(error.message,"bad");
+  }finally{
+    button.disabled=false;
+  }
+});
+
+const ownerLabel=document.createElement("label");
+ownerLabel.innerHTML='Sunucu sahibi<select id="serverOwner"><option value="">Atanmamış</option></select>';
+document.querySelector(".server-meta-form").append(ownerLabel);
+
+const scheduleBox=document.createElement("div");
+scheduleBox.className="admin-schedule-fields";
+scheduleBox.innerHTML='<label>Beta tarih ve saati<input id="serverBetaAt" type="datetime-local"></label><label>Açılış tarih ve saati<input id="serverLaunchAt" type="datetime-local"></label><label>Sunucu durumu<select id="serverOperationalStatus"><option value="online">Çevrimiçi</option><option value="maintenance">Bakımda</option><option value="offline">Kapalı</option></select></label><label>Durum açıklaması<input id="serverStatusNote" maxlength="120" placeholder="Örn. Planlı bakım"></label>';
+$("#serverDescription").parentElement.before(scheduleBox);
+
+$("#serverForm").onsubmit=async event=>{
+  event.preventDefault();
+  const id=$("#serverId").value;
+  const payload={
+    name:$("#serverName").value,
+    description:$("#serverDescription").value,
+    cap:Number($("#serverCap").value),
+    server_type:$("#serverType").value,
+    opened_at:$("#serverOpenedAt").value,
+    beta_at:$("#serverBetaAt").value,
+    launch_at:$("#serverLaunchAt").value,
+    operational_status:$("#serverOperationalStatus").value,
+    status_note:$("#serverStatusNote").value,
+    website_url:$("#serverWebsite").value,
+    discord_url:$("#serverDiscord").value,
+    promo_url:$("#serverPromo").value,
+    image_url:$("#serverImage").value,
+    is_active:$("#serverActive").checked,
+    owner_user_id:$("#serverOwner").value?Number($("#serverOwner").value):null
+  };
+  try{
+    await api(id?`/api/admin/servers/${id}`:"/api/admin/servers",{
+      method:id?"PUT":"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+    resetServerForm();
+    await load();
+    show("Sunucu, takvim ve sahiplik bilgileri kaydedildi.","good");
+  }catch(error){
+    show(error.message,"bad");
+  }
+};
+
+$("#serverCancel").onclick=resetServerForm;
+
+function editServer(id){
+  const server=data.servers.find(item=>Number(item.id)===id);
+  if(!server)return;
+  $("#serverId").value=server.id;
+  $("#serverName").value=server.name;
+  $("#serverDescription").value=server.description;
+  $("#serverCap").value=server.cap;
+  $("#serverType").value=server.server_type;
+  $("#serverOpenedAt").value=server.opened_at||"";
+  $("#serverBetaAt").value=server.beta_at||"";
+  $("#serverLaunchAt").value=server.launch_at||"";
+  $("#serverOperationalStatus").value=server.operational_status||"offline";
+  $("#serverStatusNote").value=server.status_note||"";
+  $("#serverWebsite").value=server.website_url||"";
+  $("#serverDiscord").value=server.discord_url||"";
+  $("#serverPromo").value=server.promo_url||"";
+  $("#serverImage").value=server.image_url||"";
+  $("#serverOwner").value=server.owner_user_id||"";
+  $("#serverActive").checked=Boolean(server.is_active);
+  previewServer(server.image_url||"");
+  $("#serverFormTitle").textContent="Sunucu Düzenle";
+  $("#serverCancel").classList.remove("hidden");
+  $("#serverForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function resetServerForm(){
+  $("#serverForm").reset();
+  $("#serverId").value="";
+  $("#serverCap").value=110;
+  $("#serverType").value="EU/CH";
+  $("#serverOperationalStatus").value="offline";
+  $("#serverActive").checked=true;
+  $("#serverImage").value="";
+  $("#serverOwner").value="";
+  previewServer("");
+  $("#serverFormTitle").textContent="Sunucu Ekle";
+  $("#serverCancel").classList.add("hidden");
+}
+
+$("#settingsForm").onsubmit=async event=>{
+  event.preventDefault();
+  const keys=["logo_image","banner_text","banner_url","banner_image","left_ad_text","left_ad_url","left_ad_image","right_ad_text","right_ad_url","right_ad_image","contact_text","disclaimer_text","footer_tagline","twitch_url","kick_url","youtube_url"];
+  const payload=Object.fromEntries(keys.map(key=>[key,document.getElementById(key).value]));
+  try{
+    await api("/api/admin/settings",jsonPut(payload));
+    show("Site ayarları kaydedildi.","good");
+    await load();
+  }catch(error){
+    show(error.message,"bad");
+  }
+};
+
+document.querySelectorAll("[data-upload]").forEach(input=>input.onchange=async()=>{
+  try{
+    show("Görsel hazırlanıyor…","good");
+    const url=await imageData(input.files[0]);
+    document.getElementById(input.dataset.upload).value=url;
+    preview(input.dataset.upload,url);
+    $("#settingsForm").requestSubmit();
+  }catch(error){
+    show(error.message,"bad");
+  }
+});
+
+$("#serverImageFile").onchange=async()=>{
+  try{
+    const url=await imageData($("#serverImageFile").files[0]);
+    $("#serverImage").value=url;
+    previewServer(url);
+    show("Sunucu görseli hazır.","good");
+  }catch(error){
+    show(error.message,"bad");
+  }
+};
+
+async function imageData(file){
+  if(!file)return"";
+  if(!["image/png","image/jpeg","image/webp","image/gif"].includes(file.type))throw new Error("PNG, JPG, WebP veya GIF seçin.");
+  const read=()=>new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+  if(file.type==="image/gif"){
+    if(file.size>307200)throw new Error("Animasyonlu GIF en fazla 300 KB olabilir.");
+    return read();
+  }
+  const source=await read();
+  const image=await new Promise((resolve,reject)=>{
+    const item=new Image();
+    item.onload=()=>resolve(item);
+    item.onerror=reject;
+    item.src=source;
+  });
+  const scale=Math.min(1,1200/Math.max(image.width,image.height));
+  const canvas=document.createElement("canvas");
+  canvas.width=Math.round(image.width*scale);
+  canvas.height=Math.round(image.height*scale);
+  canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+  for(const quality of [.82,.7,.58,.46]){
+    const result=canvas.toDataURL("image/webp",quality);
+    if(result.length<400000)return result;
+  }
+  throw new Error("Görsel küçültülemedi. Daha küçük bir dosya seçin.");
+}
+
+function preview(key,url){
+  const image=document.querySelector(`[data-preview="${key}"]`);
+  if(!image)return;
+  image.src=url||"";
+  image.classList.toggle("hidden",!url);
+}
+function previewServer(url){
+  $("#serverImagePreview").src=url||"";
+  $("#serverImagePreview").classList.toggle("hidden",!url);
+}
+function jsonPut(value){return{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(value)}}
+function jsonPost(value){return{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(value)}}
+function externalLink(label,url){return url?`<a class="outline" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>`:""}
+function statusText(value){return({online:"Çevrimiçi",maintenance:"Bakımda",offline:"Kapalı"})[value]||"Kapalı"}
+function show(text,className){$("#adminMessage").className=`message admin-toast ${className}`;$("#adminMessage").textContent=text}
+function esc(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]))}
+
+document.querySelectorAll(".brand").forEach(element=>element.innerHTML='<img class="admin-brand-logo" src="/sro-rating-header.png" alt="SRO RATING">');
+load();
