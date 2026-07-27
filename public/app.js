@@ -285,7 +285,7 @@ async function openServer(id,focusForm=false,focusReviewId=0){
   $("#serverDetailHero").className=`server-detail-hero${server.image_url?"":" placeholder"}`;
   $("#serverDetailHero").style.backgroundImage=server.image_url?`url("${String(server.image_url).replaceAll('"',"%22")}")`:"";
   $("#serverDetailHero").innerHTML=server.image_url?"":'<div><strong>Sunucu görseli bekleniyor</strong></div>';
-  $("#serverDetailBadges").innerHTML=`<span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span><span class="server-status inline ${statusClass}" title="${esc(server.status_note||statusText)}"><i></i>${statusText}</span>`;
+  $("#serverDetailBadges").innerHTML=`<span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span><span class="detail-status-indicator ${statusClass}" title="${esc(server.status_note||statusText)}" aria-label="Sunucu durumu: ${statusText}"><i></i><b class="sr-only">${statusText}</b></span>`;
   const links=[["Web Sitesi",server.website_url],["Discord",server.discord_url],["Tanıtım",server.promo_url]].filter(([,url])=>url);
   $("#serverDetailLinks").innerHTML=links.map(([name,url])=>`<a class="outline" href="${esc(url)}" target="_blank" rel="noopener nofollow">${name} ↗</a>`).join("");
   $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars detail-stars">${stars(rating)}</span><small>${data.reviews.length} yorum</small>`;
