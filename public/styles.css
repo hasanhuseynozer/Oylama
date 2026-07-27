@@ -231,3 +231,69 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
 @media(max-width:1400px){.header-inner>.banner{width:48vw!important}}
 @media(max-width:1050px){.header-inner>.banner{width:36vw!important}}
 @media(max-width:900px){.header-inner>.banner{display:none!important}}
+
+/* Calm semantic accents: every color has a consistent purpose */
+.favorite-button{
+  color:#e1b95f!important;
+  border-color:#766137!important;
+  background:rgba(18,25,27,.94)!important;
+  box-shadow:0 5px 14px rgba(0,0,0,.2)
+}
+.favorite-button:hover{color:#f3cc6e!important;border-color:#b5944d!important}
+.favorite-button.active{
+  color:#fff5f5!important;
+  border-color:#e36870!important;
+  background:linear-gradient(145deg,#c94d59,#8d2f3a)!important;
+  box-shadow:0 0 0 3px rgba(227,104,112,.14),0 7px 18px rgba(105,30,39,.32)!important
+}
+.server-badges span:nth-child(1){
+  color:#d4c5fa!important;
+  border-color:#685b92!important;
+  background:#211d35!important
+}
+.server-badges span:nth-child(2){
+  color:#a9d8f2!important;
+  border-color:#46718a!important;
+  background:#142734!important
+}
+.server-badges .fresh{
+  color:#092019!important;
+  border-color:#78c5a2!important;
+  background:linear-gradient(135deg,#77c6a1,#a0d7b8)!important
+}
+.server-card .card-actions .outline{
+  color:#cad0ff!important;
+  border-color:#6673ad!important;
+  background:linear-gradient(145deg,#202642,#171d34)!important
+}
+.server-card .card-actions .outline:hover{
+  border-color:#919de0!important;
+  background:linear-gradient(145deg,#2b3357,#202744)!important
+}
+.server-card .card-actions .primary{
+  color:#071513!important;
+  border-color:#83c9bf!important;
+  background:linear-gradient(135deg,#65b5aa,#8dcfc4)!important;
+  box-shadow:0 7px 18px rgba(68,147,138,.17)
+}
+.server-card .card-actions .primary:hover{
+  background:linear-gradient(135deg,#76c4b9,#a0dbd2)!important
+}
+.score,.detail-score>strong{
+  color:#f2c75c!important;
+  text-shadow:0 0 18px rgba(242,199,92,.18)
+}
+.stars,.card-stars,.detail-stars,.detail-comment header>span,.inline-rating button.active{
+  color:#efc45b!important;
+  text-shadow:0 0 10px rgba(239,196,91,.12)
+}
+.detail-comment .user-link{
+  color:var(--commenter-color,#79c8bd)!important;
+  font-weight:800!important
+}
+.detail-comment{
+  border-color:#30484e!important;
+  background:linear-gradient(145deg,#101b1f,#0c1518)!important
+}
+.reaction-button:not(.dislike){color:#87cba2!important;border-color:#416f57!important}
+.reaction-button.dislike{color:#e49398!important;border-color:#74474c!important}
