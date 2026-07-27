@@ -32,3 +32,5 @@ body{background:radial-gradient(circle at 50% -10%,#2b1d08 0,#0b0a08 34%,#070707
 /* Guaranteed ad visibility for desktop and laptop */
 @media(min-width:1000px) and (max-width:1279px){.shell{width:calc(100% - 24px)}.page-layout{grid-template-columns:92px minmax(0,1fr) 92px;gap:16px}.sponsor-rail{display:flex;min-height:620px}.server-grid{grid-template-columns:repeat(3,minmax(210px,1fr))}.toolbar{gap:20px}.toolbar>div:first-child{min-width:250px}}
 @media(max-width:999px){.page-layout{grid-template-columns:minmax(0,1fr)}.sponsor-rail{display:none}}
+
+.password-guide{display:grid;gap:5px;margin:10px 0 16px;padding:12px;background:#100f0c;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:12px}.password-guide strong{color:var(--gold2)}.auth-card button:disabled{opacity:.65;cursor:wait}
