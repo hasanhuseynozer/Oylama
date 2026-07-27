@@ -1,6 +1,6 @@
 const state={
   servers:[],user:null,settings:{},turnstileKey:"",widget:null,query:"",
-  favoriteOnly:false,page:1,openServerId:null
+  favoriteOnly:false,page:1,openServerId:null,loadingServers:false,serverLoadError:""
 };
 const $=selector=>document.querySelector(selector);
 const $$=selector=>[...document.querySelectorAll(selector)];
@@ -131,10 +131,20 @@ function setupCalendar(){
 }
 
 async function loadServers(){
-  const data=await api("/api/servers");
-  state.servers=data.servers||[];
-  fillFilters();
-  renderServers();
+  if(state.loadingServers)return;
+  state.loadingServers=true;state.serverLoadError="";
+  const grid=$("#serverGrid");
+  grid.setAttribute("aria-busy","true");
+  grid.innerHTML=Array.from({length:8},()=>'<article class="server-card server-card-skeleton" aria-hidden="true"><div></div><span></span><span></span><span></span></article>').join("");
+  try{
+    const data=await api("/api/servers");
+    state.servers=[...new Map((data.servers||[]).map(server=>[Number(server.id),server])).values()];
+    fillFilters();renderServers();
+  }catch(error){
+    state.serverLoadError=error.message||"Sunucular yüklenemedi.";
+    grid.innerHTML=`<div class="panel empty-results load-error"><h3>Sunucular yüklenemedi</h3><p>${esc(state.serverLoadError)}</p><button type="button" class="primary" data-retry-servers>Tekrar Dene</button></div>`;
+    grid.querySelector("[data-retry-servers]").onclick=loadServers;
+  }finally{state.loadingServers=false;grid.setAttribute("aria-busy","false")}
 }
 
 function fillFilters(){
@@ -143,7 +153,8 @@ function fillFilters(){
   [...select.options].slice(1).forEach(option=>option.remove());
   [...new Set(state.servers.map(server=>Number(server.cap)).filter(Boolean))].sort((a,b)=>a-b)
     .forEach(cap=>select.add(new Option(`CAP ${cap}`,String(cap))));
-  select.value=[...select.options].some(option=>option.value===current)?current:"";
+  const requested=new URLSearchParams(location.search).get("cap")||current;
+  select.value=[...select.options].some(option=>option.value===requested)?requested:"";
 }
 
 function setupDiscovery(){
@@ -158,9 +169,18 @@ function setupDiscovery(){
   tag.id="tagFilter";tag.setAttribute("aria-label","Etiket");
   tag.innerHTML='<option value="">Tüm etiketler</option><option value="new">Yeni</option><option value="popular">Popüler</option><option value="high">Yüksek puan</option><option value="favorite">Favorilerim</option>';
   $("#typeFilter").after(status,rating,tag);
+  [["searchInput","Arama"],["sortSelect","Sıralama"],["capFilter","CAP"],["typeFilter","Tür"],["statusFilter","Durum"],["ratingFilter","Puan"],["tagFilter","Etiket"]].forEach(([id,text])=>{
+    const control=document.getElementById(id),label=document.createElement("label");
+    label.className="filter-field";label.innerHTML=`<span>${text}</span>`;control.before(label);label.append(control);
+  });
+  const params=new URLSearchParams(location.search);
+  const restored={search:"searchInput",sort:"sortSelect",cap:"capFilter",type:"typeFilter",status:"statusFilter",rating:"ratingFilter",tag:"tagFilter"};
+  Object.entries(restored).forEach(([key,id])=>{const value=params.get(key);if(value!==null&&document.getElementById(id))document.getElementById(id).value=value});
+  $("#newOnly").checked=params.get("new")==="1";state.query=$("#searchInput").value;
   if(state.user){
     const favorite=document.createElement("button");
     favorite.id="favoriteFilter";favorite.className="tiny favorite-filter";favorite.type="button";favorite.textContent="♥ Favorilerim";
+    state.favoriteOnly=params.get("favorites")==="1";favorite.classList.toggle("active",state.favoriteOnly);
     favorite.onclick=()=>{state.favoriteOnly=!state.favoriteOnly;favorite.classList.toggle("active",state.favoriteOnly);state.page=1;renderServers()};
     $("#clearFilters").before(favorite);
   }
@@ -178,6 +198,14 @@ function setupDiscovery(){
   const pagination=document.createElement("nav");
   pagination.id="serverPagination";pagination.className="server-pagination";pagination.setAttribute("aria-label","Sunucu sayfaları");
   $("#serverGrid").after(pagination);
+}
+
+function syncFilterUrl(){
+  const params=new URLSearchParams();
+  const values={search:$("#searchInput").value.trim(),sort:$("#sortSelect").value,cap:$("#capFilter").value,type:$("#typeFilter").value,status:$("#statusFilter").value,rating:$("#ratingFilter").value,tag:$("#tagFilter").value};
+  Object.entries(values).forEach(([key,value])=>{if(value&&!(key==="sort"&&value==="rating"))params.set(key,value)});
+  if($("#newOnly").checked)params.set("new","1");if(state.favoriteOnly)params.set("favorites","1");
+  history.replaceState(null,"",`${location.pathname}${params.size?`?${params}`:""}`);
 }
 
 function renderServers(){
@@ -201,10 +229,15 @@ function renderServers(){
   const pages=Math.max(1,Math.ceil(servers.length/8));
   state.page=Math.min(Math.max(1,state.page||1),pages);
   const visible=servers.slice((state.page-1)*8,state.page*8);
-  $("#serverGrid").innerHTML=visible.length?visible.map(serverCard).join(""):'<div class="panel empty-results"><h3>Bu filtrelere uygun sunucu bulunamadı.</h3><p>Arama veya filtreleri değiştirin.</p></div>';
+  const filtered=Boolean(query||cap||type||status||minRating||tag||newOnly||state.favoriteOnly);
+  $("#serverGrid").innerHTML=visible.length?visible.map(serverCard).join(""):state.servers.length===0?'<div class="panel empty-results"><h3>Henüz yayımlanmış sunucu yok</h3><p>Yeni sunucular eklendiğinde burada görünecek.</p></div>':`<div class="panel empty-results"><h3>Sonuç bulunamadı</h3><p>Seçili filtrelerle eşleşen sunucu yok.</p>${filtered?'<button class="outline" type="button" data-clear-empty>Filtreleri Temizle</button>':""}</div>`;
   $("#serverPagination").innerHTML=pages>1?Array.from({length:pages},(_,index)=>`<button type="button" data-page="${index+1}" class="${state.page===index+1?"active":""}">${index+1}</button>`).join(""):"";
   bindServerCards();
+  $("[data-clear-empty]")?.addEventListener("click",()=>$("#clearFilters").click());
+  syncFilterUrl();
 }
+
+function serverPath(server){return `/sunucular/${String(server.name||"sunucu").toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ı/g,"i").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}-${server.id}`}
 
 function serverCard(server){
   const rating=Number(server.average_rating||0);
@@ -216,19 +249,18 @@ function serverCard(server){
     <button class="favorite-button ${server.is_favorite?"active":""}" data-favorite="${server.id}" type="button" aria-pressed="${Boolean(server.is_favorite)}" aria-label="${server.is_favorite?"Favorilerden çıkar":"Favorilere ekle"}">♥</button>
     <div class="server-status ${statusClass}" title="${esc(server.status_note||statusText)}"><i></i>${statusText}</div>
     ${cover}<div class="server-card-body"><div class="server-badges"><span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div>
-    <h2>${esc(server.name)}</h2>${event?`<div class="countdown" data-date="${esc(event[1])}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></div>`:""}
+    <h2><a href="${serverPath(server)}">${esc(server.name)}</a></h2>${event?`<div class="countdown" data-date="${esc(event[1])}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></div>`:""}
     <p class="desc card-summary">${esc(compactDescription(server.description,110))}</p>
     <div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${server.vote_count} değerlendirme</small></div><div class="stars card-stars">${stars(rating)}</div></div>
-    <div class="card-actions"><button class="outline" data-detail="${server.id}">Detaylar</button><button class="primary" data-review="${server.id}">Oy Ver</button></div></div>
+    <div class="card-actions"><a class="outline" href="${serverPath(server)}">Detay Sayfası</a><button class="primary" data-review="${server.id}">Oy Ver</button></div></div>
   </article>`;
 }
 
 function bindServerCards(){
   $$("[data-server]").forEach(card=>{
-    card.onclick=event=>{if(!event.target.closest("button"))openServer(Number(card.dataset.server))};
-    card.onkeydown=event=>{if((event.key==="Enter"||event.key===" ")&&!event.target.closest("button")){event.preventDefault();openServer(Number(card.dataset.server))}};
+    card.onclick=event=>{if(!event.target.closest("button,a"))location.href=serverPath(state.servers.find(item=>Number(item.id)===Number(card.dataset.server)))};
+    card.onkeydown=event=>{if((event.key==="Enter"||event.key===" ")&&!event.target.closest("button,a")){event.preventDefault();location.href=serverPath(state.servers.find(item=>Number(item.id)===Number(card.dataset.server)))}};
   });
-  $$("[data-detail]").forEach(button=>button.onclick=()=>openServer(Number(button.dataset.detail)));
   $$("[data-review]").forEach(button=>button.onclick=()=>openServer(Number(button.dataset.review),true));
   $$("[data-favorite]").forEach(button=>button.onclick=async()=>{
     if(!state.user){location.href="/giris/";return}
@@ -290,9 +322,9 @@ async function openServer(id,focusForm=false,focusReviewId=0){
 
 function detailReviewForm(mine){
   return `<form id="inlineDetailReview" class="inline-detail-review">
-    <div class="inline-rating" data-inline-rating aria-label="Puan">${[1,2,3,4,5].map(value=>`<button type="button" data-value="${value}" class="${Number(mine?.rating||0)>=value?"active":""}" aria-label="${value} puan">★</button>`).join("")}</div>
-    <textarea minlength="3" maxlength="500" required placeholder="Bu sunucu hakkındaki deneyiminiz…">${esc(mine?.comment||"")}</textarea>
-    <div><small><span data-review-count>${String(mine?.comment||"").length}</span>/500 karakter</small><button class="primary">${mine?"Puan ve Yorumu Güncelle":"Oy Ver ve Yorumla"}</button></div>
+    <div class="inline-rating" data-inline-rating role="radiogroup" aria-label="Sunucu puanı">${[1,2,3,4,5].map(value=>`<button type="button" role="radio" aria-checked="${Number(mine?.rating||0)===value}" data-value="${value}" class="${Number(mine?.rating||0)>=value?"active":""}" aria-label="${value} yıldız ver">★</button>`).join("")}</div><div class="rating-selection"><span data-rating-selection>${mine?`Seçilen puan: ${mine.rating}/5`:"Puan seçilmedi"}</span><button type="button" data-rating-reset>Puanı temizle</button></div>
+    <textarea minlength="10" maxlength="500" required aria-describedby="inlineReviewHelp" placeholder="Bu sunucu hakkındaki deneyiminiz…">${esc(mine?.comment||"")}</textarea>
+    <div><small id="inlineReviewHelp">En az 10 karakter · <span data-review-count>${String(mine?.comment||"").length}</span>/500</small><button class="primary">${mine?"Puan ve Yorumu Güncelle":"Oy Ver ve Yorumla"}</button></div>
     <p class="inline-review-message" role="status"></p>
   </form>`;
 }
@@ -301,21 +333,29 @@ function bindInlineReview(serverId,mine){
   const form=$("#inlineDetailReview");
   if(!form)return;
   let chosen=Number(mine?.rating||0);
-  form.querySelectorAll("[data-value]").forEach(button=>button.onclick=()=>{
-    chosen=Number(button.dataset.value);
-    form.querySelectorAll("[data-value]").forEach(item=>item.classList.toggle("active",Number(item.dataset.value)<=chosen));
+  const choose=value=>{
+    chosen=value;
+    form.querySelectorAll("[data-value]").forEach(item=>{item.classList.toggle("active",Number(item.dataset.value)<=chosen);item.setAttribute("aria-checked",String(Number(item.dataset.value)===chosen))});
+    form.querySelector("[data-rating-selection]").textContent=chosen?`Seçilen puan: ${chosen}/5`:"Puan seçilmedi";
+  };
+  form.querySelectorAll("[data-value]").forEach(button=>{
+    button.onclick=()=>choose(Number(button.dataset.value));
+    button.onkeydown=event=>{if(["ArrowLeft","ArrowDown","ArrowRight","ArrowUp"].includes(event.key)){event.preventDefault();const next=Math.min(5,Math.max(1,Number(button.dataset.value)+(event.key==="ArrowRight"||event.key==="ArrowUp"?1:-1)));choose(next);form.querySelector(`[data-value="${next}"]`).focus()}}
   });
+  form.querySelector("[data-rating-reset]").onclick=()=>choose(0);
   form.querySelector("textarea").oninput=event=>form.querySelector("[data-review-count]").textContent=event.target.value.length;
   form.onsubmit=async event=>{
     event.preventDefault();
     const message=form.querySelector(".inline-review-message");
+    const comment=form.querySelector("textarea").value.trim();
     if(!chosen){message.textContent="Bir puan seçin.";return}
+    if(comment.length<10){message.textContent="Yorum en az 10 karakter olmalıdır.";form.querySelector("textarea").focus();return}
     const submit=form.querySelector("button[type=submit],button.primary");
     submit.disabled=true;message.textContent="Kaydediliyor…";
     try{
       await api(mine?`/api/reviews/${mine.id}`:`/api/servers/${serverId}/reviews`,{
         method:mine?"PUT":"POST",headers:{"content-type":"application/json"},
-        body:JSON.stringify({rating:chosen,comment:form.querySelector("textarea").value})
+        body:JSON.stringify({rating:chosen,comment})
       });
       await loadServers();await openServer(serverId,false,mine?.id||0);
     }catch(error){message.textContent=error.message;submit.disabled=false}
@@ -339,6 +379,11 @@ function renderReviewList(reviews,mode){
     }catch(error){showActionToast(error.message,"bad");button.disabled=false}
   });
   $$("[data-profile]").forEach(button=>button.onclick=()=>openProfile(button.dataset.profile));
+  $$("[data-report-review]").forEach(button=>button.onclick=async()=>{
+    if(!state.user){location.href="/giris/";return}
+    button.disabled=true;
+    try{const result=await api(`/api/reviews/${button.dataset.reportReview}/report`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reason:"Topluluk kurallarına aykırı içerik"})});showActionToast(result.message)}catch(error){showActionToast(error.message,"bad");button.disabled=false}
+  });
 }
 
 function reviewBlock(review){
@@ -346,7 +391,7 @@ function reviewBlock(review){
     <header><button class="user-link" style="--commenter-color:${commenterTone(review.user_id||review.display_name)}" data-profile="${review.user_id||""}">${esc(review.display_name)}</button><span class="stars">${stars(review.rating)}</span></header>
     <p>${esc(review.comment)}</p>
     ${review.owner_reply?`<div class="owner-reply"><strong>✓ Sunucu sahibinin resmî cevabı</strong><p>${esc(review.owner_reply)}</p></div>`:""}
-    <div class="review-actions"><button class="reaction-button like ${review.my_reaction==="like"?"active":""}" data-reaction="like" data-review-id="${review.id}" aria-pressed="${review.my_reaction==="like"}"><span>👍</span><strong>${review.like_count||0}</strong><em>Beğen</em></button><button class="reaction-button dislike ${review.my_reaction==="dislike"?"active":""}" data-reaction="dislike" data-review-id="${review.id}" aria-pressed="${review.my_reaction==="dislike"}"><span>👎</span><strong>${review.dislike_count||0}</strong><em>Beğenme</em></button></div>
+    <div class="review-actions"><button class="reaction-button like ${review.my_reaction==="like"?"active":""}" data-reaction="like" data-review-id="${review.id}" aria-pressed="${review.my_reaction==="like"}"><span>👍</span><strong>${review.like_count||0}</strong><em>Beğen</em></button><button class="reaction-button dislike ${review.my_reaction==="dislike"?"active":""}" data-reaction="dislike" data-review-id="${review.id}" aria-pressed="${review.my_reaction==="dislike"}"><span>👎</span><strong>${review.dislike_count||0}</strong><em>Beğenme</em></button>${state.user&&Number(review.user_id)!==Number(state.user.id)?`<button class="review-report" type="button" data-report-review="${review.id}">Bildir</button>`:""}</div>
   </article>`;
 }
 

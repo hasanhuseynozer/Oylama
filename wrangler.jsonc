@@ -18,6 +18,7 @@
   ],
   "vars": {
     "SITE_NAME": "SRO Rating",
+    "SITE_URL": "https://sro-oylama.hasanhuseynozer.workers.dev",
     "TURNSTILE_SITE_KEY": ""
   }
 }
