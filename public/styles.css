@@ -323,8 +323,8 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
   grid-column:2!important;
   left:auto!important;
   transform:none!important;
-  width:calc(100% + 80px)!important;
-  margin-left:-80px!important;
+  width:calc(100% + 180px)!important;
+  margin-left:-180px!important;
   max-width:none!important;
   min-width:0!important;
   justify-self:stretch!important
@@ -336,7 +336,7 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
 }
 @media(max-width:1500px){
   .header-inner{grid-template-columns:minmax(280px,350px) minmax(260px,1fr) max-content!important;gap:16px!important}
-  .header-inner>.banner{width:calc(100% + 40px)!important;margin-left:-40px!important}
+  .header-inner>.banner{width:calc(100% + 80px)!important;margin-left:-80px!important}
 }
 @media(max-width:1120px){
   .header-inner{grid-template-columns:minmax(250px,300px) minmax(220px,1fr) max-content!important;gap:12px!important}
