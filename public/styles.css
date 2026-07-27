@@ -535,3 +535,97 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
   .account-actions>.profile-chip.enhanced{min-width:154px!important;max-width:166px!important}
   .account-actions>.profile-chip.enhanced::after{display:none}
 }
+
+/* Final account bar: one surface, no row of bordered boxes */
+.header-inner>.account-actions{
+  height:54px;
+  padding:4px!important;
+  gap:2px!important;
+  border:1px solid #2f4b51!important;
+  border-radius:15px!important;
+  background:linear-gradient(145deg,rgba(15,31,35,.96),rgba(9,21,25,.96))!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(180,224,218,.045)!important
+}
+.header-inner>.account-actions>.calendar-button,
+.header-inner>.account-actions>.notification-button,
+.header-inner>.account-actions>.profile-chip.enhanced,
+.header-inner>.account-actions>.logout-button{
+  height:44px!important;
+  min-height:44px!important;
+  border:0!important;
+  box-shadow:none!important;
+  background:transparent!important
+}
+.header-inner>.account-actions>.calendar-button{
+  min-width:94px!important;
+  padding:0 12px!important;
+  border-radius:10px!important;
+  color:#c7dbd8!important
+}
+.header-inner>.account-actions>.notification-button{
+  width:40px!important;
+  min-width:40px!important;
+  border-radius:10px!important;
+  color:#edc45f!important
+}
+.header-inner>.account-actions>.profile-chip.enhanced{
+  min-width:170px!important;
+  max-width:186px!important;
+  padding:3px 10px 3px 7px!important;
+  border-radius:11px!important;
+  background:rgba(82,137,137,.13)!important
+}
+.header-inner>.account-actions>.profile-chip.enhanced::before{
+  content:"";
+  width:1px;
+  height:28px;
+  margin-right:5px;
+  background:#315057
+}
+.header-inner>.account-actions>.profile-chip.enhanced::after{display:none!important}
+.header-inner>.account-actions>.profile-chip.enhanced img{
+  width:34px!important;
+  height:34px!important;
+  flex-basis:34px!important;
+  border:0!important;
+  padding:0!important;
+  background:transparent!important
+}
+.header-inner>.account-actions>.profile-chip.enhanced strong{
+  max-width:105px!important;
+  font-size:13px!important
+}
+.header-inner>.account-actions>.profile-chip.enhanced small{
+  font-size:9px!important;
+  color:#82a9a5!important
+}
+.header-inner>.account-actions>.logout-button{
+  position:relative;
+  min-width:60px!important;
+  padding:0 10px 0 13px!important;
+  border-radius:10px!important;
+  color:#9db4b1!important
+}
+.header-inner>.account-actions>.logout-button::before{
+  content:"";
+  position:absolute;
+  left:3px;
+  width:1px;
+  height:26px;
+  background:#315057
+}
+.header-inner>.account-actions>.calendar-button:hover,
+.header-inner>.account-actions>.notification-button:hover,
+.header-inner>.account-actions>.profile-chip.enhanced:hover{
+  background:rgba(100,165,160,.12)!important;
+  transform:none!important
+}
+.header-inner>.account-actions>.logout-button:hover{
+  color:#ee9fa3!important;
+  background:rgba(126,55,61,.13)!important;
+  transform:none!important
+}
+@media(max-width:1250px){
+  .header-inner>.account-actions>.calendar-button{min-width:40px!important;width:40px!important;padding:0!important}
+  .header-inner>.account-actions>.profile-chip.enhanced{min-width:146px!important;max-width:158px!important}
+}
