@@ -1,11 +1,57 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Profil — SRO RATING</title><link rel="icon" href="/sro-rating-logo.png"><link rel="stylesheet" href="/styles.css?v=20260727-34"></head><body>
-<main class="profile-shell"><header class="topbar"><a href="/"><img class="profile-brand-logo" src="/sro-rating-header.png" alt="SRO RATING"></a><nav><a id="ownerPanelLink" class="primary hidden" href="/sunucu-paneli/">Sunucu Sahibi Paneli</a><a class="outline" href="/">Siteye Dön</a><button id="logout" class="outline">Çıkış</button></nav></header>
-<section class="profile-hero profile-identity"><div><p class="eyebrow">TOPLULUK PROFİLİ</p><h1 id="profileGreeting">Profilim</h1><p>Oyun kimliğini ve topluluk profilini yönet.</p></div><div id="profileBadges" class="badge-wall"></div></section>
-<div id="profileMessage"></div><div class="profile-dashboard">
-<form id="profileForm" class="panel"><h2>Profil Bilgileri</h2><label>Kullanıcı adı<input id="displayName" required minlength="2" maxlength="40"></label><label>Oyun içi karakter adı<input id="gameAlias" maxlength="40" placeholder="Karakter adınız"></label><label>Kısa profil yazısı<textarea id="bio" maxlength="240" rows="4"></textarea></label><label>E-posta<input id="email" disabled></label><div class="section-heading"><h3>Oynadığım Sunucular</h3><small>En fazla 20</small></div><div class="server-picker"><input id="serverSearch" type="search" placeholder="Sunucu ara…"><div id="playingServers" class="server-choice-grid"></div></div><button class="primary">Profili Kaydet</button></form>
-<aside class="profile-side"><form id="passwordForm" class="panel"><h2>Şifre Değiştir</h2><label>Mevcut şifre<input id="oldPassword" type="password" required></label><label>Yeni şifre<input id="newPassword" type="password" required minlength="8"></label><button class="primary">Şifreyi Değiştir</button></form><section class="panel"><h2>Rozetlerim</h2><div id="badgeDetails" class="badge-list"></div></section></aside></div>
-<div class="two-col"><form id="suggestionForm" class="panel"><p class="eyebrow">BİRLİKTE GELİŞTİRELİM</p><h2>İyileştirme Önerisi</h2><label>Konu<input id="suggestionSubject" required maxlength="100"></label><label>Öneriniz<textarea id="suggestionMessage" required minlength="10" maxlength="1000" rows="6"></textarea></label><button class="primary">Öneriyi Gönder</button></form><section class="panel"><h2>Önerilerim</h2><div id="communityHistory"></div></section></div>
-<section class="panel"><h2>Oylarım ve Yorumlarım</h2><div id="myReviews"></div></section></main>
-<dialog id="editReviewDialog" class="edit-review-dialog"><button id="closeEditReview" class="close" type="button">×</button><form id="editReviewForm"><p class="eyebrow">DEĞERLENDİRMENİ GÜNCELLE</p><h2>Puan ve Yorum</h2><label>Puan<select id="editRating"><option value="1">1 — Çok kötü</option><option value="2">2 — Geliştirilmeli</option><option value="3">3 — Ortalama</option><option value="4">4 — Çok iyi</option><option value="5">5 — Mükemmel</option></select></label><label>Yorum<textarea id="editComment" minlength="3" maxlength="500" rows="6" required></textarea></label><button class="primary">Değişiklikleri Kaydet</button><p id="editReviewMessage"></p></form></dialog>
-<script src="/profile.js?v=20260727-35" defer></script><script src="/notification-popover.js?v=20260727-34" defer></script></body></html>
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Profil — SRO RATING</title>
+  <link rel="icon" href="/sro-rating-logo.png">
+  <link rel="stylesheet" href="/styles.css?v=20260727-36">
+</head>
+<body class="dashboard-body">
+<main class="profile-shell community-dashboard">
+  <header class="topbar dashboard-topbar">
+    <a class="dashboard-brand" href="/" aria-label="Ana sayfa"><img class="profile-brand-logo" src="/sro-rating-header.png" alt="SRO RATING"></a>
+    <nav class="dashboard-nav" aria-label="Profil menüsü">
+      <a class="dashboard-nav-link active" href="/profil/"><span>◉</span><span>Profilim</span></a>
+      <a id="ownerPanelLink" class="dashboard-nav-link hidden" href="/sunucu-paneli/"><span>♛</span><span>Sunucu Paneli</span></a>
+      <button class="dashboard-nav-link notification-link" type="button" data-notification-toggle><span>🔔</span><span>Bildirimler</span><b></b></button>
+      <a class="dashboard-nav-link" href="/"><span>⌂</span><span>Siteye Dön</span></a>
+      <button id="logout" class="dashboard-nav-link danger-link" type="button"><span>↪</span><span>Çıkış</span></button>
+    </nav>
+  </header>
+
+  <section class="profile-hero profile-identity dashboard-hero">
+    <div class="profile-avatar" aria-hidden="true"><img src="/sro-rating-logo.png" alt=""></div>
+    <div class="profile-hero-copy"><p class="eyebrow">TOPLULUK PROFİLİ</p><h1 id="profileGreeting">Profilim</h1><p>Oyun kimliğini, sunucularını ve topluluk geçmişini tek yerden yönet.</p><div id="profileBadges" class="badge-wall"></div></div>
+    <div class="profile-completion"><span>Profil Merkezi</span><strong>Kimliğini tamamla</strong><small>Rozetlerini ve oyun geçmişini toplulukla paylaş.</small></div>
+  </section>
+
+  <div id="profileMessage"></div>
+  <div class="profile-dashboard">
+    <form id="profileForm" class="panel profile-main-card">
+      <div class="panel-heading"><div><p class="eyebrow">KİMLİK</p><h2>Profil Bilgileri</h2></div><span class="panel-icon">✎</span></div>
+      <div class="profile-field-grid"><label>Kullanıcı adı<input id="displayName" required minlength="2" maxlength="40"></label><label>Genel karakter adı<input id="gameAlias" maxlength="40" placeholder="İsteğe bağlı"></label></div>
+      <label>Kısa profil yazısı<textarea id="bio" maxlength="240" rows="4" placeholder="Topluluğa kendinden ve oyun tarzından bahset…"></textarea></label>
+      <label>E-posta<input id="email" disabled></label>
+      <div class="section-heading"><div><h3>Oynadığım Sunucular</h3><p>Her sunucu için farklı karakter adı belirleyebilirsin.</p></div><span id="playedCount" class="selection-counter">0 / 20</span></div>
+      <div class="server-picker"><input id="serverSearch" type="search" placeholder="Sunucu ara…"><div id="playingServers" class="server-choice-grid"></div></div>
+      <button class="primary profile-save">Değişiklikleri Kaydet</button>
+    </form>
+
+    <aside class="profile-side">
+      <section class="panel badge-panel"><div class="panel-heading"><h2>Rozetlerim</h2><span class="panel-icon">✦</span></div><div id="badgeDetails" class="badge-list"></div></section>
+      <form id="passwordForm" class="panel compact-panel"><div class="panel-heading"><h2>Güvenlik</h2><span class="panel-icon">⌁</span></div><label>Mevcut şifre<input id="oldPassword" type="password" required autocomplete="current-password"></label><label>Yeni şifre<input id="newPassword" type="password" required minlength="8" autocomplete="new-password"></label><button class="primary">Şifreyi Değiştir</button></form>
+    </aside>
+  </div>
+
+  <div class="profile-community-grid">
+    <form id="suggestionForm" class="panel suggestion-card"><p class="eyebrow">BİRLİKTE GELİŞTİRELİM</p><h2>İyileştirme Önerisi</h2><p class="panel-lead">Fikrini doğrudan yönetime ilet.</p><label>Konu<input id="suggestionSubject" required maxlength="100"></label><label>Öneriniz<textarea id="suggestionMessage" required minlength="10" maxlength="1000" rows="6"></textarea></label><button class="primary">Öneriyi Gönder</button></form>
+    <section class="panel suggestion-history"><div class="panel-heading"><h2>Önerilerim</h2><span class="panel-icon">✓</span></div><div id="communityHistory"></div></section>
+  </div>
+  <section class="panel review-history-panel"><div class="panel-heading"><div><p class="eyebrow">GEÇMİŞ</p><h2>Oylarım ve Yorumlarım</h2></div><span class="panel-icon">★</span></div><div id="myReviews"></div></section>
+</main>
+
+<dialog id="editReviewDialog" class="edit-review-dialog"><button id="closeEditReview" class="close" type="button" aria-label="Kapat">×</button><form id="editReviewForm"><p class="eyebrow">DEĞERLENDİRMENİ GÜNCELLE</p><h2>Puan ve Yorum</h2><label>Puan<select id="editRating"><option value="1">1 — Çok kötü</option><option value="2">2 — Geliştirilmeli</option><option value="3">3 — Ortalama</option><option value="4">4 — Çok iyi</option><option value="5">5 — Mükemmel</option></select></label><label>Yorum<textarea id="editComment" minlength="3" maxlength="500" rows="6" required></textarea></label><button class="primary">Değişiklikleri Kaydet</button><p id="editReviewMessage"></p></form></dialog>
+<script src="/profile.js?v=20260727-36" defer></script><script src="/notification-popover.js?v=20260727-36" defer></script>
+</body>
+</html>

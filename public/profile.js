@@ -83,10 +83,17 @@ function renderServers(query=""){
       }
       character.disabled=!checkbox.checked;
       state.played.set(id,{selected:checkbox.checked,characterName:character.value});
+      updatePlayedCount();
       if(checkbox.checked)character.focus();
     };
     character.oninput=()=>state.played.set(id,{selected:checkbox.checked,characterName:character.value});
   });
+  updatePlayedCount();
+}
+
+function updatePlayedCount(){
+  const counter=$("#playedCount");
+  if(counter)counter.textContent=`${selectedCount()} / 20`;
 }
 
 function selectedCount(){

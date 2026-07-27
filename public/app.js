@@ -313,10 +313,11 @@ function renderReviewList(reviews,mode){
   $("#serverDetailComments").innerHTML=list.length?list.map(reviewBlock).join(""):'<div class="empty-comments"><strong>Henüz yorum yok</strong><p>İlk deneyimi paylaşan siz olun.</p></div>';
   $$("[data-reaction]").forEach(button=>button.onclick=async()=>{
     if(!state.user){location.href="/giris/";return}
+    button.disabled=true;
     try{
       await api(`/api/reviews/${button.dataset.reviewId}/reaction`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reaction:button.dataset.reaction})});
       await openServer(state.openServerId,false,Number(button.dataset.reviewId));
-    }catch(error){button.title=error.message}
+    }catch(error){showActionToast(error.message,"bad");button.disabled=false}
   });
   $$("[data-profile]").forEach(button=>button.onclick=()=>openProfile(button.dataset.profile));
 }
@@ -328,6 +329,15 @@ function reviewBlock(review){
     ${review.owner_reply?`<div class="owner-reply"><strong>✓ Sunucu sahibinin resmî cevabı</strong><p>${esc(review.owner_reply)}</p></div>`:""}
     <div class="review-actions"><button class="reaction-button ${review.my_reaction==="like"?"active":""}" data-reaction="like" data-review-id="${review.id}">👍 <strong>${review.like_count||0}</strong> Beğen</button><button class="reaction-button dislike ${review.my_reaction==="dislike"?"active":""}" data-reaction="dislike" data-review-id="${review.id}">👎 <strong>${review.dislike_count||0}</strong> Beğenme</button></div>
   </article>`;
+}
+
+function showActionToast(text,tone="good"){
+  let toast=$("#actionToast");
+  if(!toast){toast=document.createElement("div");toast.id="actionToast";toast.className="action-toast";document.body.append(toast)}
+  toast.className=`action-toast visible ${tone}`;
+  toast.textContent=text;
+  clearTimeout(showActionToast.timer);
+  showActionToast.timer=setTimeout(()=>toast.classList.remove("visible"),3200);
 }
 
 async function openProfile(id){
