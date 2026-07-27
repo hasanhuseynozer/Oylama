@@ -17,3 +17,14 @@ body{background:radial-gradient(circle at 50% -10%,#2b1d08 0,#0b0a08 34%,#070707
 
 /* Usability fixes */
 .tabs{position:static;top:auto}.admin-toast{position:fixed;right:22px;bottom:22px;z-index:1000;max-width:420px;background:#15130f;box-shadow:0 15px 45px #000;border-radius:10px}.admin-toast:empty{display:none}.footer-box:last-child{align-content:flex-start}.footer-box:last-child>div{width:100%}.socials{margin-top:14px;gap:10px}.socials a{display:inline-flex;align-items:center;justify-content:center;min-width:82px}.toolbar{padding:22px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(135deg,rgba(38,28,12,.86),rgba(14,13,10,.92));box-shadow:0 18px 50px rgba(0,0,0,.2)}.toolbar h1{background:linear-gradient(90deg,#fff,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}.filters input,.filters select{border-radius:9px;min-height:46px}
+
+/* Advertisement placeholders and wide desktop balance */
+.ad-rail{position:relative;min-height:680px;border-radius:14px;border:1px dashed #765b2c;background-color:#100e0a;background-image:repeating-linear-gradient(135deg,rgba(217,168,61,.035) 0,rgba(217,168,61,.035) 12px,transparent 12px,transparent 24px);color:#b99a5b;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.ad-rail:not(.has-image)::before{content:"REKLAM";position:absolute;top:22px;left:50%;transform:translateX(-50%);writing-mode:horizontal-tb;color:#6f5a35;font-size:9px;letter-spacing:3px}
+.ad-rail:not(.has-image)::after{content:"Görsel alanı";position:absolute;bottom:22px;left:50%;transform:translateX(-50%);writing-mode:horizontal-tb;white-space:nowrap;color:#66583f;font-size:9px;letter-spacing:1px}
+.toolbar>div:first-child{min-width:330px}.toolbar h1{white-space:normal;word-break:normal}.filters{margin-left:auto;flex:0 0 auto}
+@media(min-width:1280px){.shell{width:min(1920px,calc(100% - 32px))}.page-layout{grid-template-columns:110px minmax(0,1fr) 110px;gap:20px}.ad-rail{display:flex}.server-grid{grid-template-columns:repeat(4,minmax(220px,1fr))}}
+@media(min-width:1400px){.page-layout{grid-template-columns:132px minmax(0,1fr) 132px;gap:24px}.server-grid{grid-template-columns:repeat(4,minmax(240px,1fr))}}
+@media(max-width:1279px){.page-layout{grid-template-columns:minmax(0,1fr)}.ad-rail{display:none}.server-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:780px){.toolbar>div:first-child{min-width:0}.filters{margin-left:0}.server-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.server-grid{grid-template-columns:1fr}}
