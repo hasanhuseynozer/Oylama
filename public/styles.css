@@ -153,3 +153,39 @@ body{background:radial-gradient(circle at 50% -10%,#2b1d08 0,#0b0a08 34%,#070707
 .detail-comments .section-heading{min-height:48px}
 @media(max-width:1400px){.header-inner{grid-template-columns:220px minmax(360px,1fr) auto!important}.site-logo{width:210px!important}.banner{height:96px!important;min-height:96px!important;margin:12px 0!important}}
 @media(max-width:900px){.header-inner{min-height:86px!important;grid-template-columns:180px 1fr!important}.site-logo{width:175px!important}.detail-comments{padding-top:58px!important}}
+
+/* Calm slate and teal visual identity */
+:root{
+  --bg:#091014;
+  --panel:#111a1e;
+  --panel2:#0c1519;
+  --line:#294047;
+  --gold:#69aaa4;
+  --gold2:#a5d2cb;
+  --text:#e7ece9;
+  --muted:#9aa9a6;
+  --ok:#66c78b;
+  --danger:#e37b72;
+}
+body{background:radial-gradient(circle at 50% -18%,#1b3136 0,#0c171b 35%,#080d10 74%)!important}
+.site-header{background:rgba(8,15,18,.94)!important;border-bottom-color:#294047!important}
+.panel,.server-card,.profile-hero,.owner-server,.owner-review,.admin-hero,.tab-content,.toolbar{background:linear-gradient(145deg,#142025,#0d161a)!important;border-color:#294047!important}
+.primary,.tab.active,.server-pagination button.active{background:linear-gradient(135deg,#4f948e,#91c7bf)!important;color:#07100f!important}
+.outline,.tiny,input,textarea,select,.new-filter{border-color:#355158!important;background-color:#0d171b!important}
+.outline{color:#9ed0c9!important}
+.server-card:hover{border-color:#5c9f99!important;box-shadow:0 18px 45px rgba(83,157,149,.14)!important}
+.toolbar{box-shadow:0 12px 28px rgba(0,0,0,.2)!important}
+.stars,.card-stars,.detail-stars,.inline-rating button.active,.score,.detail-score>strong{color:#d9b66f!important}
+.server-badges span,.profile-badge,.role-pill{border-color:#3d5b60!important;background:#101c20!important;color:#b9d8d3!important}
+.server-badges .fresh{background:#76b5ad!important;border-color:#76b5ad!important;color:#07100f!important}
+.site-footer{background:linear-gradient(180deg,#101a1e,#080e11)!important;border-top-color:#294047!important}
+.footer-box,.footer-bottom{border-color:#294047!important}
+.sponsor-rail.empty-sponsor{background:linear-gradient(180deg,#142125,#0d1518)!important;border-color:#355158!important}
+.detail-comment,.owner-reply,.review-thread{background:#0e181c!important;border-color:#294047!important}
+.server-detail-dialog,.calendar-dialog,.edit-review-dialog,.profile-dialog{background:#0b1418!important;border-color:#477078!important}
+.server-detail-hero:not(.placeholder){background-size:122% auto!important;background-position:center 42%!important;background-repeat:no-repeat!important}
+.server-detail-hero{box-shadow:inset 0 -1px 0 #294047!important}
+.header-inner{grid-template-columns:290px minmax(460px,1fr) auto!important}
+.site-logo{width:280px!important;height:82px!important}
+@media(max-width:1400px){.header-inner{grid-template-columns:245px minmax(360px,1fr) auto!important}.site-logo{width:235px!important}}
+@media(max-width:900px){.header-inner{grid-template-columns:195px 1fr!important}.site-logo{width:190px!important}}
