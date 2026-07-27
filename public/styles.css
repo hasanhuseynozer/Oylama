@@ -184,6 +184,7 @@ body{background:radial-gradient(circle at 50% -18%,#1b3136 0,#0c171b 35%,#080d10
 .detail-comment,.owner-reply,.review-thread{background:#0e181c!important;border-color:#294047!important}
 .server-detail-dialog,.calendar-dialog,.edit-review-dialog,.profile-dialog{background:#0b1418!important;border-color:#477078!important}
 .server-detail-hero:not(.placeholder){background-size:122% auto!important;background-position:center 42%!important;background-repeat:no-repeat!important}
+.server-detail-hero.placeholder{background-image:url("/sro-rating-header.png")!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
 .server-detail-hero{box-shadow:inset 0 -1px 0 #294047!important}
 .header-inner{grid-template-columns:290px minmax(460px,1fr) auto!important}
 .site-logo{width:280px!important;height:82px!important}
