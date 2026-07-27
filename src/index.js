@@ -497,7 +497,7 @@ async function handleApi(request, env, url) {
         FROM servers s LEFT JOIN reviews r ON r.server_id=s.id GROUP BY s.id ORDER BY s.created_at DESC
       `).all();
       const reviews = await env.DB.prepare(`
-        SELECT r.id,r.rating,r.comment,r.created_at,r.email_masked,s.name server_name,
+        SELECT r.id,r.server_id,r.rating,r.comment,r.created_at,r.email_masked,s.name server_name,
           COALESCE(u.display_name,'Eski kullanıcı') display_name
         FROM reviews r JOIN servers s ON s.id=r.server_id LEFT JOIN users u ON u.id=r.user_id
         ORDER BY datetime(r.created_at) DESC LIMIT 500

@@ -1,5 +1,6 @@
 const $=selector=>document.querySelector(selector);
 let data={servers:[],reviews:[],users:[],settings:{},requests:[],changes:[],reports:[],suggestions:[]};
+let lastServerSnapshot=null;
 
 async function api(url,options={}){
   const response=await fetch(url,options);
@@ -10,6 +11,13 @@ async function api(url,options={}){
     throw error;
   }
   return payload;
+}
+
+function confirmAction(message,title="İşlemi onayla"){
+  let dialog=$("#adminActionDialog");
+  if(!dialog){dialog=document.createElement("dialog");dialog.id="adminActionDialog";dialog.className="action-dialog";dialog.innerHTML='<button class="close" type="button">×</button><div class="action-dialog-icon">!</div><h2></h2><p></p><div class="dialog-actions"><button class="outline" type="button" data-cancel>Vazgeç</button><button class="primary danger" type="button" data-accept>Onayla</button></div>';document.body.append(dialog)}
+  dialog.querySelector("h2").textContent=title;dialog.querySelector("p").textContent=message;dialog.showModal();
+  return new Promise(resolve=>{const finish=value=>{dialog.close();resolve(value)};dialog.querySelector("[data-accept]").onclick=()=>finish(true);dialog.querySelector("[data-cancel]").onclick=dialog.querySelector(".close").onclick=()=>finish(false);dialog.onclick=event=>{if(event.target===dialog)finish(false)}});
 }
 
 $("#adminLogin").onsubmit=async event=>{
@@ -85,29 +93,32 @@ function renderStats(){
 }
 
 function renderServers(){
-  $("#serversTable").innerHTML=`<table><thead><tr><th>Sunucu</th><th>Özellikler</th><th>Durum</th><th>Puan/Oy</th><th>İşlem</th></tr></thead><tbody>${data.servers.map(server=>`
-    <tr>
-      <td><b>${esc(server.name)}</b><br><small>${esc(server.description)}</small></td>
-      <td>${esc(server.server_type)} · CAP ${server.cap}</td>
-      <td>${server.is_active?"Yayında":"Gizli"} · ${statusText(server.operational_status)}</td>
-      <td>${Number(server.average_rating||0).toFixed(1)} / ${server.vote_count||0}</td>
-      <td><div class="table-actions">
-        <button class="tiny" data-action="edit-server" data-id="${server.id}">Düzenle</button>
-        <button class="tiny" data-action="reset-server" data-id="${server.id}">Sıfırla</button>
-        <button class="tiny danger" data-action="delete-server" data-id="${server.id}">Sil</button>
-      </div></td>
-    </tr>`).join("")}</tbody></table>`;
+  const picker=$("#adminServerPicker"),selected=picker?.value;
+  if(picker){picker.innerHTML='<option value="">Düzenlenecek sunucuyu seçin…</option>'+data.servers.map(server=>`<option value="${server.id}">${esc(server.name)}</option>`).join("");picker.value=selected||""}
+  const reviewPicker=$("#adminReviewServer"),reviewSelected=reviewPicker?.value;
+  if(reviewPicker){reviewPicker.innerHTML='<option value="">Tüm sunucular</option>'+data.servers.map(server=>`<option value="${server.id}">${esc(server.name)}</option>`).join("");reviewPicker.value=reviewSelected||""}
+  $("#serversTable").innerHTML=`<div class="admin-server-directory">${data.servers.map(server=>`<article class="admin-server-row">
+    <div class="admin-server-identity"><span class="server-status-dot ${esc(server.operational_status||"offline")}"></span><div><b>${esc(server.name)}</b><small>${esc(server.server_type)} · CAP ${server.cap}</small></div></div>
+    <div class="admin-server-metrics"><span><strong>${Number(server.average_rating||0).toFixed(1)}</strong> Puan</span><span><strong>${server.vote_count||0}</strong> Oy</span><span class="status ${server.is_active?"approved":"pending"}">${server.is_active?"Yayında":"Gizli"}</span></div>
+    <div class="table-actions"><button class="tiny primary" data-action="edit-server" data-id="${server.id}">Yönet</button><button class="tiny danger" data-action="delete-server" data-id="${server.id}">Sil</button></div>
+  </article>`).join("")}</div>`;
 }
 
 function renderReviews(){
-  $("#reviewsTable").innerHTML=data.reviews.length?`<table><thead><tr><th>Sunucu</th><th>Kullanıcı</th><th>Puan</th><th>Yorum</th><th>İşlem</th></tr></thead><tbody>${data.reviews.map(review=>`
+  const query=String($("#adminReviewSearch")?.value||"").toLocaleLowerCase("tr-TR"),serverId=$("#adminReviewServer")?.value||"",rating=$("#adminReviewRating")?.value||"";
+  const rows=data.reviews.filter(review=>(!query||`${review.display_name} ${review.comment}`.toLocaleLowerCase("tr-TR").includes(query))&&(!serverId||String(review.server_id)===serverId)&&(!rating||String(review.rating)===rating));
+  $("#adminReviewCount").textContent=`${rows.length} sonuç`;
+  $("#reviewsTable").innerHTML=rows.length?`<table><thead><tr><th>Sunucu</th><th>Kullanıcı</th><th>Puan</th><th>Yorum</th><th>İşlem</th></tr></thead><tbody>${rows.map(review=>`
     <tr><td>${esc(review.server_name)}</td><td>${esc(review.display_name)}</td><td class="stars">${"★".repeat(review.rating)}</td><td>${esc(review.comment)}</td>
     <td><button class="tiny danger" data-action="delete-review" data-id="${review.id}">Sil</button></td></tr>`).join("")}</tbody></table>`:"<div class=\"empty-state\">Henüz yorum yok.</div>";
 }
 
 function renderUsers(){
+  const query=String($("#adminUserSearch")?.value||"").toLocaleLowerCase("tr-TR"),role=$("#adminUserRole")?.value||"",status=$("#adminUserStatus")?.value||"";
+  const users=data.users.filter(user=>(!query||`${user.display_name} ${user.email}`.toLocaleLowerCase("tr-TR").includes(query))&&(!role||user.account_role===role)&&(!status||user.status===status));
+  $("#adminUserCount").textContent=`${users.length} sonuç`;
   const serverOptions='<option value="">Sunucu seçin</option>'+data.servers.map(server=>`<option value="${server.id}">${esc(server.name)}</option>`).join("");
-  $("#usersTable").innerHTML=`<table><thead><tr><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>Durum</th><th>Sunucu Sahipliği</th><th>Hesap</th></tr></thead><tbody>${data.users.map(user=>`
+  $("#usersTable").innerHTML=`<table><thead><tr><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>Durum</th><th>Sunucu Sahipliği</th><th>Hesap</th></tr></thead><tbody>${users.map(user=>`
     <tr data-user-row="${user.id}">
       <td><b>${esc(user.display_name)}</b></td>
       <td>${esc(user.email)}</td>
@@ -177,22 +188,22 @@ document.addEventListener("click",async event=>{
   try{
     button.disabled=true;
     if(action==="edit-server"){editServer(id);return}
-    if(action==="delete-server"&&confirm("Sunucu ve yorumları silinsin mi?"))await api(`/api/admin/servers/${id}`,{method:"DELETE"});
-    else if(action==="reset-server"&&confirm("Oylar ve yorumlar sıfırlansın mı?"))await api(`/api/admin/servers/${id}/reset`,{method:"POST"});
-    else if(action==="delete-review"&&confirm("Yorum silinsin mi?"))await api(`/api/admin/reviews/${id}`,{method:"DELETE"});
+    if(action==="delete-server"&&await confirmAction("Sunucu ve bağlı yorumlar kalıcı olarak silinecek."))await api(`/api/admin/servers/${id}`,{method:"DELETE"});
+    else if(action==="reset-server"&&await confirmAction("Bu sunucunun oy ve yorumları sıfırlanacak."))await api(`/api/admin/servers/${id}/reset`,{method:"POST"});
+    else if(action==="delete-review"&&await confirmAction("Seçili yorum kalıcı olarak silinecek."))await api(`/api/admin/reviews/${id}`,{method:"DELETE"});
     else if(action==="toggle-user")await api(`/api/admin/users/${id}/status`,jsonPut({status:button.dataset.status}));
     else if(action==="set-role")await api(`/api/admin/users/${id}/role`,jsonPut({role:button.dataset.role}));
     else if(action==="assign-owner"){
       const serverId=Number(button.closest("[data-user-row]").querySelector("[data-owner-server]").value);
       if(!serverId)throw new Error("Önce bir sunucu seçin.");
       await api(`/api/admin/users/${id}/assign-server`,jsonPost({serverId}));
-    }else if(action==="delete-user"&&confirm("Kullanıcı silinsin mi?"))await api(`/api/admin/users/${id}`,{method:"DELETE"});
+    }else if(action==="delete-user"&&await confirmAction("Kullanıcı hesabı kalıcı olarak silinecek."))await api(`/api/admin/users/${id}`,{method:"DELETE"});
     else if(action==="request"){
-      if(!confirm(button.dataset.status==="approved"?"Sunucu başvurusu onaylansın mı?":"Başvuru reddedilsin mi?"))return;
+      if(!await confirmAction(button.dataset.status==="approved"?"Sunucu başvurusu onaylanacak.":"Sunucu başvurusu reddedilecek."))return;
       await api(`/api/admin/server-requests/${id}`,jsonPut({status:button.dataset.status}));
     }else if(action==="change")await api(`/api/admin/server-changes/${id}`,jsonPut({status:button.dataset.status}));
     else if(action==="report"){
-      if(button.dataset.status==="approved"&&!confirm("Yorum ve verdiği puan kalıcı olarak silinsin mi?"))return;
+      if(button.dataset.status==="approved"&&!await confirmAction("Yorum ve verdiği puan kalıcı olarak silinecek."))return;
       await api(`/api/admin/reports/${id}`,jsonPut({status:button.dataset.status}));
     }else if(action==="suggestion")await api(`/api/admin/suggestions/${id}`,jsonPut({status:button.dataset.status}));
     else return;
@@ -204,6 +215,27 @@ document.addEventListener("click",async event=>{
     button.disabled=false;
   }
 });
+
+function installAdminControls(){
+  const serverTab=$("#tab-servers"),layout=serverTab.querySelector(".two-col"),form=$("#serverForm"),directory=$("#serversTable").closest(".panel");
+  const toolbar=document.createElement("div");
+  toolbar.className="admin-section-toolbar";
+  toolbar.innerHTML='<div><p class="eyebrow">SUNUCU YÖNETİMİ</p><h2>Kayıt seçin veya yeni sunucu oluşturun</h2><p>Sunucu listesi ile düzenleme formu birbirinden ayrıldı.</p></div><div class="admin-server-picker"><select id="adminServerPicker"><option value="">Düzenlenecek sunucuyu seçin…</option></select><button id="adminNewServer" class="primary" type="button">+ Yeni Sunucu</button></div>';
+  serverTab.prepend(toolbar);layout.classList.add("server-management-layout");form.classList.add("server-editor-panel");directory.classList.add("server-directory-panel");
+  const editorHead=document.createElement("div");editorHead.className="editor-context";editorHead.innerHTML='<div><span id="adminEditorBadge">YENİ KAYIT</span><p>Kaydetmeden önce sunucu bilgilerini ve görsel önizlemesini kontrol edin.</p></div><button id="adminUndoServer" class="outline hidden" type="button">Son Değişikliği Geri Al</button>';form.prepend(editorHead);
+  $("#adminServerPicker").onchange=event=>event.target.value?editServer(Number(event.target.value)):resetServerForm();
+  $("#adminNewServer").onclick=()=>{resetServerForm();$("#serverName").focus()};
+  $("#adminUndoServer").onclick=async()=>{if(!lastServerSnapshot)return;const snapshot=lastServerSnapshot;await api(`/api/admin/servers/${snapshot.id}`,jsonPut(serverPayload(snapshot)));lastServerSnapshot=null;$("#adminUndoServer").classList.add("hidden");await load();editServer(snapshot.id);show("Son sunucu değişikliği geri alındı.","good")};
+  const addFilter=(container,html)=>{const bar=document.createElement("div");bar.className="admin-filter-bar";bar.innerHTML=html;container.querySelector("h2").after(bar)};
+  addFilter($("#tab-reviews"),'<input id="adminReviewSearch" type="search" placeholder="Kullanıcı veya yorum ara…"><select id="adminReviewServer"><option value="">Tüm sunucular</option></select><select id="adminReviewRating"><option value="">Tüm puanlar</option><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select><span id="adminReviewCount"></span>');
+  addFilter($("#tab-users"),'<input id="adminUserSearch" type="search" placeholder="Kullanıcı veya e-posta ara…"><select id="adminUserRole"><option value="">Tüm roller</option><option value="user">Kullanıcı</option><option value="owner">Sunucu Sahibi</option></select><select id="adminUserStatus"><option value="">Tüm durumlar</option><option value="active">Aktif</option><option value="blocked">Engelli</option></select><span id="adminUserCount"></span>');
+  ["adminReviewSearch","adminReviewServer","adminReviewRating"].forEach(id=>document.getElementById(id).addEventListener(id.includes("Search")?"input":"change",renderReviews));
+  ["adminUserSearch","adminUserRole","adminUserStatus"].forEach(id=>document.getElementById(id).addEventListener(id.includes("Search")?"input":"change",renderUsers));
+  const guides={logo_image:["Logo","Önerilen 640 × 240 px · şeffaf PNG/WebP"],banner_image:["Banner / GIF","Önerilen 1400 × 180 px · merkezde güvenli alan"],left_ad_image:["Sol reklam","Önerilen 260 × 1200 px · dikey tasarım"],right_ad_image:["Sağ reklam","Önerilen 260 × 1200 px · dikey tasarım"]};
+  Object.entries(guides).forEach(([key,[title,text]])=>{const label=document.querySelector(`[data-upload="${key}"]`)?.closest("label");if(label){label.classList.add("upload-spec-card");label.insertAdjacentHTML("afterbegin",`<span class="upload-spec-title">${title}</span><small>${text}</small>`)}});
+}
+
+installAdminControls();
 
 const ownerLabel=document.createElement("label");
 ownerLabel.innerHTML='Sunucu sahibi<select id="serverOwner"><option value="">Atanmamış</option></select>';
@@ -235,6 +267,7 @@ $("#serverForm").onsubmit=async event=>{
     owner_user_id:$("#serverOwner").value?Number($("#serverOwner").value):null
   };
   try{
+    if(id)lastServerSnapshot={...data.servers.find(item=>Number(item.id)===Number(id))};
     await api(id?`/api/admin/servers/${id}`:"/api/admin/servers",{
       method:id?"PUT":"POST",
       headers:{"content-type":"application/json"},
@@ -242,6 +275,7 @@ $("#serverForm").onsubmit=async event=>{
     });
     resetServerForm();
     await load();
+    if(lastServerSnapshot)$("#adminUndoServer").classList.remove("hidden");
     show("Sunucu, takvim ve sahiplik bilgileri kaydedildi.","good");
   }catch(error){
     show(error.message,"bad");
@@ -271,6 +305,8 @@ function editServer(id){
   $("#serverActive").checked=Boolean(server.is_active);
   previewServer(server.image_url||"");
   $("#serverFormTitle").textContent="Sunucu Düzenle";
+  $("#adminEditorBadge").textContent="DÜZENLEME MODU";
+  $("#adminServerPicker").value=String(server.id);
   $("#serverCancel").classList.remove("hidden");
   $("#serverForm").scrollIntoView({behavior:"smooth",block:"start"});
 }
@@ -286,6 +322,8 @@ function resetServerForm(){
   $("#serverOwner").value="";
   previewServer("");
   $("#serverFormTitle").textContent="Sunucu Ekle";
+  $("#adminEditorBadge").textContent="YENİ KAYIT";
+  $("#adminServerPicker").value="";
   $("#serverCancel").classList.add("hidden");
 }
 
@@ -369,6 +407,7 @@ function previewServer(url){
 }
 function jsonPut(value){return{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(value)}}
 function jsonPost(value){return{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(value)}}
+function serverPayload(server){return{name:server.name,description:server.description,cap:Number(server.cap),server_type:server.server_type,opened_at:server.opened_at||"",beta_at:server.beta_at||"",launch_at:server.launch_at||"",operational_status:server.operational_status||"offline",status_note:server.status_note||"",website_url:server.website_url||"",discord_url:server.discord_url||"",promo_url:server.promo_url||"",image_url:server.image_url||"",is_active:Boolean(server.is_active),owner_user_id:server.owner_user_id?Number(server.owner_user_id):null}}
 function externalLink(label,url){return url?`<a class="outline" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>`:""}
 function statusText(value){return({online:"Çevrimiçi",maintenance:"Bakımda",offline:"Kapalı"})[value]||"Kapalı"}
 function show(text,className){$("#adminMessage").className=`message admin-toast ${className}`;$("#adminMessage").textContent=text}

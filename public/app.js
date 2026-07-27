@@ -246,9 +246,17 @@ async function openServer(id,focusForm=false,focusReviewId=0){
   const links=[["Web Sitesi",server.website_url],["Discord",server.discord_url],["Tanıtım",server.promo_url]].filter(([,url])=>url);
   $("#serverDetailLinks").innerHTML=links.map(([name,url])=>`<a class="outline" href="${esc(url)}" target="_blank" rel="noopener nofollow">${name} ↗</a>`).join("");
   $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars detail-stars">${stars(rating)}</span><small>${data.reviews.length} yorum</small>`;
+  $("#serverDetailOverview").innerHTML=`<div class="detail-fact-grid"><article><small>Sunucu türü</small><strong>${esc(server.server_type)}</strong></article><article><small>Seviye sınırı</small><strong>CAP ${server.cap}</strong></article><article><small>Durum</small><strong>${statusText}</strong></article><article><small>Açılış</small><strong>${server.opened_at?new Date(server.opened_at).toLocaleDateString("tr-TR"):"Belirtilmedi"}</strong></article></div>${server.status_note?`<div class="detail-note"><strong>Güncel durum notu</strong><p>${esc(server.status_note)}</p></div>`:""}`;
+  const similar=state.servers.filter(item=>Number(item.id)!==id&&(item.server_type===server.server_type||Number(item.cap)===Number(server.cap))).slice(0,4);
+  $("#serverSimilarList").innerHTML=similar.length?similar.map(item=>`<button type="button" data-similar-server="${item.id}"><span>${esc(item.name)}</span><small>${esc(item.server_type)} · CAP ${item.cap} · ${Number(item.average_rating||0).toFixed(1)} ★</small></button>`).join(""):'<p class="empty-state">Benzer sunucu bulunamadı.</p>';
   $("#serverDetailCount").innerHTML='<label class="comment-sort-label">Sırala <select id="commentSort"><option value="ratingDesc">Puan: yüksekten düşüğe</option><option value="ratingAsc">Puan: düşükten yükseğe</option><option value="likes">En çok beğenilen</option><option value="dislikes">En çok beğenilmeyen</option><option value="newest">En yeni</option></select></label>';
   renderReviewList(data.reviews,"ratingDesc");
   $("#commentSort").onchange=event=>renderReviewList(data.reviews,event.target.value);
+  $$('[data-detail-tab]').forEach(button=>button.onclick=()=>{
+    $$('[data-detail-tab]').forEach(item=>item.classList.toggle("active",item===button));
+    $$('[data-detail-panel]').forEach(panel=>panel.classList.toggle("active",panel.dataset.detailPanel===button.dataset.detailTab));
+  });
+  $$('[data-similar-server]').forEach(button=>button.onclick=()=>openServer(Number(button.dataset.similarServer)));
   const actions=$(".detail-actions");
   if(!state.user)actions.innerHTML='<a class="primary" href="/giris/">Oy vermek için giriş yap</a>';
   else if(data.viewer?.isOwner)actions.innerHTML='<p class="message">Sunucu sahipleri kendi sunucularına puan veremez.</p>';
@@ -327,7 +335,7 @@ function reviewBlock(review){
     <header><button class="user-link" style="--commenter-color:${commenterTone(review.user_id||review.display_name)}" data-profile="${review.user_id||""}">${esc(review.display_name)}</button><span class="stars">${stars(review.rating)}</span></header>
     <p>${esc(review.comment)}</p>
     ${review.owner_reply?`<div class="owner-reply"><strong>✓ Sunucu sahibinin resmî cevabı</strong><p>${esc(review.owner_reply)}</p></div>`:""}
-    <div class="review-actions"><button class="reaction-button ${review.my_reaction==="like"?"active":""}" data-reaction="like" data-review-id="${review.id}">👍 <strong>${review.like_count||0}</strong> Beğen</button><button class="reaction-button dislike ${review.my_reaction==="dislike"?"active":""}" data-reaction="dislike" data-review-id="${review.id}">👎 <strong>${review.dislike_count||0}</strong> Beğenme</button></div>
+    <div class="review-actions"><button class="reaction-button like ${review.my_reaction==="like"?"active":""}" data-reaction="like" data-review-id="${review.id}" aria-pressed="${review.my_reaction==="like"}"><span>👍</span><strong>${review.like_count||0}</strong><em>Beğen</em></button><button class="reaction-button dislike ${review.my_reaction==="dislike"?"active":""}" data-reaction="dislike" data-review-id="${review.id}" aria-pressed="${review.my_reaction==="dislike"}"><span>👎</span><strong>${review.dislike_count||0}</strong><em>Beğenme</em></button></div>
   </article>`;
 }
 
@@ -345,10 +353,10 @@ async function openProfile(id){
   $("#serverDialog").close();
   const data=await api(`/api/users/${id}/profile`),profile=data.profile,stats=data.stats;
   const badges=["Topluluk Üyesi",Number(stats.reviews)>=1&&"İlk Değerlendirme",Number(stats.reviews)>=5&&"Deneyimli Yorumcu",profile.account_role==="owner"&&"Sunucu Sahibi"].filter(Boolean);
-  $("#profilePreviewContent").innerHTML=`<div class="profile-preview-head"><img src="/sro-rating-logo.png" alt=""><div><p class="eyebrow">${profile.account_role==="owner"?"SUNUCU SAHİBİ":"TOPLULUK ÜYESİ"}</p><h2>${esc(profile.display_name)}</h2></div></div>
-    ${profile.bio?`<p class="profile-bio">${esc(profile.bio)}</p>`:""}<div class="badge-wall">${badges.map(badge=>`<span class="profile-badge">✦ ${badge}</span>`).join("")}</div>
-    <h3>Oynadığı Sunucular ve Karakterleri</h3><div class="public-server-list">${data.servers.length?data.servers.map(server=>`<article><span>${esc(server.name)}</span><strong>${esc(server.character_name||"Karakter adı paylaşılmadı")}</strong></article>`).join(""):"<p>Henüz sunucu seçmedi.</p>"}</div>
-    <div class="profile-stats"><span><strong>${stats.reviews}</strong> Değerlendirme</span><span><strong>${stats.likes}</strong> Beğeni</span></div>`;
+  $("#profilePreviewContent").innerHTML=`<div class="profile-preview-cover"><div class="profile-preview-head"><div class="profile-preview-avatar"><img src="/sro-rating-logo.png" alt=""></div><div><p class="eyebrow">${profile.account_role==="owner"?"SUNUCU SAHİBİ":"TOPLULUK ÜYESİ"}</p><h2>${esc(profile.display_name)}</h2><small>Topluluğa ${new Date(profile.created_at).toLocaleDateString("tr-TR")} tarihinde katıldı</small></div></div></div>
+    <div class="profile-preview-body">${profile.bio?`<p class="profile-bio">${esc(profile.bio)}</p>`:'<p class="profile-bio muted">Henüz profil açıklaması eklenmedi.</p>'}<div class="badge-wall">${badges.map(badge=>`<span class="profile-badge">✦ ${badge}</span>`).join("")}</div>
+    <div class="profile-preview-section"><div class="section-heading"><h3>Oynadığı Sunucular</h3><span>${data.servers.length} sunucu</span></div><div class="public-server-list">${data.servers.length?data.servers.map(server=>`<article><span>${esc(server.name)}</span><strong>${esc(server.character_name||"Karakter adı paylaşılmadı")}</strong></article>`).join(""):"<p>Henüz sunucu seçmedi.</p>"}</div></div>
+    <div class="profile-stats"><span><strong>${stats.reviews}</strong><small>Değerlendirme</small></span><span><strong>${stats.likes}</strong><small>Toplam Beğeni</small></span></div></div>`;
   $("#profilePreviewDialog").showModal();
 }
 
@@ -367,11 +375,12 @@ function esc(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&am
 
 ["serverDialog","reviewDialog","profilePreviewDialog"].forEach(id=>{
   const dialog=document.getElementById(id);
-  dialog?.addEventListener("click",event=>{if(event.target===dialog)dialog.close()});
+  dialog?.addEventListener("click",event=>{if(event.target===dialog){dialog.close();if(id==="serverDialog")history.replaceState(null,"",location.pathname)}});
 });
-$("#closeServerDialog").onclick=()=>$("#serverDialog").close();
+$("#closeServerDialog").onclick=()=>{$("#serverDialog").close();history.replaceState(null,"",location.pathname)};
 $("#closeDialog").onclick=()=>$("#reviewDialog").close();
 $("#closeProfilePreview").onclick=()=>$("#profilePreviewDialog").close();
+window.openServerById=(id,reviewId=0)=>openServer(Number(id),false,Number(reviewId||0));
 
 init().catch(error=>{
   document.body.classList.remove("app-loading");

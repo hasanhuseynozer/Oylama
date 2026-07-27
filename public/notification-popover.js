@@ -1,5 +1,5 @@
 function setupNotificationPopover(){
-  const button=document.querySelector("[data-notification-toggle]");
+  const button=[...document.querySelectorAll("[data-notification-toggle]")].find(item=>item.getClientRects().length&&getComputedStyle(item).visibility!=="hidden")||document.querySelector("[data-notification-toggle]");
   if(!button||button.dataset.notificationReady)return false;
   button.dataset.notificationReady="1";
   const panel=document.createElement("aside");
@@ -7,10 +7,12 @@ function setupNotificationPopover(){
   panel.innerHTML='<header><strong>Bildirimler</strong><button type="button" data-clear-notifications>Tümünü Sil</button></header><div class="notification-popover-list">Yükleniyor…</div>';
   document.body.append(panel);
   const place=()=>{
-    const box=button.getBoundingClientRect(),gap=10,width=Math.min(390,innerWidth-24);
+    const box=button.getBoundingClientRect(),gap=10,width=Math.min(410,innerWidth-24);
     panel.style.width=`${width}px`;
     panel.style.left=`${Math.max(12,Math.min(innerWidth-width-12,box.right-width))}px`;
-    panel.style.top=`${Math.min(innerHeight-90,box.bottom+gap)}px`;
+    const availableBelow=innerHeight-box.bottom-gap;
+    const top=availableBelow>240?box.bottom+gap:Math.max(12,box.top-Math.min(panel.scrollHeight,520)-gap);
+    panel.style.top=`${top}px`;
   };
   const esc=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]));
   async function request(url,options={}){const response=await fetch(url,options),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||"İşlem başarısız.");return data}
@@ -18,7 +20,14 @@ function setupNotificationPopover(){
     const data=await request("/api/notifications"),list=panel.querySelector(".notification-popover-list"),badge=button.querySelector("b");
     if(badge){badge.textContent=data.unread>99?"99+":data.unread||"";badge.classList.toggle("visible",data.unread>0)}
     list.innerHTML=data.notifications.length?data.notifications.map(item=>`<button type="button" class="notification-popover-item ${item.is_read?"":"unread"}" data-notification-id="${item.id}" data-target="${esc(item.target_url)}"><span>${item.type==="like"?"👍":item.type==="dislike"?"👎":item.type==="ownership"?"♛":"💬"}</span><span><strong>${esc(item.title)}</strong><small>${esc(item.message)}</small></span></button>`).join(""):'<div class="empty-state">Yeni bildiriminiz yok.</div>';
-    list.querySelectorAll("[data-notification-id]").forEach(item=>item.onclick=async()=>{await request(`/api/notifications/${item.dataset.notificationId}/read`,{method:"PUT"});location.href=item.dataset.target||"/"});
+    list.querySelectorAll("[data-notification-id]").forEach(item=>item.onclick=async()=>{
+      await request(`/api/notifications/${item.dataset.notificationId}/read`,{method:"PUT"});
+      item.classList.remove("unread");panel.classList.add("hidden");
+      const target=item.dataset.target||"/",url=new URL(target,location.origin),serverId=url.searchParams.get("server"),reviewId=url.searchParams.get("review");
+      if(serverId&&typeof window.openServerById==="function"){window.openServerById(serverId,reviewId);return}
+      if(url.pathname===location.pathname){history.replaceState(null,"",url.pathname);return}
+      location.href=target;
+    });
   }
   button.addEventListener("click",async event=>{event.preventDefault();panel.classList.toggle("hidden");if(!panel.classList.contains("hidden")){place();await load()}});
   panel.querySelector("[data-clear-notifications]").onclick=async()=>{await request("/api/notifications",{method:"DELETE"});await load()};
