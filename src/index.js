@@ -3,7 +3,7 @@ const USER_COOKIE = "sro_user";
 const ADMIN_COOKIE = "sro_admin";
 const USER_SESSION_SECONDS = 60 * 60 * 24 * 30;
 const ADMIN_SESSION_SECONDS = 60 * 60 * 12;
-const PBKDF2_ITERATIONS = 150000;
+const PBKDF2_ITERATIONS = 50000;
 
 export default {
   async fetch(request, env) {
