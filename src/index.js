@@ -222,8 +222,11 @@ async function handleApi(request, env, url) {
       ? body.playedServers.slice(0,20).map(x=>({serverId:Number(x.serverId),characterName:cleanText(x.characterName).slice(0,40)})).filter(x=>Number.isInteger(x.serverId))
       : (Array.isArray(body.serverIds)?body.serverIds:[]).slice(0,20).map(serverId=>({serverId:Number(serverId),characterName:""})).filter(x=>Number.isInteger(x.serverId));
     if(playedServers.some(x=>hasProfanity(x.characterName)))return json({error:"Karakter adında yasaklı ifade kullanılamaz."},400);
-    await env.DB.prepare("DELETE FROM user_playing_servers WHERE user_id=?").bind(user.id).run();
-    if(playedServers.length)await env.DB.batch(playedServers.map(x=>env.DB.prepare("INSERT OR IGNORE INTO user_playing_servers(user_id,server_id,character_name) SELECT ?,id,? FROM servers WHERE id=? AND is_active=1").bind(user.id,x.characterName,x.serverId)));
+    const playingStatements=[
+      env.DB.prepare("DELETE FROM user_playing_servers WHERE user_id=?").bind(user.id),
+      ...playedServers.map(x=>env.DB.prepare("INSERT OR IGNORE INTO user_playing_servers(user_id,server_id,character_name) SELECT ?,id,? FROM servers WHERE id=? AND is_active=1").bind(user.id,x.characterName,x.serverId))
+    ];
+    await env.DB.batch(playingStatements);
     return json({ message: "Profil güncellendi." });
   }
 
@@ -309,6 +312,7 @@ async function handleApi(request, env, url) {
     const subject=cleanText(body.subject), message=cleanText(body.message);
     if(subject.length<3||subject.length>100||message.length<10||message.length>1000) return json({error:"Öneri bilgileri geçersiz."},400);
     if(hasProfanity(subject)||hasProfanity(message))return json({error:"Öneri yasaklı ifade içeriyor."},400);
+    if(!(await rateLimit(env.DB,"suggestion-user",String(user.id),3,24*60*60)))return json({error:"Günde en fazla 3 öneri gönderebilirsiniz."},429);
     await env.DB.prepare("INSERT INTO suggestions(user_id,subject,message) VALUES(?,?,?)").bind(user.id,subject,message).run();
     return json({message:"Öneriniz alındı. Teşekkürler!"},201);
   }
@@ -335,6 +339,7 @@ async function handleApi(request, env, url) {
     if(hasProfanity(reply))return json({error:"Küfür, hakaret ve aşağılayıcı ifadeler yasaktır."},400);
     const review=await env.DB.prepare("SELECT r.server_id FROM reviews r JOIN server_owners o ON o.server_id=r.server_id WHERE r.id=? AND o.user_id=?").bind(reviewId,user.id).first();
     if(!review)return json({error:"Bu yoruma cevap verme yetkiniz yok."},403);
+    if(!(await rateLimit(env.DB,`owner-reply:${reviewId}`,String(user.id),1,3*60)))return json({error:"Bu yoruma 3 dakika içinde yalnızca bir kez cevap güncelleyebilirsiniz."},429);
     await env.DB.prepare(`INSERT INTO review_replies(review_id,server_id,user_id,reply,updated_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP)
       ON CONFLICT(review_id) DO UPDATE SET reply=excluded.reply,user_id=excluded.user_id,updated_at=CURRENT_TIMESTAMP`).bind(reviewId,review.server_id,user.id,reply).run();
     const recipient=await env.DB.prepare("SELECT user_id FROM reviews WHERE id=?").bind(reviewId).first();
@@ -349,10 +354,12 @@ async function handleApi(request, env, url) {
     const owned=await env.DB.prepare("SELECT 1 FROM server_owners WHERE server_id=? AND user_id=?").bind(serverId,user.id).first();
     if(!owned)return json({error:"Bu sunucuyu düzenleme yetkiniz yok."},403);
     const description=cleanText(body.description),image=safeImage(body.image_url),website=cleanUrl(body.website_url),discord=cleanUrl(body.discord_url),promo=cleanUrl(body.promo_url);
+    const statusNote=cleanText(body.status_note).slice(0,120),betaAt=validDateTime(body.beta_at),launchAt=validDateTime(body.launch_at);
     if(description.length<3||description.length>300||hasProfanity(description))return json({error:"Açıklama 3–300 karakter olmalı ve yasaklı ifade içermemelidir."},400);
+    if(hasProfanity(statusNote))return json({error:"Durum açıklaması yasaklı ifade içeriyor."},400);
+    if(betaAt&&launchAt&&betaAt>launchAt)return json({error:"Beta tarihi açılış tarihinden sonra olamaz."},400);
     await env.DB.prepare("UPDATE servers SET description=?,website_url=?,discord_url=?,promo_url=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
-      .bind(description,website,discord,promo,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),serverId).run();
-    if(hasProfanity(cleanText(body.status_note)))return json({error:"Durum açıklaması yasaklı ifade içeriyor."},400);
+      .bind(description,website,discord,promo,betaAt,launchAt,validOperationalStatus(body.operational_status),statusNote,serverId).run();
     if(image)await saveSetting(env.DB,`server_image_${serverId}`,image);
     await addAuditEvent(env.DB, request, "owner", user.id, "server.update", "server", serverId, { fields:["description","links","schedule","status",image?"image":null].filter(Boolean) });
     return json({message:"Sunucu bilgileriniz yayımlandı."});
@@ -361,7 +368,7 @@ async function handleApi(request, env, url) {
   const ownerReport=path.match(/^\/api\/owner\/reviews\/(\d+)\/report$/);
   if(method==="POST"&&ownerReport){
     verifyOrigin(request);requireJson(request);
-    const user=await requireUser(request,env.DB),reviewId=Number(ownerReport[1]),body=await readJson(request),reason=cleanText(body.reason)||"Küfür / hakaret";
+    const user=await requireUser(request,env.DB),reviewId=Number(ownerReport[1]),body=await readJson(request),reason=(cleanText(body.reason)||"Küfür / hakaret").slice(0,500);
     const review=await env.DB.prepare("SELECT r.server_id FROM reviews r JOIN server_owners o ON o.server_id=r.server_id WHERE r.id=? AND o.user_id=?").bind(reviewId,user.id).first();
     if(!review)return json({error:"Bildirim yetkiniz yok."},403);
     await env.DB.prepare("INSERT OR IGNORE INTO content_reports(review_id,server_id,reporter_user_id,reason) VALUES(?,?,?,?)").bind(reviewId,review.server_id,user.id,reason).run();
@@ -373,25 +380,21 @@ async function handleApi(request, env, url) {
     verifyOrigin(request);requireJson(request);
     const user=await requireUser(request,env.DB),reviewId=Number(reactionMatch[1]),body=await readJson(request),reaction=["like","dislike"].includes(body.reaction)?body.reaction:"";
     if(!reaction)return json({error:"Tepki geçersiz."},400);
-    const old=await env.DB.prepare("SELECT reaction FROM review_reactions WHERE review_id=? AND user_id=?").bind(reviewId,user.id).first();
     const reviewOwner=await env.DB.prepare("SELECT user_id,server_id FROM reviews WHERE id=?").bind(reviewId).first();
+    if(!reviewOwner)return json({error:"Yorum bulunamadı."},404);
+    if(Number(reviewOwner.user_id)===Number(user.id))return json({error:"Kendi yorumunuza tepki veremezsiniz."},409);
+    if(!(await rateLimit(env.DB,`reaction:${reviewId}`,String(user.id),20,5*60)))return json({error:"Çok hızlı tepki veriyorsunuz."},429);
+    const old=await env.DB.prepare("SELECT reaction FROM review_reactions WHERE review_id=? AND user_id=?").bind(reviewId,user.id).first();
     if(old?.reaction===reaction)await env.DB.prepare("DELETE FROM review_reactions WHERE review_id=? AND user_id=?").bind(reviewId,user.id).run();
     else await env.DB.prepare(`INSERT INTO review_reactions(review_id,user_id,reaction,updated_at) VALUES(?,?,?,CURRENT_TIMESTAMP)
       ON CONFLICT(review_id,user_id) DO UPDATE SET reaction=excluded.reaction,updated_at=CURRENT_TIMESTAMP`).bind(reviewId,user.id,reaction).run();
-    if(!reviewOwner)return json({error:"Yorum bulunamadı."},404);
-    if(Number(reviewOwner.user_id)===Number(user.id))return json({error:"Kendi yorumunuza tepki veremezsiniz."},409);
     if(reviewOwner?.user_id&&old?.reaction!==reaction)await addNotification(env.DB,reviewOwner.user_id,user.id,reaction,reaction==="like"?"Yorumun beğenildi":"Yorumuna beğenmeme geldi",reaction==="like"?"Bir kullanıcı yorumunu beğendi.":"Bir kullanıcı yorumunu beğenmedi.",`/?server=${reviewOwner.server_id}&review=${reviewId}`);
     return json({message:"Tepki güncellendi."});
   }
 
   const likeMatch=path.match(/^\/api\/reviews\/(\d+)\/like$/);
   if(method==="POST"&&likeMatch){
-    verifyOrigin(request);const user=await requireUser(request,env.DB),reviewId=Number(likeMatch[1]);
-    const exists=await env.DB.prepare("SELECT 1 FROM review_likes WHERE review_id=? AND user_id=?").bind(reviewId,user.id).first();
-    if(exists)await env.DB.prepare("DELETE FROM review_likes WHERE review_id=? AND user_id=?").bind(reviewId,user.id).run();
-    else await env.DB.prepare("INSERT INTO review_likes(review_id,user_id) VALUES(?,?)").bind(reviewId,user.id).run();
-    const count=await env.DB.prepare("SELECT COUNT(*) count FROM review_likes WHERE review_id=?").bind(reviewId).first();
-    return json({liked:!exists,count:Number(count.count)});
+    return json({error:"Bu eski tepki adresi artık kullanılmıyor."},410);
   }
 
   const commentMatch=path.match(/^\/api\/reviews\/(\d+)\/comments$/);
@@ -406,8 +409,9 @@ async function handleApi(request, env, url) {
     if(!Number.isInteger(rating)||rating<1||rating>5||comment.length<3||comment.length>500||hasProfanity(comment))return json({error:"Puan veya yorum geçersiz."},400);
     const old=await env.DB.prepare("SELECT rating,comment FROM reviews WHERE id=? AND user_id=?").bind(reviewId,user.id).first();
     if(!old)return json({error:"Bu yorumu düzenleme yetkiniz yok."},403);
+    if(!(await rateLimit(env.DB,`review-edit:${reviewId}`,String(user.id),5,10*60)))return json({error:"Yorumunuzu çok sık güncelliyorsunuz."},429);
     await env.DB.prepare("UPDATE reviews SET rating=?,comment=? WHERE id=?").bind(rating,comment,reviewId).run();
-    console.log(`REVIEW_EDIT user=${user.id} review=${reviewId} old_rating=${old.rating} new_rating=${rating} old=${JSON.stringify(old.comment)} new=${JSON.stringify(comment)}`);
+    await addAuditEvent(env.DB,request,"user",user.id,"review.update","review",reviewId,{oldRating:old.rating,newRating:rating,commentChanged:old.comment!==comment});
     return json({message:"Puanınız ve yorumunuz güncellendi."});
   }
 
@@ -552,12 +556,17 @@ async function handleApi(request, env, url) {
 
     if (method === "POST" && path === "/api/admin/servers") {
       requireJson(request); const body = await readJson(request);
-      const name = cleanText(body.name), description = cleanText(body.description), cap=validCap(body.cap), rates=validRates(body.rates), serverType=validServerType(body.server_type), openedAt=validDate(body.opened_at);
-      if (name.length < 2 || name.length > 80 || description.length < 3 || description.length > 300) return json({ error: "Sunucu adı veya açıklaması geçersiz. Açıklama en fazla 300 karakter olabilir." }, 400);
-      const result = await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,beta_at,launch_at,operational_status,status_note,is_verified,is_active,website_url,discord_url,promo_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(name,description,cap,rates,serverType,openedAt,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),0,body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url)).run();
+      const name=cleanText(body.name),description=cleanText(body.description),cap=validCap(body.cap),rates=validRates(body.rates),serverType=validServerType(body.server_type),openedAt=validDate(body.opened_at);
+      const betaAt=validDateTime(body.beta_at),launchAt=validDateTime(body.launch_at),statusNote=cleanText(body.status_note).slice(0,120),image=safeImage(body.image_url);
+      const website=cleanUrl(body.website_url),discord=cleanUrl(body.discord_url),promo=cleanUrl(body.promo_url);
+      if(name.length<2||name.length>80||description.length<3||description.length>300)return json({error:"Sunucu adı veya açıklaması geçersiz. Açıklama en fazla 300 karakter olabilir."},400);
+      if(hasProfanity(name)||hasProfanity(description)||hasProfanity(statusNote))return json({error:"Sunucu bilgileri yasaklı ifade içeriyor."},400);
+      if(betaAt&&launchAt&&betaAt>launchAt)return json({error:"Beta tarihi açılış tarihinden sonra olamaz."},400);
+      const result=await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,beta_at,launch_at,operational_status,status_note,is_verified,is_active,website_url,discord_url,promo_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        .bind(name,description,cap,rates,serverType,openedAt,betaAt,launchAt,validOperationalStatus(body.operational_status),statusNote,0,body.is_active?1:0,website,discord,promo).run();
       const ownerId=Number(body.owner_user_id||0);
       if(ownerId){await env.DB.prepare("INSERT OR IGNORE INTO server_owners(server_id,user_id) VALUES(?,?)").bind(Number(result.meta.last_row_id),ownerId).run();await reconcileOwnerRoles(env.DB,[ownerId])}
-      await saveSetting(env.DB, `server_image_${Number(result.meta.last_row_id)}`, safeImage(body.image_url));
+      await saveSetting(env.DB,`server_image_${Number(result.meta.last_row_id)}`,image);
       await addAuditEvent(env.DB,request,"admin",null,"server.create","server",Number(result.meta.last_row_id),{name,ownerId:ownerId||null});
       return json({ message: "Sunucu eklendi." }, 201);
     }
@@ -566,9 +575,14 @@ async function handleApi(request, env, url) {
     if (adminServer && method === "PUT") {
       requireJson(request); const body = await readJson(request);
       const serverId=Number(adminServer[1]);
-      await env.DB.prepare("UPDATE servers SET name=?,description=?,cap=?,rates=?,server_type=?,opened_at=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,is_verified=0,is_active=?,website_url=?,discord_url=?,promo_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
-        .bind(cleanText(body.name),cleanText(body.description),validCap(body.cap),validRates(body.rates),validServerType(body.server_type),validDate(body.opened_at),validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url),serverId).run();
-      await saveSetting(env.DB, `server_image_${serverId}`, safeImage(body.image_url));
+      const name=cleanText(body.name),description=cleanText(body.description),betaAt=validDateTime(body.beta_at),launchAt=validDateTime(body.launch_at),statusNote=cleanText(body.status_note).slice(0,120),image=safeImage(body.image_url);
+      if(name.length<2||name.length>80||description.length<3||description.length>300)return json({error:"Sunucu adı veya açıklaması geçersiz. Açıklama en fazla 300 karakter olabilir."},400);
+      if(hasProfanity(name)||hasProfanity(description)||hasProfanity(statusNote))return json({error:"Sunucu bilgileri yasaklı ifade içeriyor."},400);
+      if(betaAt&&launchAt&&betaAt>launchAt)return json({error:"Beta tarihi açılış tarihinden sonra olamaz."},400);
+      const updated=await env.DB.prepare("UPDATE servers SET name=?,description=?,cap=?,rates=?,server_type=?,opened_at=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,is_verified=0,is_active=?,website_url=?,discord_url=?,promo_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+        .bind(name,description,validCap(body.cap),validRates(body.rates),validServerType(body.server_type),validDate(body.opened_at),betaAt,launchAt,validOperationalStatus(body.operational_status),statusNote,body.is_active?1:0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url),serverId).run();
+      if(!updated.meta.changes)return json({error:"Sunucu bulunamadı."},404);
+      await saveSetting(env.DB,`server_image_${serverId}`,image);
       const previousOwners=await env.DB.prepare("SELECT user_id FROM server_owners WHERE server_id=?").bind(serverId).all();
       await env.DB.prepare("DELETE FROM server_owners WHERE server_id=?").bind(serverId).run();
       const ownerId=Number(body.owner_user_id||0);
@@ -578,19 +592,32 @@ async function handleApi(request, env, url) {
       return json({ message: "Sunucu güncellendi." });
     }
     if (adminServer && method === "DELETE") {
-      await env.DB.prepare("DELETE FROM servers WHERE id=?").bind(Number(adminServer[1])).run();
+      const serverId=Number(adminServer[1]);
+      const existing=await env.DB.prepare("SELECT name FROM servers WHERE id=?").bind(serverId).first();
+      if(!existing)return json({error:"Sunucu bulunamadı."},404);
+      const previousOwners=await env.DB.prepare("SELECT user_id FROM server_owners WHERE server_id=?").bind(serverId).all();
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM servers WHERE id=?").bind(serverId),
+        env.DB.prepare("DELETE FROM site_settings WHERE setting_key=?").bind(`server_image_${serverId}`)
+      ]);
+      await reconcileOwnerRoles(env.DB,(previousOwners.results||[]).map(x=>Number(x.user_id)));
+      await addAuditEvent(env.DB,request,"admin",null,"server.delete","server",serverId,{name:existing.name});
       return json({ message: "Sunucu silindi." });
     }
 
     const reset = path.match(/^\/api\/admin\/servers\/(\d+)\/reset$/);
     if (reset && method === "POST") {
-      await env.DB.prepare("DELETE FROM reviews WHERE server_id=?").bind(Number(reset[1])).run();
+      const serverId=Number(reset[1]);
+      await env.DB.prepare("DELETE FROM reviews WHERE server_id=?").bind(serverId).run();
+      await addAuditEvent(env.DB,request,"admin",null,"server.reviews.reset","server",serverId);
       return json({ message: "Oylar ve yorumlar sıfırlandı." });
     }
 
     const deleteReview = path.match(/^\/api\/admin\/reviews\/(\d+)$/);
     if (deleteReview && method === "DELETE") {
-      await env.DB.prepare("DELETE FROM reviews WHERE id=?").bind(Number(deleteReview[1])).run();
+      const reviewId=Number(deleteReview[1]);
+      await env.DB.prepare("DELETE FROM reviews WHERE id=?").bind(reviewId).run();
+      await addAuditEvent(env.DB,request,"admin",null,"review.delete","review",reviewId);
       return json({ message: "Yorum silindi." });
     }
 
@@ -602,6 +629,7 @@ async function handleApi(request, env, url) {
         env.DB.prepare("UPDATE users SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,Number(userStatus[1])),
         env.DB.prepare("DELETE FROM user_sessions WHERE user_id=?").bind(Number(userStatus[1]))
       ]);
+      await addAuditEvent(env.DB,request,"admin",null,"user.status","user",Number(userStatus[1]),{status});
       return json({ message: status === "blocked" ? "Kullanıcı engellendi." : "Kullanıcı açıldı." });
     }
 
@@ -611,6 +639,7 @@ async function handleApi(request, env, url) {
       await env.DB.prepare("UPDATE users SET account_role=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(role,userId).run();
       if(role==="user")await env.DB.prepare("DELETE FROM server_owners WHERE user_id=?").bind(userId).run();
       await reconcileOwnerRoles(env.DB,[userId]);
+      await addAuditEvent(env.DB,request,"admin",null,"user.role","user",userId,{requestedRole:role});
       return json({message:role==="owner"?"Kullanıcı sunucu sahibi rolüne geçirildi. Sunucu atamasını Sunucular bölümünden yapın.":"Kullanıcı normal role geçirildi."});
     }
 
@@ -633,7 +662,9 @@ async function handleApi(request, env, url) {
 
     const deleteUser = path.match(/^\/api\/admin\/users\/(\d+)$/);
     if (deleteUser && method === "DELETE") {
-      await env.DB.prepare("DELETE FROM users WHERE id=?").bind(Number(deleteUser[1])).run();
+      const userId=Number(deleteUser[1]);
+      await env.DB.prepare("DELETE FROM users WHERE id=?").bind(userId).run();
+      await addAuditEvent(env.DB,request,"admin",null,"user.delete","user",userId);
       return json({ message: "Kullanıcı silindi." });
     }
 
@@ -643,8 +674,9 @@ async function handleApi(request, env, url) {
       const statements = allowed.map(key => env.DB.prepare(`
         INSERT INTO site_settings(setting_key,setting_value,updated_at) VALUES(?,?,CURRENT_TIMESTAMP)
         ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_at=CURRENT_TIMESTAMP
-      `).bind(key, key.endsWith("_image") ? safeImage(body[key]) : cleanText(body[key] || "")));
+      `).bind(key,sanitizeSetting(key,body[key])));
       await env.DB.batch(statements);
+      await addAuditEvent(env.DB,request,"admin",null,"settings.update","settings",null,{keys:allowed});
       return json({ message: "Site ayarları kaydedildi." });
     }
   }
@@ -675,7 +707,24 @@ function safeImage(value){
   const image=String(value||"");
   if(!image)return "";
   if(!/^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(image)||image.length>420000)throw new HttpError("Görsel PNG, JPG, WebP veya GIF olmalı ve 300 KB sınırını aşmamalıdır.",400);
+  const [header,payload]=image.split(",",2),type=header.slice(11,header.indexOf(";"));
+  let bytes;
+  try{bytes=Uint8Array.from(atob(payload.slice(0,24)),character=>character.charCodeAt(0));}
+  catch{throw new HttpError("Görsel verisi bozuk.",400);}
+  const isPng=bytes[0]===0x89&&bytes[1]===0x50&&bytes[2]===0x4e&&bytes[3]===0x47;
+  const isJpeg=bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff;
+  const isGif=bytes[0]===0x47&&bytes[1]===0x49&&bytes[2]===0x46&&bytes[3]===0x38;
+  const isWebp=bytes[0]===0x52&&bytes[1]===0x49&&bytes[2]===0x46&&bytes[3]===0x46&&bytes[8]===0x57&&bytes[9]===0x45&&bytes[10]===0x42&&bytes[11]===0x50;
+  if(!({png:isPng,jpeg:isJpeg,gif:isGif,webp:isWebp}[type]))throw new HttpError("Görsel türü ile dosya içeriği eşleşmiyor.",400);
   return image;
+}
+function sanitizeSetting(key,value){
+  if(key.endsWith("_image"))return safeImage(value);
+  if(key.endsWith("_url"))return cleanUrl(value);
+  const limits={banner_text:100,left_ad_text:80,right_ad_text:80,contact_text:500,disclaimer_text:750,footer_tagline:140};
+  const text=cleanText(value).slice(0,limits[key]||500);
+  if(hasProfanity(text))throw new HttpError("Site metni yasaklı ifade içeriyor.",400);
+  return text;
 }
 
 async function getSettings(db) {
@@ -840,7 +889,18 @@ function verifyOrigin(request) {
 function requireJson(request) {
   if (!request.headers.get("content-type")?.toLowerCase().includes("application/json")) throw new HttpError("İstek JSON olmalıdır.",415);
 }
-async function readJson(request) { try { return await request.json(); } catch { throw new HttpError("Geçersiz veri.",400); } }
+async function readJson(request) {
+  const maxBytes=512*1024,declared=Number(request.headers.get("content-length")||0);
+  if(Number.isFinite(declared)&&declared>maxBytes)throw new HttpError("İstek boyutu sınırı aşıldı.",413);
+  try{
+    const text=await request.text();
+    if(encoder.encode(text).byteLength>maxBytes)throw new HttpError("İstek boyutu sınırı aşıldı.",413);
+    return JSON.parse(text);
+  }catch(error){
+    if(error instanceof HttpError)throw error;
+    throw new HttpError("Geçersiz veri.",400);
+  }
+}
 function cleanText(value) { return String(value || "").replace(/<[^>]*>/g,"").replace(/[\u0000-\u001F\u007F]/g," ").replace(/\s+/g," ").trim(); }
 function hasProfanity(value){
   const raw=String(value||"").toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[0@4]/g,"a").replace(/[1!|]/g,"i").replace(/[3]/g,"e").replace(/[5$]/g,"s").replace(/[7]/g,"t");
@@ -853,6 +913,9 @@ async function addNotification(db,userId,actorUserId,type,title,message,targetUr
   const safeTarget=safeInternalTarget(targetUrl);
   await db.prepare("INSERT INTO notifications(user_id,actor_user_id,type,title,message,target_url) VALUES(?,?,?,?,?,?)")
     .bind(Number(userId),actorUserId?Number(actorUserId):null,String(type),cleanText(title).slice(0,100),cleanText(message).slice(0,240),safeTarget).run();
+  await db.prepare(`DELETE FROM notifications WHERE user_id=? AND id NOT IN (
+    SELECT id FROM notifications WHERE user_id=? ORDER BY datetime(created_at) DESC,id DESC LIMIT 100
+  )`).bind(Number(userId),Number(userId)).run();
 }
 function safeInternalTarget(value){
   const target=String(value||"/").slice(0,300);
@@ -861,11 +924,27 @@ function safeInternalTarget(value){
 function validCap(value) { const cap=Number(value); return Number.isInteger(cap)&&cap>=1&&cap<=200 ? cap : 110; }
 function validRates(value) { const rates=cleanText(value).slice(0,30); return rates || "1x"; }
 function validServerType(value) { return String(value).toUpperCase()==="CH" ? "CH" : "EU/CH"; }
-function validDate(value) { const date=String(value||""); return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : ""; }
-function validDateTime(value){const date=String(value||"");return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(date)?date:"";}
+function validDate(value){
+  const date=String(value||"");
+  if(!date)return "";
+  const match=date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!match)throw new HttpError("Tarih geçersiz.",400);
+  const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]),parsed=new Date(Date.UTC(year,month-1,day));
+  if(year<2000||year>2100||parsed.getUTCFullYear()!==year||parsed.getUTCMonth()!==month-1||parsed.getUTCDate()!==day)throw new HttpError("Tarih geçersiz.",400);
+  return date;
+}
+function validDateTime(value){
+  const date=String(value||"");
+  if(!date)return "";
+  const match=date.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})$/);
+  if(!match||Number(match[2])>23||Number(match[3])>59)throw new HttpError("Tarih ve saat geçersiz.",400);
+  validDate(match[1]);
+  return date;
+}
 function validOperationalStatus(value){return ["online","maintenance","offline"].includes(value)?value:"offline";}
 function cleanUrl(value) {
   const raw=String(value||"").trim(); if(!raw)return "";
+  if(raw.length>500)throw new HttpError("Web adresi çok uzun.",400);
   try { const url=new URL(raw); return ["http:","https:"].includes(url.protocol)?url.toString():""; } catch { throw new HttpError("Geçerli bir web adresi yazın.",400); }
 }
 function normalizeEmail(value) { return String(value || "").trim().toLowerCase(); }

@@ -25,6 +25,9 @@ try{
   await call(`/api/owner/servers/${server.id}/change-request`,{method:"POST",cookie:ownerCookie,...jsonBody({description:"Sahip tarafından doğrudan güncellendi",operational_status:"online",status_note:"Çevrimiçi"})});
   const review=await call(`/api/servers/${server.id}/reviews`,{method:"POST",cookie:userCookie,...jsonBody({rating:4,comment:"Otomatik kullanıcı testi"})});
   const detail=(await call(`/api/servers/${server.id}`,{cookie:userCookie})).data,reviewId=detail.reviews[0].id;
+  const selfReaction=await fetch(`${base}/api/reviews/${reviewId}/reaction`,{method:"POST",headers:{"content-type":"application/json",cookie:userCookie,origin:base},body:JSON.stringify({reaction:"like"})});if(selfReaction.status!==409)throw new Error("Kullanıcının kendi yorumuna tepki vermesi engellenmedi");
+  const selfDetail=(await call(`/api/servers/${server.id}`,{cookie:userCookie})).data,selfReview=selfDetail.reviews.find(x=>x.id===reviewId);if(selfReview.my_reaction||Number(selfReview.like_count)!==0)throw new Error("Reddedilen öz tepki veritabanına yazıldı");
+  const legacyLike=await fetch(`${base}/api/reviews/${reviewId}/like`,{method:"POST",headers:{cookie:userCookie,origin:base}});if(legacyLike.status!==410)throw new Error("Eski beğeni adresi kapatılmadı");
   await call(`/api/reviews/${reviewId}`,{method:"PUT",cookie:userCookie,...jsonBody({rating:5,comment:"Otomatik kullanıcı testi güncellendi"})});
   await call(`/api/reviews/${reviewId}/reaction`,{method:"POST",cookie:ownerCookie,...jsonBody({reaction:"like"})});
   const notices=(await call("/api/notifications",{cookie:userCookie})).data;if(!notices.notifications.some(x=>x.type==="like"))throw new Error("Beğeni bildirimi oluşmadı");
@@ -33,6 +36,9 @@ try{
   const favorite=(await call(`/api/servers/${server.id}/favorite`,{method:"POST",cookie:userCookie})).data;if(!favorite.favorite)throw new Error("Favori eklenmedi");
   const favorites=(await call("/api/profile/favorites",{cookie:userCookie})).data;if(!favorites.favorites.some(x=>Number(x.id)===Number(server.id)))throw new Error("Favori listesi hatalı");
   const forbidden=await fetch(`${base}/api/reviews/${reviewId}/comments`,{method:"POST",headers:{"content-type":"application/json",cookie:userCookie,origin:base},body:JSON.stringify({comment:"yasak yanıt"})});if(forbidden.status!==403)throw new Error("Normal kullanıcı yanıtı engellenmedi");
+  const invalidImageName=`Bozuk Görsel ${stamp}`,invalidImage=await fetch(`${base}/api/admin/servers`,{method:"POST",headers:{"content-type":"application/json",cookie:adminCookie,origin:base},body:JSON.stringify({name:invalidImageName,description:"Geçerli açıklama",cap:110,server_type:"EU/CH",image_url:"data:image/png;base64,SGVsbG8="})});if(invalidImage.status!==400)throw new Error("Sahte görsel içeriği reddedilmedi");
+  dashboard=(await call("/api/admin/dashboard",{cookie:adminCookie})).data;if(dashboard.servers.some(x=>x.name===invalidImageName))throw new Error("Reddedilen görsel isteği kısmi sunucu oluşturdu");
+  const oversized=await fetch(`${base}/api/profile/suggestions`,{method:"POST",headers:{"content-type":"application/json",cookie:userCookie,origin:base},body:JSON.stringify({subject:"Boyut testi",message:"x".repeat(513*1024)})});if(oversized.status!==413)throw new Error("Büyük JSON isteği reddedilmedi");
   const adminRoute=await fetch(base+"/admin");if(adminRoute.status!==404)throw new Error("/admin 404 değil");
   console.log("ROLE_SMOKE_OK");
 }finally{
