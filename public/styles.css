@@ -28,3 +28,7 @@ body{background:radial-gradient(circle at 50% -10%,#2b1d08 0,#0b0a08 34%,#070707
 @media(max-width:1279px){.page-layout{grid-template-columns:minmax(0,1fr)}.ad-rail{display:none}.server-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:780px){.toolbar>div:first-child{min-width:0}.filters{margin-left:0}.server-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){.server-grid{grid-template-columns:1fr}}
+
+/* Guaranteed ad visibility for desktop and laptop */
+@media(min-width:1000px) and (max-width:1279px){.shell{width:calc(100% - 24px)}.page-layout{grid-template-columns:92px minmax(0,1fr) 92px;gap:16px}.ad-rail{display:flex;min-height:620px}.server-grid{grid-template-columns:repeat(3,minmax(210px,1fr))}.toolbar{gap:20px}.toolbar>div:first-child{min-width:250px}}
+@media(max-width:999px){.page-layout{grid-template-columns:minmax(0,1fr)}.ad-rail{display:none}}
