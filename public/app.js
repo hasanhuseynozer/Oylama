@@ -78,3 +78,45 @@ async function openProfile(id){
 }
 
 setTimeout(()=>{const serverId=Number(new URLSearchParams(location.search).get("server"));if(serverId&&state.servers.some(x=>Number(x.id)===serverId))openServer(serverId)},900);
+
+function renderAccount(){
+  const box=$("#accountActions");if(!state.user)return;
+  const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":"✦ Üye";
+  box.innerHTML=`<button class="notification-button" type="button" data-notification-toggle aria-label="Bildirimler">🔔<b></b></button><a class="profile-chip enhanced" href="/profil/"><img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span></a><button id="logoutBtn" class="outline logout-button">Çıkış</button>`;
+  $("#logoutBtn").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.reload()};
+}
+
+function card(s){
+  const rating=Number(s.average_rating||0),fresh=Date.now()-new Date((s.opened_at||s.created_at)+"Z").getTime()<45*86400000,[statusClass,statusText]=statusInfo(s),event=nextEvent(s);
+  return `<article class="server-card" data-server="${s.id}" tabindex="0"><button class="favorite-button ${s.is_favorite?"active":""}" data-favorite="${s.id}" type="button" aria-label="${s.is_favorite?"Favorilerden çıkar":"Favorilere ekle"}">♥</button><div class="server-status ${statusClass}" title="${esc(s.status_note||statusText)}"><i></i>${statusText}</div>${s.image_url?`<div class="server-cover" style="background-image:url('${s.image_url}')"></div>`:`<div class="server-cover server-cover-placeholder"><span>SRO RATING</span></div>`}<div class="server-card-body"><div class="server-badges"><span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div><h2>${esc(s.name)}</h2>${event?`<div class="countdown" data-date="${event[1]}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></div>`:""}<p class="desc card-summary">${esc(s.description)}</p><div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${s.vote_count} değerlendirme</small></div><div class="stars card-stars">${stars(rating)}</div></div><div class="card-actions"><button class="outline" data-detail="${s.id}">Detaylar</button><button class="primary" data-review="${s.id}">Oy Ver</button></div></div></article>`;
+}
+
+function renderServers(){
+  const q=state.query.toLocaleLowerCase("tr-TR"),cap=$("#capFilter").value,type=$("#typeFilter").value,newOnly=$("#newOnly").checked,cutoff=Date.now()-45*86400000;
+  let list=state.servers.filter(s=>`${s.name} ${s.description} ${s.cap}`.toLocaleLowerCase("tr-TR").includes(q)&&(!cap||String(s.cap)===cap)&&(!type||s.server_type===type)&&(!newOnly||new Date((s.opened_at||s.created_at)+"Z").getTime()>=cutoff));
+  const sort=$("#sortSelect").value;list.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):sort==="newest"?new Date(b.opened_at||b.created_at)-new Date(a.opened_at||a.created_at):Number(b.average_rating)-Number(a.average_rating)||Number(b.vote_count)-Number(a.vote_count));
+  $("#serverGrid").innerHTML=list.length?list.map(card).join(""):'<div class="panel empty-results"><h3>Bu filtrelere uygun sunucu bulunamadı.</h3></div>';
+  document.querySelectorAll("[data-server]").forEach(x=>x.onclick=e=>{if(!e.target.closest("button"))openServer(Number(x.dataset.server))});
+  document.querySelectorAll("[data-detail]").forEach(x=>x.onclick=()=>openServer(Number(x.dataset.detail)));
+  document.querySelectorAll("[data-review]").forEach(x=>x.onclick=()=>openServer(Number(x.dataset.review)));
+  document.querySelectorAll("[data-favorite]").forEach(x=>x.onclick=async()=>{if(!state.user)return location.href="/giris/";const result=await api(`/api/servers/${x.dataset.favorite}/favorite`,{method:"POST"}),server=state.servers.find(s=>Number(s.id)===Number(x.dataset.favorite));server.is_favorite=result.favorite?1:0;renderServers()});
+}
+
+function detailReviewForm(serverId,mine){
+  return `<form id="inlineDetailReview" class="inline-detail-review"><div class="inline-rating" data-inline-rating>${[1,2,3,4,5].map(n=>`<button type="button" data-value="${n}" class="${Number(mine?.rating||0)>=n?"active":""}">★</button>`).join("")}</div><textarea minlength="3" maxlength="500" required placeholder="Bu sunucu hakkındaki deneyiminiz…">${esc(mine?.comment||"")}</textarea><div><small>En fazla 500 karakter</small><button class="primary">${mine?"Puan ve Yorumu Güncelle":"Oy Ver ve Yorumla"}</button></div><p class="inline-review-message"></p></form>`;
+}
+
+async function openServer(id){
+  state.openServerId=id;
+  const s=state.servers.find(x=>Number(x.id)===id),d=await api(`/api/servers/${id}`),rating=Number(s.average_rating||0),[statusClass,statusText]=statusInfo(s),mine=d.reviews.find(r=>Number(r.user_id)===Number(state.user?.id));
+  $("#serverDetailName").textContent=s.name;$("#serverDetailDescription").textContent=s.description;
+  $("#serverDetailHero").className=`server-detail-hero${s.image_url?"":" placeholder"}`;$("#serverDetailHero").style.backgroundImage=s.image_url?`url("${s.image_url}")`:"";$("#serverDetailHero").innerHTML="";
+  $("#serverDetailBadges").innerHTML=`<span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span><span class="server-status inline ${statusClass}" title="${esc(s.status_note||statusText)}"><i></i>${statusText}</span>`;
+  const links=[["Web Sitesi",d.server.website_url],["Discord",d.server.discord_url],["Tanıtım",d.server.promo_url]].filter(x=>x[1]);$("#serverDetailLinks").innerHTML=links.map(x=>`<a class="outline" href="${escapeAttr(x[1])}" target="_blank" rel="noopener nofollow">${x[0]} ↗</a>`).join("");
+  $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars detail-stars">${stars(rating)}</span><small>${d.reviews.length} yorum</small>`;
+  $("#serverDetailCount").innerHTML=`<label class="comment-sort-label">Sırala <select id="commentSort"><option value="ratingDesc">Puan: yüksekten düşüğe</option><option value="ratingAsc">Puan: düşükten yükseğe</option><option value="likes">En çok beğenilen</option><option value="dislikes">En çok beğenilmeyen</option></select></label>`;
+  renderReviewList(d.reviews,"ratingDesc");$("#commentSort").onchange=e=>renderReviewList(d.reviews,e.target.value);
+  $(".detail-actions").innerHTML=state.user?detailReviewForm(id,mine):'<a class="primary" href="/giris/">Oy vermek için giriş yap</a>';
+  const form=$("#inlineDetailReview");if(form){let chosen=Number(mine?.rating||0);form.querySelectorAll("[data-value]").forEach(button=>button.onclick=()=>{chosen=Number(button.dataset.value);form.querySelectorAll("[data-value]").forEach(x=>x.classList.toggle("active",Number(x.dataset.value)<=chosen))});form.onsubmit=async event=>{event.preventDefault();const message=form.querySelector(".inline-review-message");if(!chosen){message.textContent="Bir puan seçin.";return}try{await api(mine?`/api/reviews/${mine.id}`:`/api/servers/${id}/reviews`,{method:mine?"PUT":"POST",headers:{"content-type":"application/json"},body:JSON.stringify({rating:chosen,comment:form.querySelector("textarea").value})});await loadServers();await openServer(id)}catch(error){message.textContent=error.message}}}
+  if(!$("#serverDialog").open)$("#serverDialog").showModal();history.replaceState(null,"",`/?server=${id}`);
+}

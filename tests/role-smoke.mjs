@@ -24,6 +24,8 @@ try{
   const notices=(await call("/api/notifications",{cookie:userCookie})).data;if(!notices.notifications.some(x=>x.type==="like"))throw new Error("Beğeni bildirimi oluşmadı");
   await call("/api/profile",{method:"PUT",cookie:userCookie,...jsonBody({displayName:`User${stamp}`,gameAlias:"",bio:"",playedServers:[{serverId:server.id,characterName:"BotKarakter"}]})});
   const publicProfile=(await call(`/api/users/${user.id}/profile`)).data;if(publicProfile.servers[0]?.character_name!=="BotKarakter")throw new Error("Sunucu karakter adı kaydedilmedi");
+  const favorite=(await call(`/api/servers/${server.id}/favorite`,{method:"POST",cookie:userCookie})).data;if(!favorite.favorite)throw new Error("Favori eklenmedi");
+  const favorites=(await call("/api/profile/favorites",{cookie:userCookie})).data;if(!favorites.favorites.some(x=>Number(x.id)===Number(server.id)))throw new Error("Favori listesi hatalı");
   const forbidden=await fetch(`${base}/api/reviews/${reviewId}/comments`,{method:"POST",headers:{"content-type":"application/json",cookie:userCookie,origin:base},body:JSON.stringify({comment:"yasak yanıt"})});if(forbidden.status!==403)throw new Error("Normal kullanıcı yanıtı engellenmedi");
   const adminRoute=await fetch(base+"/admin");if(adminRoute.status!==404)throw new Error("/admin 404 değil");
   console.log("ROLE_SMOKE_OK");

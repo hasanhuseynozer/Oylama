@@ -42,18 +42,35 @@ async function handleApi(request, env, url) {
   }
 
   if (method === "GET" && path === "/api/servers") {
+    const currentUser=await getCurrentUser(request,env.DB);
     const result = await env.DB.prepare(`
       SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.beta_at, s.launch_at, s.operational_status, s.status_note, s.website_url, s.discord_url, s.promo_url, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count,
+        EXISTS(SELECT 1 FROM user_favorite_servers f WHERE f.server_id=s.id AND f.user_id=?) AS is_favorite,
         ROUND(((COALESCE(AVG(r.rating),3.5)*COUNT(r.id)+17.5)/(COUNT(r.id)+5))+(s.is_verified*0.35),2) AS trust_score
       FROM servers s
       LEFT JOIN reviews r ON r.server_id = s.id
       WHERE s.is_active = 1
       GROUP BY s.id
       ORDER BY trust_score DESC, vote_count DESC, s.created_at DESC
-    `).all();
+    `).bind(currentUser?.id||0).all();
     return json({ servers: result.results || [] });
+  }
+
+  const favoriteMatch=path.match(/^\/api\/servers\/(\d+)\/favorite$/);
+  if(favoriteMatch&&method==="POST"){
+    verifyOrigin(request);const user=await requireUser(request,env.DB),serverId=Number(favoriteMatch[1]);
+    const existing=await env.DB.prepare("SELECT 1 FROM user_favorite_servers WHERE user_id=? AND server_id=?").bind(user.id,serverId).first();
+    if(existing)await env.DB.prepare("DELETE FROM user_favorite_servers WHERE user_id=? AND server_id=?").bind(user.id,serverId).run();
+    else await env.DB.prepare("INSERT INTO user_favorite_servers(user_id,server_id) SELECT ?,id FROM servers WHERE id=? AND is_active=1").bind(user.id,serverId).run();
+    return json({favorite:!existing,message:existing?"Favorilerden çıkarıldı.":"Favorilere eklendi."});
+  }
+
+  if(method==="GET"&&path==="/api/profile/favorites"){
+    const user=await requireUser(request,env.DB);
+    const result=await env.DB.prepare("SELECT s.id,s.name,s.operational_status FROM user_favorite_servers f JOIN servers s ON s.id=f.server_id WHERE f.user_id=? AND s.is_active=1 ORDER BY datetime(f.created_at) DESC").bind(user.id).all();
+    return json({favorites:result.results||[]});
   }
 
   const serverMatch = path.match(/^\/api\/servers\/(\d+)$/);
@@ -408,10 +425,17 @@ async function handleApi(request, env, url) {
 
     const emailHash = await keyedHash(env, user.email_normalized);
     try {
-      await env.DB.prepare(`
+      const createdReview=await env.DB.prepare(`
         INSERT INTO reviews(server_id, email_hash, email_masked, rating, comment, ip_hash, user_id)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).bind(serverId, emailHash, maskEmail(user.email), rating, comment, await keyedHash(env, ip), user.id).run();
+      const recentFromIp=await env.DB.prepare("SELECT COUNT(*) count FROM reviews WHERE ip_hash=? AND datetime(created_at)>=datetime('now','-1 hour')").bind(await keyedHash(env,ip)).first();
+      const recentAccount=await env.DB.prepare("SELECT COUNT(*) count FROM reviews WHERE user_id=? AND datetime(created_at)>=datetime('now','-24 hours')").bind(user.id).first();
+      const reasons=[],ipCount=Number(recentFromIp?.count||0),accountCount=Number(recentAccount?.count||0);
+      if(ipCount>=4)reasons.push("Aynı ağdan yoğun oy");if(accountCount>=6)reasons.push("Hesaptan yoğun oy");if(comment.length<12)reasons.push("Çok kısa yorum");
+      const riskScore=Math.min(100,(ipCount>=4?45:0)+(accountCount>=6?35:0)+(comment.length<12?15:0));
+      await env.DB.prepare("INSERT INTO vote_security_events(review_id,user_id,server_id,ip_hash,user_agent_hash,risk_score,risk_reasons) VALUES(?,?,?,?,?,?,?)")
+        .bind(Number(createdReview.meta.last_row_id),user.id,serverId,await keyedHash(env,ip),await keyedHash(env,request.headers.get("user-agent")||"unknown"),riskScore,reasons.join(", ")).run();
       return json({ message: "Puanınız ve yorumunuz yayımlandı." }, 201);
     } catch (error) {
       if (String(error).toLowerCase().includes("unique")) return json({ error: "Bu sunucuya daha önce oy verdiniz." }, 409);
