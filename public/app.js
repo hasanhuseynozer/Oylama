@@ -84,6 +84,7 @@ function renderAccount(){
   const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":"✦ Üye";
   box.innerHTML=`<button class="notification-button" type="button" data-notification-toggle aria-label="Bildirimler">🔔<b></b></button><a class="profile-chip enhanced" href="/profil/"><img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span></a><button id="logoutBtn" class="outline logout-button">Çıkış</button>`;
   $("#logoutBtn").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.reload()};
+  if(!$("#favoriteFilter")){const favoriteFilter=document.createElement("button");favoriteFilter.id="favoriteFilter";favoriteFilter.className="tiny favorite-filter";favoriteFilter.type="button";favoriteFilter.textContent="♥ Favorilerim";favoriteFilter.onclick=()=>{state.favoriteOnly=!state.favoriteOnly;favoriteFilter.classList.toggle("active",!!state.favoriteOnly);renderServers()};$("#clearFilters").before(favoriteFilter)}
 }
 
 function card(s){
@@ -93,7 +94,7 @@ function card(s){
 
 function renderServers(){
   const q=state.query.toLocaleLowerCase("tr-TR"),cap=$("#capFilter").value,type=$("#typeFilter").value,newOnly=$("#newOnly").checked,cutoff=Date.now()-45*86400000;
-  let list=state.servers.filter(s=>`${s.name} ${s.description} ${s.cap}`.toLocaleLowerCase("tr-TR").includes(q)&&(!cap||String(s.cap)===cap)&&(!type||s.server_type===type)&&(!newOnly||new Date((s.opened_at||s.created_at)+"Z").getTime()>=cutoff));
+  let list=state.servers.filter(s=>`${s.name} ${s.description} ${s.cap}`.toLocaleLowerCase("tr-TR").includes(q)&&(!cap||String(s.cap)===cap)&&(!type||s.server_type===type)&&(!newOnly||new Date((s.opened_at||s.created_at)+"Z").getTime()>=cutoff)&&(!state.favoriteOnly||s.is_favorite));
   const sort=$("#sortSelect").value;list.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):sort==="newest"?new Date(b.opened_at||b.created_at)-new Date(a.opened_at||a.created_at):Number(b.average_rating)-Number(a.average_rating)||Number(b.vote_count)-Number(a.vote_count));
   $("#serverGrid").innerHTML=list.length?list.map(card).join(""):'<div class="panel empty-results"><h3>Bu filtrelere uygun sunucu bulunamadı.</h3></div>';
   document.querySelectorAll("[data-server]").forEach(x=>x.onclick=e=>{if(!e.target.closest("button"))openServer(Number(x.dataset.server))});
