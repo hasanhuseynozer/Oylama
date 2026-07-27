@@ -1,0 +1,35 @@
+<!doctype html><html lang="tr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="SRO Rating - Silkroad Online private server değerlendirme platformu">
+<title>SRO Rating</title><link rel="stylesheet" href="/styles.css">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+</head><body>
+<header class="site-header"><div class="shell header-inner">
+<a class="brand" href="/">SRO <span>Rating</span></a>
+<a id="banner" class="banner" href="#" rel="nofollow">SRO Rating</a>
+<div id="accountActions" class="account-actions">
+<a class="outline" href="/giris/">Giriş Yap</a><a class="primary" href="/kayit/">Kayıt Ol</a>
+</div></div></header>
+<div class="shell page-layout">
+<a id="leftAd" class="ad-rail" href="#" rel="nofollow">Reklam alanı</a>
+<main class="content">
+<div class="toolbar"><div><p class="eyebrow">SRO RATING</p><h1>Sunucu Değerlendirmeleri</h1></div>
+<div class="filters"><input id="searchInput" type="search" placeholder="Sunucu ara…"><select id="sortSelect"><option value="rating">En yüksek puan</option><option value="votes">En çok oy</option><option value="newest">En yeni</option></select></div></div>
+<div id="serverGrid" class="server-grid"><div class="panel">Yükleniyor…</div></div>
+</main>
+<a id="rightAd" class="ad-rail" href="#" rel="nofollow">Reklam alanı</a>
+</div>
+<footer class="site-footer">
+<div class="footer-box"><strong>İletişim</strong><p id="contactText"></p></div>
+<div class="footer-box"><strong>Sorumluluk Reddi</strong><p id="disclaimerText"></p></div>
+<div class="footer-box"><strong>Sosyal Medya</strong><div id="socials" class="socials"></div></div>
+</footer>
+<dialog id="reviewDialog"><form id="reviewForm" class="modal">
+<button id="closeDialog" class="close" type="button">×</button><h2 id="reviewServerName">Oy ve Yorum</h2>
+<p id="loginRequired" class="message hidden">Oy vermek için giriş yapmalısınız.</p>
+<input type="hidden" id="serverId"><div class="rating-buttons" id="ratingButtons">
+<button type="button" data-rating="1">★</button><button type="button" data-rating="2">★</button><button type="button" data-rating="3">★</button><button type="button" data-rating="4">★</button><button type="button" data-rating="5">★</button></div>
+<input type="hidden" id="rating"><label>Yorum<textarea id="comment" minlength="3" maxlength="500" required rows="5"></textarea></label>
+<div id="turnstile"></div><button class="primary" type="submit">Yayımla</button><p id="formMessage"></p>
+</form></dialog>
+<script src="/app.js" defer></script></body></html>

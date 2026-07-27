@@ -1,0 +1,16 @@
+{
+  "name": "sro-rating",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SRO Rating - Silkroad Online sunucu oylama, kullanıcı ve yönetim platformu",
+  "scripts": {
+    "build": "node --check src/index.js && node --check public/app.js && node --check public/auth.js && node --check public/profile.js && node --check public/sro-yonetim-9f4k2/admin.js",
+    "dev": "wrangler dev",
+    "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "db:remote": "wrangler d1 migrations apply DB --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

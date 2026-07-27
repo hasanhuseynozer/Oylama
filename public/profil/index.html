@@ -1,0 +1,8 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profil — SRO Rating</title><link rel="stylesheet" href="/styles.css"></head><body>
+<main class="profile-shell"><header class="topbar"><a class="brand" href="/">SRO <span>Rating</span></a><div><a class="outline" href="/">Siteye Dön</a> <button id="logout" class="outline">Çıkış</button></div></header>
+<div id="profileMessage"></div><div class="two-col">
+<form id="profileForm" class="panel"><h2>Profil Bilgileri</h2><label>Kullanıcı adı<input id="displayName" required minlength="2" maxlength="40"></label><label>E-posta<input id="email" disabled></label><button class="primary">Kaydet</button></form>
+<form id="passwordForm" class="panel"><h2>Şifre Değiştir</h2><label>Mevcut şifre<input id="oldPassword" type="password" required></label><label>Yeni şifre<input id="newPassword" type="password" required minlength="8"></label><button class="primary">Şifreyi Değiştir</button></form>
+</div><section class="panel"><h2>Oylarım ve Yorumlarım</h2><div id="myReviews" class="table-wrap"></div></section></main>
+<script src="/profile.js" defer></script></body></html>

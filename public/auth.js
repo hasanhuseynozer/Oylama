@@ -1,0 +1,5 @@
+const form=document.querySelector("#authForm"),msg=document.querySelector("#authMessage");let config={},widget=null;
+async function api(url,opt={}){const r=await fetch(url,opt),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"İşlem başarısız.");return d}
+async function init(){config=await api("/api/config");if(config.turnstileSiteKey){const go=()=>window.turnstile?widget=window.turnstile.render("#turnstile",{sitekey:config.turnstileSiteKey,theme:"dark"}):setTimeout(go,200);go()}}
+form.onsubmit=async e=>{e.preventDefault();msg.textContent="";const mode=form.dataset.mode,payload={email:document.querySelector("#email").value,password:document.querySelector("#password").value,turnstileToken:widget!==null&&window.turnstile?window.turnstile.getResponse(widget):""};if(mode==="register")payload.displayName=document.querySelector("#displayName").value;try{await api(`/api/auth/${mode}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});location.href=mode==="register"?"/profil/":"/"}catch(e){msg.textContent=e.message;if(widget!==null&&window.turnstile)window.turnstile.reset(widget)}};
+init();

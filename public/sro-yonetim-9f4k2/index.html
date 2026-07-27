@@ -1,0 +1,17 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yönetim — SRO Rating</title><link rel="stylesheet" href="/styles.css"></head><body>
+<main class="admin-shell"><section id="loginView" class="auth-card"><a class="brand" href="/">SRO <span>Rating</span></a><h1>Yönetici Girişi</h1><form id="adminLogin"><label>Şifre<input id="adminPassword" type="password" required></label><button class="primary">Giriş Yap</button><p id="loginMessage"></p></form></section>
+<section id="dashboard" class="hidden"><header class="topbar"><a class="brand" href="/">SRO <span>Rating</span></a><div><a class="outline" href="/">Siteyi Gör</a> <button id="adminLogout" class="outline">Çıkış</button></div></header>
+<div id="adminMessage"></div><div class="tabs"><button class="tab active" data-tab="overview">Genel</button><button class="tab" data-tab="servers">Sunucular</button><button class="tab" data-tab="reviews">Yorumlar</button><button class="tab" data-tab="users">Kullanıcılar</button><button class="tab" data-tab="settings">Site Ayarları</button></div>
+<section id="tab-overview" class="tab-content"><div id="stats" class="stat-grid"></div></section>
+<section id="tab-servers" class="tab-content hidden"><div class="two-col"><form id="serverForm" class="panel"><h2 id="serverFormTitle">Sunucu Ekle</h2><input id="serverId" type="hidden"><label>Ad<input id="serverName" required maxlength="80"></label><label>Açıklama<textarea id="serverDescription" required maxlength="600"></textarea></label><label><input id="serverActive" type="checkbox" checked> Sitede göster</label><button class="primary">Kaydet</button> <button id="serverCancel" class="outline hidden" type="button">Vazgeç</button></form><div class="panel"><h2>Sunucular</h2><div id="serversTable" class="table-wrap"></div></div></div></section>
+<section id="tab-reviews" class="tab-content hidden"><div class="panel"><h2>Yorumlar</h2><div id="reviewsTable" class="table-wrap"></div></div></section>
+<section id="tab-users" class="tab-content hidden"><div class="panel"><h2>Kullanıcılar</h2><div id="usersTable" class="table-wrap"></div></div></section>
+<section id="tab-settings" class="tab-content hidden"><form id="settingsForm" class="panel"><h2>Banner, Reklam ve Footer</h2><div class="two-col">
+<label>Banner yazısı<input id="banner_text"></label><label>Banner bağlantısı<input id="banner_url" type="url"></label>
+<label>Sol reklam yazısı<input id="left_ad_text"></label><label>Sol reklam bağlantısı<input id="left_ad_url" type="url"></label>
+<label>Sağ reklam yazısı<input id="right_ad_text"></label><label>Sağ reklam bağlantısı<input id="right_ad_url" type="url"></label>
+<label>İletişim<textarea id="contact_text"></textarea></label><label>Sorumluluk reddi<textarea id="disclaimer_text"></textarea></label>
+<label>Twitch<input id="twitch_url" type="url"></label><label>Kick<input id="kick_url" type="url"></label><label>YouTube<input id="youtube_url" type="url"></label>
+</div><button class="primary">Ayarları Kaydet</button></form></section>
+</section></main><script src="/sro-yonetim-9f4k2/admin.js" defer></script></body></html>
