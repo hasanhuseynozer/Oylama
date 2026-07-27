@@ -329,7 +329,7 @@ async function handleApi(request, env, url) {
     const owned=await env.DB.prepare("SELECT 1 FROM server_owners WHERE server_id=? AND user_id=?").bind(serverId,user.id).first();
     if(!owned)return json({error:"Bu sunucuyu düzenleme yetkiniz yok."},403);
     const description=cleanText(body.description),image=safeImage(body.image_url),website=cleanUrl(body.website_url),discord=cleanUrl(body.discord_url),promo=cleanUrl(body.promo_url);
-    if(description.length<3||description.length>750||hasProfanity(description))return json({error:"Açıklama 3–750 karakter olmalı ve yasaklı ifade içermemelidir."},400);
+    if(description.length<3||description.length>300||hasProfanity(description))return json({error:"Açıklama 3–300 karakter olmalı ve yasaklı ifade içermemelidir."},400);
     await env.DB.prepare("UPDATE servers SET description=?,website_url=?,discord_url=?,promo_url=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
       .bind(description,website,discord,promo,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),serverId).run();
     if(image)await saveSetting(env.DB,`server_image_${serverId}`,image);
@@ -533,7 +533,7 @@ async function handleApi(request, env, url) {
     if (method === "POST" && path === "/api/admin/servers") {
       requireJson(request); const body = await readJson(request);
       const name = cleanText(body.name), description = cleanText(body.description), cap=validCap(body.cap), rates=validRates(body.rates), serverType=validServerType(body.server_type), openedAt=validDate(body.opened_at);
-      if (name.length < 2 || name.length > 80 || description.length < 3 || description.length > 750) return json({ error: "Sunucu adı veya açıklaması geçersiz. Açıklama en fazla 750 karakter olabilir." }, 400);
+      if (name.length < 2 || name.length > 80 || description.length < 3 || description.length > 300) return json({ error: "Sunucu adı veya açıklaması geçersiz. Açıklama en fazla 300 karakter olabilir." }, 400);
       const result = await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,beta_at,launch_at,operational_status,status_note,is_verified,is_active,website_url,discord_url,promo_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(name,description,cap,rates,serverType,openedAt,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),0,body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url)).run();
       const ownerId=Number(body.owner_user_id||0);
       if(ownerId){await env.DB.prepare("INSERT OR IGNORE INTO server_owners(server_id,user_id) VALUES(?,?)").bind(Number(result.meta.last_row_id),ownerId).run();await env.DB.prepare("UPDATE users SET account_role='owner' WHERE id=?").bind(ownerId).run()}
