@@ -43,7 +43,7 @@ async function handleApi(request, env, url) {
 
   if (method === "GET" && path === "/api/servers") {
     const result = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, s.cap, s.rates, s.server_type, s.opened_at, s.is_verified, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
+      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.is_verified, s.website_url, s.discord_url, s.promo_url, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count,
         ROUND(((COALESCE(AVG(r.rating),3.5)*COUNT(r.id)+17.5)/(COUNT(r.id)+5))+(s.is_verified*0.35),2) AS trust_score
@@ -68,16 +68,22 @@ async function handleApi(request, env, url) {
     `).bind(id).first();
     if (!server) return json({ error: "Sunucu bulunamadı." }, 404);
 
+    const currentUser = await getCurrentUser(request,env.DB);
     const reviews = await env.DB.prepare(`
       SELECT r.id, r.rating, r.comment, r.created_at,
         COALESCE(u.display_name, 'Eski kullanıcı') AS display_name,
-        rr.reply AS owner_reply, rr.updated_at AS owner_reply_at
+        rr.reply AS owner_reply, rr.updated_at AS owner_reply_at,
+        (SELECT COUNT(*) FROM review_likes l WHERE l.review_id=r.id) AS like_count,
+        EXISTS(SELECT 1 FROM review_likes l WHERE l.review_id=r.id AND l.user_id=?) AS liked
       FROM reviews r LEFT JOIN users u ON u.id = r.user_id
       LEFT JOIN review_replies rr ON rr.review_id=r.id
       WHERE r.server_id = ?
       ORDER BY datetime(r.created_at) DESC LIMIT 200
-    `).bind(id).all();
-    return json({ server, reviews: reviews.results || [] });
+    `).bind(currentUser?.id||0,id).all();
+    const reviewComments=await env.DB.prepare(`SELECT c.id,c.review_id,c.comment,c.created_at,COALESCE(u.display_name,'Eski kullanıcı') display_name
+      FROM review_comments c LEFT JOIN users u ON u.id=c.user_id JOIN reviews r ON r.id=c.review_id
+      WHERE r.server_id=? ORDER BY datetime(c.created_at) ASC LIMIT 500`).bind(id).all();
+    return json({ server, reviews: reviews.results || [], reviewComments:reviewComments.results||[] });
   }
 
   // User registration
@@ -90,6 +96,7 @@ async function handleApi(request, env, url) {
 
     if (!isValidEmail(email)) return json({ error: "Geçerli bir e-posta adresi yazın." }, 400);
     if (displayName.length < 2 || displayName.length > 40) return json({ error: "Kullanıcı adı 2–40 karakter olmalıdır." }, 400);
+    if (hasProfanity(displayName)) return json({ error: "Kullanıcı adında yasaklı ifade kullanılamaz." }, 400);
     if (!isValidPassword(password)) return json({ error: "Şifre en az 8 karakter olmalı ve harf ile rakam içermelidir." }, 400);
 
     const nameExists = await env.DB.prepare("SELECT id FROM users WHERE lower(display_name)=lower(?)").bind(displayName).first();
@@ -166,6 +173,7 @@ async function handleApi(request, env, url) {
     const body = await readJson(request);
     const displayName = cleanText(body.displayName);
     if (displayName.length < 2 || displayName.length > 40) return json({ error: "Kullanıcı adı 2–40 karakter olmalıdır." }, 400);
+    if (hasProfanity(displayName)) return json({ error: "Kullanıcı adında yasaklı ifade kullanılamaz." }, 400);
     const nameExists = await env.DB.prepare("SELECT id FROM users WHERE lower(display_name)=lower(?) AND id<>?").bind(displayName,user.id).first();
     if (nameExists) return json({ error: "Bu kullanıcı adı zaten kullanılıyor." }, 409);
     await env.DB.prepare("UPDATE users SET display_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
@@ -217,6 +225,7 @@ async function handleApi(request, env, url) {
     const user = await requireUser(request, env.DB), body = await readJson(request);
     const name=cleanText(body.serverName), description=cleanText(body.description), website=cleanUrl(body.websiteUrl), cap=validCap(body.cap), rates=validRates(body.rates), serverType=validServerType(body.serverType), openedAt=validDate(body.openedAt);
     if(name.length<2||name.length>80||description.length<20||description.length>800) return json({error:"Sunucu adı 2–80, açıklama 20–800 karakter olmalıdır."},400);
+    if(hasProfanity(name)||hasProfanity(description))return json({error:"Sunucu bilgileri yasaklı ifade içeriyor."},400);
     await env.DB.prepare("INSERT INTO server_requests(user_id,server_name,description,website_url,cap,rates,server_type,opened_at) VALUES(?,?,?,?,?,?,?,?)").bind(user.id,name,description,website,cap,rates,serverType,openedAt).run();
     return json({message:"Sunucu ekleme isteğiniz yöneticiye gönderildi."},201);
   }
@@ -226,13 +235,17 @@ async function handleApi(request, env, url) {
     const user = await requireUser(request, env.DB), body = await readJson(request);
     const subject=cleanText(body.subject), message=cleanText(body.message);
     if(subject.length<3||subject.length>100||message.length<10||message.length>1000) return json({error:"Öneri bilgileri geçersiz."},400);
+    if(hasProfanity(subject)||hasProfanity(message))return json({error:"Öneri yasaklı ifade içeriyor."},400);
     await env.DB.prepare("INSERT INTO suggestions(user_id,subject,message) VALUES(?,?,?)").bind(user.id,subject,message).run();
     return json({message:"Öneriniz alındı. Teşekkürler!"},201);
   }
 
   if (method === "GET" && path === "/api/owner/dashboard") {
     const user = await requireUser(request, env.DB);
-    const servers = await env.DB.prepare("SELECT s.id,s.name,s.description FROM server_owners o JOIN servers s ON s.id=o.server_id WHERE o.user_id=?").bind(user.id).all();
+    const servers = await env.DB.prepare(`SELECT s.id,s.name,s.description,s.website_url,s.discord_url,s.promo_url,
+      COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,
+      (SELECT status FROM server_change_requests c WHERE c.server_id=s.id ORDER BY c.id DESC LIMIT 1) change_status
+      FROM server_owners o JOIN servers s ON s.id=o.server_id WHERE o.user_id=?`).bind(user.id).all();
     const reviews = await env.DB.prepare(`SELECT r.id,r.server_id,r.rating,r.comment,r.created_at,s.name server_name,
       COALESCE(u.display_name,'Eski kullanıcı') display_name,rr.reply,rr.updated_at reply_updated_at
       FROM reviews r JOIN server_owners o ON o.server_id=r.server_id AND o.user_id=?
@@ -246,11 +259,54 @@ async function handleApi(request, env, url) {
     verifyOrigin(request); requireJson(request);
     const user=await requireUser(request,env.DB), reviewId=Number(ownerReply[1]), body=await readJson(request), reply=cleanText(body.reply);
     if(reply.length<2||reply.length>500)return json({error:"Cevap 2–500 karakter arasında olmalıdır."},400);
+    if(hasProfanity(reply))return json({error:"Küfür, hakaret ve aşağılayıcı ifadeler yasaktır."},400);
     const review=await env.DB.prepare("SELECT r.server_id FROM reviews r JOIN server_owners o ON o.server_id=r.server_id WHERE r.id=? AND o.user_id=?").bind(reviewId,user.id).first();
     if(!review)return json({error:"Bu yoruma cevap verme yetkiniz yok."},403);
     await env.DB.prepare(`INSERT INTO review_replies(review_id,server_id,user_id,reply,updated_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP)
       ON CONFLICT(review_id) DO UPDATE SET reply=excluded.reply,user_id=excluded.user_id,updated_at=CURRENT_TIMESTAMP`).bind(reviewId,review.server_id,user.id,reply).run();
     return json({message:"Sunucu sahibi cevabı yayınlandı."});
+  }
+
+  const ownerChange=path.match(/^\/api\/owner\/servers\/(\d+)\/change-request$/);
+  if(method==="POST"&&ownerChange){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),serverId=Number(ownerChange[1]),body=await readJson(request);
+    const owned=await env.DB.prepare("SELECT 1 FROM server_owners WHERE server_id=? AND user_id=?").bind(serverId,user.id).first();
+    if(!owned)return json({error:"Bu sunucuyu düzenleme yetkiniz yok."},403);
+    const description=cleanText(body.description),image=safeImage(body.image_url),website=cleanUrl(body.website_url),discord=cleanUrl(body.discord_url),promo=cleanUrl(body.promo_url);
+    if(description.length<3||description.length>800||hasProfanity(description))return json({error:"Açıklama geçersiz veya yasaklı ifade içeriyor."},400);
+    await env.DB.prepare(`INSERT INTO server_change_requests(server_id,user_id,description,image_url,website_url,discord_url,promo_url)
+      VALUES(?,?,?,?,?,?,?)`).bind(serverId,user.id,description,image,website,discord,promo).run();
+    return json({message:"Değişiklikler yönetici onayına gönderildi."},201);
+  }
+
+  const ownerReport=path.match(/^\/api\/owner\/reviews\/(\d+)\/report$/);
+  if(method==="POST"&&ownerReport){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),reviewId=Number(ownerReport[1]),body=await readJson(request),reason=cleanText(body.reason)||"Küfür / hakaret";
+    const review=await env.DB.prepare("SELECT r.server_id FROM reviews r JOIN server_owners o ON o.server_id=r.server_id WHERE r.id=? AND o.user_id=?").bind(reviewId,user.id).first();
+    if(!review)return json({error:"Bildirim yetkiniz yok."},403);
+    await env.DB.prepare("INSERT OR IGNORE INTO content_reports(review_id,server_id,reporter_user_id,reason) VALUES(?,?,?,?)").bind(reviewId,review.server_id,user.id,reason).run();
+    return json({message:"Bildirim yönetici incelemesine gönderildi."},201);
+  }
+
+  const likeMatch=path.match(/^\/api\/reviews\/(\d+)\/like$/);
+  if(method==="POST"&&likeMatch){
+    verifyOrigin(request);const user=await requireUser(request,env.DB),reviewId=Number(likeMatch[1]);
+    const exists=await env.DB.prepare("SELECT 1 FROM review_likes WHERE review_id=? AND user_id=?").bind(reviewId,user.id).first();
+    if(exists)await env.DB.prepare("DELETE FROM review_likes WHERE review_id=? AND user_id=?").bind(reviewId,user.id).run();
+    else await env.DB.prepare("INSERT INTO review_likes(review_id,user_id) VALUES(?,?)").bind(reviewId,user.id).run();
+    const count=await env.DB.prepare("SELECT COUNT(*) count FROM review_likes WHERE review_id=?").bind(reviewId).first();
+    return json({liked:!exists,count:Number(count.count)});
+  }
+
+  const commentMatch=path.match(/^\/api\/reviews\/(\d+)\/comments$/);
+  if(method==="POST"&&commentMatch){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),reviewId=Number(commentMatch[1]),body=await readJson(request),comment=cleanText(body.comment);
+    if(comment.length<2||comment.length>500||hasProfanity(comment))return json({error:"Yanıt geçersiz veya yasaklı ifade içeriyor."},400);
+    await env.DB.prepare("INSERT INTO review_comments(review_id,user_id,comment) VALUES(?,?,?)").bind(reviewId,user.id,comment).run();
+    return json({message:"Yanıtınız yayınlandı."},201);
   }
 
   const reviewMatch = path.match(/^\/api\/servers\/(\d+)\/reviews$/);
@@ -267,6 +323,7 @@ async function handleApi(request, env, url) {
     const comment = cleanText(body.comment);
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) return json({ error: "1–5 arasında puan seçin." }, 400);
     if (comment.length < 3 || comment.length > 500) return json({ error: "Yorum 3–500 karakter arasında olmalıdır." }, 400);
+    if (hasProfanity(comment)) return json({ error: "Küfür, hakaret ve aşağılayıcı ifadeler yasaktır." }, 400);
 
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const allowed = await rateLimit(env.DB, "review", await keyedHash(env, ip), 8, 10 * 60);
@@ -315,7 +372,7 @@ async function handleApi(request, env, url) {
 
     if (method === "GET" && path === "/api/admin/dashboard") {
       const servers = await env.DB.prepare(`
-        SELECT s.id,s.name,s.description,s.cap,s.rates,s.server_type,s.opened_at,s.is_verified,COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,s.is_active,s.created_at,
+        SELECT s.id,s.name,s.description,s.cap,s.rates,s.server_type,s.opened_at,s.is_verified,s.website_url,s.discord_url,s.promo_url,COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,s.is_active,s.created_at,
           COALESCE(ROUND(AVG(r.rating),1),0) average_rating,COUNT(r.id) vote_count
         FROM servers s LEFT JOIN reviews r ON r.server_id=s.id GROUP BY s.id ORDER BY s.created_at DESC
       `).all();
@@ -330,7 +387,32 @@ async function handleApi(request, env, url) {
       `).all();
       const requests = await env.DB.prepare(`SELECT q.*,u.display_name,u.email FROM server_requests q JOIN users u ON u.id=q.user_id ORDER BY CASE q.status WHEN 'pending' THEN 0 ELSE 1 END,datetime(q.created_at) DESC`).all();
       const suggestions = await env.DB.prepare(`SELECT g.*,u.display_name,u.email FROM suggestions g JOIN users u ON u.id=g.user_id ORDER BY CASE g.status WHEN 'new' THEN 0 ELSE 1 END,datetime(g.created_at) DESC`).all();
-      return json({ servers: servers.results || [], reviews: reviews.results || [], users: users.results || [], requests:requests.results||[], suggestions:suggestions.results||[], settings: await getSettings(env.DB) });
+      const changes=await env.DB.prepare(`SELECT c.*,s.name server_name,u.display_name FROM server_change_requests c JOIN servers s ON s.id=c.server_id JOIN users u ON u.id=c.user_id ORDER BY CASE c.status WHEN 'pending' THEN 0 ELSE 1 END,c.id DESC`).all();
+      const reports=await env.DB.prepare(`SELECT p.*,s.name server_name,r.comment,u.display_name reporter_name FROM content_reports p JOIN servers s ON s.id=p.server_id JOIN reviews r ON r.id=p.review_id JOIN users u ON u.id=p.reporter_user_id ORDER BY CASE p.status WHEN 'pending' THEN 0 ELSE 1 END,p.id DESC`).all();
+      return json({ servers: servers.results || [], reviews: reviews.results || [], users: users.results || [], requests:requests.results||[], suggestions:suggestions.results||[], changes:changes.results||[], reports:reports.results||[], settings: await getSettings(env.DB) });
+    }
+
+    const changeAction=path.match(/^\/api\/admin\/server-changes\/(\d+)$/);
+    if(changeAction&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),id=Number(changeAction[1]),status=body.status==="approved"?"approved":"rejected";
+      const item=await env.DB.prepare("SELECT * FROM server_change_requests WHERE id=?").bind(id).first();
+      if(!item)return json({error:"Değişiklik isteği bulunamadı."},404);
+      if(status==="approved"&&item.status==="pending"){
+        await env.DB.prepare("UPDATE servers SET description=?,website_url=?,discord_url=?,promo_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(item.description,item.website_url,item.discord_url,item.promo_url,item.server_id).run();
+        if(item.image_url)await saveSetting(env.DB,`server_image_${item.server_id}`,safeImage(item.image_url));
+      }
+      await env.DB.prepare("UPDATE server_change_requests SET status=?,admin_note=?,resolved_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,cleanText(body.note),id).run();
+      return json({message:status==="approved"?"Değişiklikler yayına alındı.":"Değişiklik isteği reddedildi."});
+    }
+
+    const reportAction=path.match(/^\/api\/admin\/reports\/(\d+)$/);
+    if(reportAction&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),id=Number(reportAction[1]),status=body.status==="approved"?"approved":"rejected";
+      const item=await env.DB.prepare("SELECT review_id FROM content_reports WHERE id=?").bind(id).first();
+      if(!item)return json({error:"Bildirim bulunamadı."},404);
+      if(status==="approved")await env.DB.prepare("DELETE FROM reviews WHERE id=?").bind(item.review_id).run();
+      else await env.DB.prepare("UPDATE content_reports SET status='rejected',resolved_at=CURRENT_TIMESTAMP WHERE id=?").bind(id).run();
+      return json({message:status==="approved"?"Yorum ve puan silindi.":"Bildirim reddedildi."});
     }
 
     const requestAction=path.match(/^\/api\/admin\/server-requests\/(\d+)$/);
@@ -357,7 +439,7 @@ async function handleApi(request, env, url) {
       requireJson(request); const body = await readJson(request);
       const name = cleanText(body.name), description = cleanText(body.description), cap=validCap(body.cap), rates=validRates(body.rates), serverType=validServerType(body.server_type), openedAt=validDate(body.opened_at);
       if (name.length < 2 || name.length > 80 || description.length < 3 || description.length > 600) return json({ error: "Sunucu bilgileri geçersiz." }, 400);
-      const result = await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,is_verified,is_active) VALUES(?,?,?,?,?,?,?,?)").bind(name,description,cap,rates,serverType,openedAt,body.is_verified?1:0,body.is_active ? 1 : 0).run();
+      const result = await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,is_verified,is_active,website_url,discord_url,promo_url) VALUES(?,?,?,?,?,?,?,?,?,?,?)").bind(name,description,cap,rates,serverType,openedAt,body.is_verified?1:0,body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url)).run();
       await saveSetting(env.DB, `server_image_${Number(result.meta.last_row_id)}`, safeImage(body.image_url));
       return json({ message: "Sunucu eklendi." }, 201);
     }
@@ -366,8 +448,8 @@ async function handleApi(request, env, url) {
     if (adminServer && method === "PUT") {
       requireJson(request); const body = await readJson(request);
       const serverId=Number(adminServer[1]);
-      await env.DB.prepare("UPDATE servers SET name=?,description=?,cap=?,rates=?,server_type=?,opened_at=?,is_verified=?,is_active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
-        .bind(cleanText(body.name),cleanText(body.description),validCap(body.cap),validRates(body.rates),validServerType(body.server_type),validDate(body.opened_at),body.is_verified?1:0,body.is_active ? 1 : 0,serverId).run();
+      await env.DB.prepare("UPDATE servers SET name=?,description=?,cap=?,rates=?,server_type=?,opened_at=?,is_verified=?,is_active=?,website_url=?,discord_url=?,promo_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+        .bind(cleanText(body.name),cleanText(body.description),validCap(body.cap),validRates(body.rates),validServerType(body.server_type),validDate(body.opened_at),body.is_verified?1:0,body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url),serverId).run();
       await saveSetting(env.DB, `server_image_${serverId}`, safeImage(body.image_url));
       return json({ message: "Sunucu güncellendi." });
     }
@@ -554,6 +636,12 @@ function requireJson(request) {
 }
 async function readJson(request) { try { return await request.json(); } catch { throw new HttpError("Geçersiz veri.",400); } }
 function cleanText(value) { return String(value || "").replace(/<[^>]*>/g,"").replace(/[\u0000-\u001F\u007F]/g," ").replace(/\s+/g," ").trim(); }
+function hasProfanity(value){
+  const raw=String(value||"").toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[0@4]/g,"a").replace(/[1!|]/g,"i").replace(/[3]/g,"e").replace(/[5$]/g,"s").replace(/[7]/g,"t");
+  const compact=raw.replace(/[^a-zçğıöşü]/g,""),tokens=raw.split(/[^a-zçğıöşü]+/).filter(Boolean);
+  const blockedRoots=["amk","amina","aminakoy","siktir","orospu","yarrak","gotveren","pezevenk","puşt","pust"];
+  return blockedRoots.some(word=>compact.includes(word))||["aq","sik","pic","ibne","kahpe","gerizekali","salak","aptal","mal"].some(word=>tokens.includes(word));
+}
 function validCap(value) { const cap=Number(value); return Number.isInteger(cap)&&cap>=1&&cap<=200 ? cap : 110; }
 function validRates(value) { const rates=cleanText(value).slice(0,30); return rates || "1x"; }
 function validServerType(value) { return String(value).toUpperCase()==="CH" ? "CH" : "EU/CH"; }
