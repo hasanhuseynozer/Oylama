@@ -60,7 +60,7 @@ async function handleApi(request, env, url) {
   if (method === "GET" && serverMatch) {
     const id = Number(serverMatch[1]);
     const server = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, s.cap, s.rates, s.server_type, s.opened_at, s.is_verified, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
+      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.is_verified, s.website_url, s.discord_url, s.promo_url, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count
       FROM servers s LEFT JOIN reviews r ON r.server_id = s.id
