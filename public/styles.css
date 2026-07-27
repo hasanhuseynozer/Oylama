@@ -760,6 +760,9 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
 @media(max-width:1399px){
   .page-layout{grid-template-columns:minmax(0,1fr)!important}
   .sponsor-rail{display:none!important}
+  .server-grid{grid-template-columns:repeat(4,minmax(240px,1fr))!important}
+}
+@media(max-width:1099px){
   .server-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
 @media(max-width:900px){
