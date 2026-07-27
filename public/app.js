@@ -35,3 +35,46 @@ function formatCountdown(value){const ms=new Date(value).getTime()-Date.now();if
 function setupExtras(){const actions=$("#accountActions"),button=document.createElement("button");button.className="outline calendar-button";button.textContent="📅 Takvim";actions.prepend(button);const dialog=document.createElement("dialog");dialog.className="calendar-dialog";dialog.innerHTML='<button class="close" type="button">×</button><p class="eyebrow">SUNUCU TAKVİMİ</p><h2>Beta ve Açılış Takvimi</h2><p class="panel-lead">Tarihler yerel saatinize göre gösterilir.</p><div class="calendar-events"></div>';document.body.append(dialog);button.onclick=()=>{const events=state.servers.flatMap(s=>[["Beta",s.beta_at],["Açılış",s.launch_at]].filter(x=>x[1]).map(x=>({server:s.name,type:x[0],date:x[1]}))).sort((a,b)=>new Date(a.date)-new Date(b.date));dialog.querySelector(".calendar-events").innerHTML=events.length?events.map(x=>`<article><time>${new Date(x.date).toLocaleString("tr-TR")}</time><div><strong>${esc(x.server)}</strong><span>${x.type} · ${formatCountdown(x.date)}</span></div></article>`).join(""):'<div class="empty-state">Takvime eklenmiş etkinlik yok.</div>';dialog.showModal()};dialog.querySelector(".close").onclick=()=>dialog.close();dialog.onclick=e=>{if(e.target===dialog)dialog.close()};setInterval(()=>document.querySelectorAll(".countdown").forEach(x=>x.querySelector("span").textContent=formatCountdown(x.dataset.date)),60000)}
 function renderAccount(){const box=$("#accountActions");if(!state.user)return;const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":"✦ Üye";box.innerHTML=`<a class="profile-chip enhanced" href="/profil/"><img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span></a><button id="logoutBtn" class="outline">Çıkış</button>`;$("#logoutBtn").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.reload()}}
 init().then(setupExtras).catch(e=>$("#serverGrid").innerHTML=`<div class="panel bad">${esc(e.message)}</div>`);
+
+function renderAccount(){
+  const box=$("#accountActions");if(!state.user)return;
+  const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":"✦ Üye";
+  box.innerHTML=`<a class="notification-button" href="/bildirimler/" aria-label="Bildirimler">🔔<b id="notificationCount"></b></a><a class="profile-chip enhanced" href="/profil/"><img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span></a><button id="logoutBtn" class="outline logout-button">Çıkış</button>`;
+  $("#logoutBtn").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.reload()};
+  api("/api/notifications").then(x=>{const count=$("#notificationCount");if(count&&x.unread){count.textContent=x.unread>99?"99+":x.unread;count.classList.add("visible")}}).catch(()=>{});
+}
+
+function renderReviewList(reviews,mode){
+  const list=[...reviews];
+  list.sort((a,b)=>mode==="ratingAsc"?a.rating-b.rating:mode==="likes"?Number(b.like_count)-Number(a.like_count):mode==="dislikes"?Number(b.dislike_count)-Number(a.dislike_count):b.rating-a.rating);
+  $("#serverDetailComments").innerHTML=list.length?list.map(r=>reviewBlock(r)).join(""):'<div class="empty-comments"><strong>Henüz yorum yok</strong><p>İlk deneyimi paylaşan siz olun.</p></div>';
+  document.querySelectorAll("[data-reaction]").forEach(b=>b.onclick=async()=>{if(!state.user)return location.href="/giris/";await api(`/api/reviews/${b.dataset.reviewId}/reaction`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reaction:b.dataset.reaction})});const params=new URLSearchParams(location.search);await openServer(Number(params.get("server")||state.openServerId))});
+  document.querySelectorAll("[data-profile]").forEach(b=>b.onclick=()=>openProfile(b.dataset.profile));
+}
+
+async function openServer(id){
+  state.openServerId=id;
+  const s=state.servers.find(x=>Number(x.id)===id),d=await api(`/api/servers/${id}`),rating=Number(s.average_rating||0),[statusClass,statusText]=statusInfo(s);
+  $("#serverDetailName").textContent=s.name;$("#serverDetailDescription").textContent=s.description;
+  $("#serverDetailHero").className=`server-detail-hero${s.image_url?"":" placeholder"}`;
+  $("#serverDetailHero").style.backgroundImage=s.image_url?`linear-gradient(180deg,transparent,rgba(5,5,5,.58)),url("${s.image_url}")`:"";
+  $("#serverDetailHero").innerHTML="";
+  $("#serverDetailBadges").innerHTML=`<span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span><span class="server-status inline ${statusClass}" title="${esc(s.status_note||statusText)}"><i></i>${statusText}</span>${nextEvent(s)?`<span>${nextEvent(s)[0]} · ${new Date(nextEvent(s)[1]).toLocaleString("tr-TR")}</span>`:""}`;
+  const links=[["Web Sitesi",d.server.website_url],["Discord",d.server.discord_url],["Tanıtım",d.server.promo_url]].filter(x=>x[1]);
+  $("#serverDetailLinks").innerHTML=links.map(x=>`<a class="outline" href="${escapeAttr(x[1])}" target="_blank" rel="noopener nofollow">${x[0]} ↗</a>`).join("");
+  $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars">${stars(rating)}</span><small>${d.reviews.length} topluluk yorumu</small>`;
+  $("#serverDetailCount").innerHTML=`<label class="comment-sort-label">Sırala <select id="commentSort"><option value="ratingDesc">Puan: yüksekten düşüğe</option><option value="ratingAsc">Puan: düşükten yükseğe</option><option value="likes">En çok beğenilen</option><option value="dislikes">En çok beğenilmeyen</option></select></label>`;
+  renderReviewList(d.reviews,"ratingDesc");$("#commentSort").onchange=e=>renderReviewList(d.reviews,e.target.value);
+  const mine=d.reviews.find(r=>Number(r.user_id)===Number(state.user?.id));$("#detailReviewButton").textContent=mine?"Puanımı / Yorumumu Düzenle":"Oy Ver / Yorum Yap";$("#detailReviewButton").onclick=()=>{$("#serverDialog").close();openReview(id,mine)};
+  if(!$("#serverDialog").open)$("#serverDialog").showModal();
+  history.replaceState(null,"",`/?server=${id}`);
+}
+
+async function openProfile(id){
+  if(!id)return;$("#serverDialog").close();
+  const d=await api(`/api/users/${id}/profile`),p=d.profile,s=d.stats,badges=["Topluluk Üyesi",Number(s.reviews)>=1&&"İlk Değerlendirme",Number(s.reviews)>=5&&"Deneyimli Yorumcu",p.account_role==="owner"&&"Sunucu Sahibi"].filter(Boolean);
+  $("#profilePreviewContent").innerHTML=`<div class="profile-preview-head"><img src="/sro-rating-logo.png" alt=""><div><p class="eyebrow">${p.account_role==="owner"?"SUNUCU SAHİBİ":"TOPLULUK ÜYESİ"}</p><h2>${esc(p.display_name)}</h2></div></div>${p.bio?`<p class="profile-bio">${esc(p.bio)}</p>`:""}<div class="badge-wall">${badges.map(x=>`<span class="profile-badge">✦ ${x}</span>`).join("")}</div><h3>Oynadığı Sunucular ve Karakterleri</h3><div class="public-server-list">${d.servers.length?d.servers.map(x=>`<article><span>${esc(x.name)}</span><strong>${esc(x.character_name||"Karakter adı paylaşılmadı")}</strong></article>`).join(""):"<p>Henüz sunucu seçmedi.</p>"}</div><div class="profile-stats"><span><strong>${s.reviews}</strong> Değerlendirme</span><span><strong>${s.likes}</strong> Beğeni</span></div>`;
+  $("#profilePreviewDialog").showModal();
+}
+
+setTimeout(()=>{const serverId=Number(new URLSearchParams(location.search).get("server"));if(serverId&&state.servers.some(x=>Number(x.id)===serverId))openServer(serverId)},900);

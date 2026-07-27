@@ -181,9 +181,12 @@ async function handleApi(request, env, url) {
     if(hasProfanity(gameAlias)||hasProfanity(bio))return json({error:"Profil bilgileri yasaklı ifade içeriyor."},400);
     await env.DB.prepare("UPDATE users SET display_name=?,game_alias=?,bio=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
       .bind(displayName,gameAlias,bio,user.id).run();
-    const serverIds=Array.isArray(body.serverIds)?body.serverIds.map(Number).filter(Number.isInteger).slice(0,20):[];
+    const playedServers=Array.isArray(body.playedServers)
+      ? body.playedServers.slice(0,50).map(x=>({serverId:Number(x.serverId),characterName:cleanText(x.characterName).slice(0,40)})).filter(x=>Number.isInteger(x.serverId))
+      : (Array.isArray(body.serverIds)?body.serverIds:[]).slice(0,50).map(serverId=>({serverId:Number(serverId),characterName:""})).filter(x=>Number.isInteger(x.serverId));
+    if(playedServers.some(x=>hasProfanity(x.characterName)))return json({error:"Karakter adında yasaklı ifade kullanılamaz."},400);
     await env.DB.prepare("DELETE FROM user_playing_servers WHERE user_id=?").bind(user.id).run();
-    if(serverIds.length)await env.DB.batch(serverIds.map(id=>env.DB.prepare("INSERT OR IGNORE INTO user_playing_servers(user_id,server_id) SELECT ?,id FROM servers WHERE id=? AND is_active=1").bind(user.id,id)));
+    if(playedServers.length)await env.DB.batch(playedServers.map(x=>env.DB.prepare("INSERT OR IGNORE INTO user_playing_servers(user_id,server_id,character_name) SELECT ?,id,? FROM servers WHERE id=? AND is_active=1").bind(user.id,x.characterName,x.serverId)));
     return json({ message: "Profil güncellendi." });
   }
 
@@ -191,7 +194,7 @@ async function handleApi(request, env, url) {
   if(method==="GET"&&publicProfile){
     const userId=Number(publicProfile[1]),profile=await env.DB.prepare("SELECT id,display_name,account_role,game_alias,bio,created_at FROM users WHERE id=? AND status='active'").bind(userId).first();
     if(!profile)return json({error:"Kullanıcı bulunamadı."},404);
-    const servers=await env.DB.prepare("SELECT s.id,s.name FROM user_playing_servers p JOIN servers s ON s.id=p.server_id WHERE p.user_id=? AND s.is_active=1 ORDER BY s.name").bind(userId).all();
+    const servers=await env.DB.prepare("SELECT s.id,s.name,p.character_name FROM user_playing_servers p JOIN servers s ON s.id=p.server_id WHERE p.user_id=? AND s.is_active=1 ORDER BY s.name").bind(userId).all();
     const stats=await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM reviews WHERE user_id=?) reviews,
       0 replies,
       (SELECT COUNT(*) FROM review_reactions WHERE user_id=? AND reaction='like') likes`).bind(userId,userId).first();
@@ -235,8 +238,28 @@ async function handleApi(request, env, url) {
     const suggestions = await env.DB.prepare("SELECT id,subject,message,status,created_at FROM suggestions WHERE user_id=? ORDER BY datetime(created_at) DESC").bind(user.id).all();
     const owned = await env.DB.prepare("SELECT s.id,s.name FROM server_owners o JOIN servers s ON s.id=o.server_id WHERE o.user_id=? ORDER BY s.name").bind(user.id).all();
     const servers=await env.DB.prepare("SELECT id,name FROM servers WHERE is_active=1 ORDER BY name").all();
-    const playing=await env.DB.prepare("SELECT server_id FROM user_playing_servers WHERE user_id=?").bind(user.id).all();
-    return json({ requests: [], suggestions: suggestions.results || [], ownedServers: owned.results || [], servers:servers.results||[], playingServerIds:(playing.results||[]).map(x=>x.server_id) });
+    const playing=await env.DB.prepare("SELECT server_id,character_name FROM user_playing_servers WHERE user_id=?").bind(user.id).all();
+    return json({ requests: [], suggestions: suggestions.results || [], ownedServers: owned.results || [], servers:servers.results||[], playingServers:playing.results||[], playingServerIds:(playing.results||[]).map(x=>x.server_id) });
+  }
+
+  if(method==="GET"&&path==="/api/notifications"){
+    const user=await requireUser(request,env.DB);
+    const result=await env.DB.prepare("SELECT id,type,title,message,target_url,is_read,created_at FROM notifications WHERE user_id=? ORDER BY datetime(created_at) DESC LIMIT 100").bind(user.id).all();
+    const unread=await env.DB.prepare("SELECT COUNT(*) count FROM notifications WHERE user_id=? AND is_read=0").bind(user.id).first();
+    return json({notifications:result.results||[],unread:Number(unread.count||0)});
+  }
+
+  if(method==="DELETE"&&path==="/api/notifications"){
+    verifyOrigin(request);const user=await requireUser(request,env.DB);
+    await env.DB.prepare("DELETE FROM notifications WHERE user_id=?").bind(user.id).run();
+    return json({message:"Bildirimler temizlendi."});
+  }
+
+  const notificationRead=path.match(/^\/api\/notifications\/(\d+)\/read$/);
+  if(method==="PUT"&&notificationRead){
+    verifyOrigin(request);const user=await requireUser(request,env.DB);
+    await env.DB.prepare("UPDATE notifications SET is_read=1 WHERE id=? AND user_id=?").bind(Number(notificationRead[1]),user.id).run();
+    return json({message:"Bildirim okundu."});
   }
 
   if (method === "POST" && path === "/api/profile/server-requests") {
@@ -277,6 +300,8 @@ async function handleApi(request, env, url) {
     if(!review)return json({error:"Bu yoruma cevap verme yetkiniz yok."},403);
     await env.DB.prepare(`INSERT INTO review_replies(review_id,server_id,user_id,reply,updated_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP)
       ON CONFLICT(review_id) DO UPDATE SET reply=excluded.reply,user_id=excluded.user_id,updated_at=CURRENT_TIMESTAMP`).bind(reviewId,review.server_id,user.id,reply).run();
+    const recipient=await env.DB.prepare("SELECT user_id FROM reviews WHERE id=?").bind(reviewId).first();
+    if(recipient?.user_id&&Number(recipient.user_id)!==Number(user.id))await addNotification(env.DB,recipient.user_id,user.id,"owner_reply","Sunucu sahibi yanıtladı","Yorumunuza sunucu sahibinden cevap geldi.",`/?server=${review.server_id}&review=${reviewId}`);
     return json({message:"Sunucu sahibi cevabı yayınlandı."});
   }
 
@@ -287,7 +312,7 @@ async function handleApi(request, env, url) {
     const owned=await env.DB.prepare("SELECT 1 FROM server_owners WHERE server_id=? AND user_id=?").bind(serverId,user.id).first();
     if(!owned)return json({error:"Bu sunucuyu düzenleme yetkiniz yok."},403);
     const description=cleanText(body.description),image=safeImage(body.image_url),website=cleanUrl(body.website_url),discord=cleanUrl(body.discord_url),promo=cleanUrl(body.promo_url);
-    if(description.length<3||description.length>800||hasProfanity(description))return json({error:"Açıklama geçersiz veya yasaklı ifade içeriyor."},400);
+    if(description.length<3||description.length>750||hasProfanity(description))return json({error:"Açıklama 3–750 karakter olmalı ve yasaklı ifade içermemelidir."},400);
     await env.DB.prepare("UPDATE servers SET description=?,website_url=?,discord_url=?,promo_url=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
       .bind(description,website,discord,promo,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),serverId).run();
     if(image)await saveSetting(env.DB,`server_image_${serverId}`,image);
@@ -310,9 +335,11 @@ async function handleApi(request, env, url) {
     const user=await requireUser(request,env.DB),reviewId=Number(reactionMatch[1]),body=await readJson(request),reaction=["like","dislike"].includes(body.reaction)?body.reaction:"";
     if(!reaction)return json({error:"Tepki geçersiz."},400);
     const old=await env.DB.prepare("SELECT reaction FROM review_reactions WHERE review_id=? AND user_id=?").bind(reviewId,user.id).first();
+    const reviewOwner=await env.DB.prepare("SELECT user_id,server_id FROM reviews WHERE id=?").bind(reviewId).first();
     if(old?.reaction===reaction)await env.DB.prepare("DELETE FROM review_reactions WHERE review_id=? AND user_id=?").bind(reviewId,user.id).run();
     else await env.DB.prepare(`INSERT INTO review_reactions(review_id,user_id,reaction,updated_at) VALUES(?,?,?,CURRENT_TIMESTAMP)
       ON CONFLICT(review_id,user_id) DO UPDATE SET reaction=excluded.reaction,updated_at=CURRENT_TIMESTAMP`).bind(reviewId,user.id,reaction).run();
+    if(reviewOwner?.user_id&&Number(reviewOwner.user_id)!==Number(user.id)&&old?.reaction!==reaction)await addNotification(env.DB,reviewOwner.user_id,user.id,reaction,reaction==="like"?"Yorumun beğenildi":"Yorumuna beğenmeme geldi",reaction==="like"?"Bir kullanıcı yorumunu beğendi.":"Bir kullanıcı yorumunu beğenmedi.",`/?server=${reviewOwner.server_id}&review=${reviewId}`);
     return json({message:"Tepki güncellendi."});
   }
 
@@ -482,7 +509,7 @@ async function handleApi(request, env, url) {
     if (method === "POST" && path === "/api/admin/servers") {
       requireJson(request); const body = await readJson(request);
       const name = cleanText(body.name), description = cleanText(body.description), cap=validCap(body.cap), rates=validRates(body.rates), serverType=validServerType(body.server_type), openedAt=validDate(body.opened_at);
-      if (name.length < 2 || name.length > 80 || description.length < 3 || description.length > 600) return json({ error: "Sunucu bilgileri geçersiz." }, 400);
+      if (name.length < 2 || name.length > 80 || description.length < 3 || description.length > 750) return json({ error: "Sunucu adı veya açıklaması geçersiz. Açıklama en fazla 750 karakter olabilir." }, 400);
       const result = await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,beta_at,launch_at,operational_status,status_note,is_verified,is_active,website_url,discord_url,promo_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(name,description,cap,rates,serverType,openedAt,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),0,body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url)).run();
       const ownerId=Number(body.owner_user_id||0);
       if(ownerId){await env.DB.prepare("INSERT OR IGNORE INTO server_owners(server_id,user_id) VALUES(?,?)").bind(Number(result.meta.last_row_id),ownerId).run();await env.DB.prepare("UPDATE users SET account_role='owner' WHERE id=?").bind(ownerId).run()}
@@ -536,6 +563,21 @@ async function handleApi(request, env, url) {
       await env.DB.prepare("UPDATE users SET account_role=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(role,userId).run();
       if(role==="user")await env.DB.prepare("DELETE FROM server_owners WHERE user_id=?").bind(userId).run();
       return json({message:role==="owner"?"Kullanıcı sunucu sahibi rolüne geçirildi. Sunucu atamasını Sunucular bölümünden yapın.":"Kullanıcı normal role geçirildi."});
+    }
+
+    const assignOwner=path.match(/^\/api\/admin\/users\/(\d+)\/assign-server$/);
+    if(assignOwner&&method==="POST"){
+      requireJson(request);const body=await readJson(request),userId=Number(assignOwner[1]),serverId=Number(body.serverId);
+      const server=await env.DB.prepare("SELECT id,name FROM servers WHERE id=?").bind(serverId).first();
+      const userRow=await env.DB.prepare("SELECT id FROM users WHERE id=? AND status='active'").bind(userId).first();
+      if(!server||!userRow)return json({error:"Kullanıcı veya sunucu bulunamadı."},404);
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM server_owners WHERE server_id=?").bind(serverId),
+        env.DB.prepare("INSERT INTO server_owners(server_id,user_id) VALUES(?,?)").bind(serverId,userId),
+        env.DB.prepare("UPDATE users SET account_role='owner',updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(userId)
+      ]);
+      await addNotification(env.DB,userId,null,"ownership","Sunucu sahipliği atandı",`${server.name} sunucusunun yönetimi hesabınıza bağlandı.`,"/sunucu-paneli/");
+      return json({message:`${server.name} sunucusu kullanıcıya atandı.`});
     }
 
     const deleteUser = path.match(/^\/api\/admin\/users\/(\d+)$/);
@@ -698,6 +740,11 @@ function hasProfanity(value){
   const compact=raw.replace(/[^a-zçğıöşü]/g,""),tokens=raw.split(/[^a-zçğıöşü]+/).filter(Boolean);
   const blockedRoots=["amk","amina","aminakoy","siktir","orospu","yarrak","gotveren","pezevenk","puşt","pust"];
   return blockedRoots.some(word=>compact.includes(word))||["aq","sik","pic","ibne","kahpe","gerizekali","salak","aptal","mal"].some(word=>tokens.includes(word));
+}
+
+async function addNotification(db,userId,actorUserId,type,title,message,targetUrl){
+  await db.prepare("INSERT INTO notifications(user_id,actor_user_id,type,title,message,target_url) VALUES(?,?,?,?,?,?)")
+    .bind(Number(userId),actorUserId?Number(actorUserId):null,String(type),cleanText(title).slice(0,100),cleanText(message).slice(0,240),String(targetUrl||"/").slice(0,300)).run();
 }
 function validCap(value) { const cap=Number(value); return Number.isInteger(cap)&&cap>=1&&cap<=200 ? cap : 110; }
 function validRates(value) { const rates=cleanText(value).slice(0,30); return rates || "1x"; }

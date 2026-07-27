@@ -12,3 +12,35 @@ $("#serverSearch").oninput=e=>renderServers(e.target.value);$("#closeEditReview"
 function badgesFor(s,owner){const b=[{icon:"✦",name:"Topluluk Üyesi",text:"SRO RATING topluluğunun bir üyesi."}];if(Number(s.reviews)>=1)b.push({icon:"★",name:"İlk Değerlendirme",text:"İlk değerlendirmesini yayımladı."});if(Number(s.reviews)>=5)b.push({icon:"🏆",name:"Deneyimli Yorumcu",text:"En az 5 sunucuyu değerlendirdi."});if(Number(s.likes)>=10)b.push({icon:"♥",name:"Destekçi",text:"Yararlı yorumları destekliyor."});if(owner)b.push({icon:"♛",name:"Sunucu Sahibi",text:"Yönetici tarafından atanmış sunucu sahibi."});return b}
 function show(t,c){msg.className=`message ${c}`;msg.textContent=t;scrollTo({top:0,behavior:"smooth"})}function status(v){return({new:"Yeni",reviewed:"İncelendi",closed:"Kapandı"})[v]||v}function date(v){return new Date(v+"Z").toLocaleString("tr-TR")}function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 init().catch(()=>location.href="/giris/");
+
+function renderServers(query){
+  const box=$("#playingServers"),q=query.toLocaleLowerCase("tr-TR");
+  const existing=new Map([...box.querySelectorAll(".server-choice")].map(row=>[
+    Number(row.querySelector("input[type=checkbox]")?.value),
+    {selected:!!row.querySelector("input[type=checkbox]")?.checked,characterName:row.querySelector(".character-name")?.value||""}
+  ]));
+  const saved=new Map((communityData.playingServers||[]).map(x=>[Number(x.server_id),{selected:true,characterName:x.character_name||""}]));
+  box.innerHTML=(communityData.servers||[]).filter(s=>s.name.toLocaleLowerCase("tr-TR").includes(q)).map(s=>{
+    const value=existing.get(Number(s.id))||saved.get(Number(s.id))||{selected:false,characterName:""};
+    return `<div class="server-choice character-server"><label><input type="checkbox" value="${s.id}" ${value.selected?"checked":""}><span>${esc(s.name)}</span></label><input class="character-name" maxlength="40" value="${esc(value.characterName)}" placeholder="Bu sunucudaki karakter adı" ${value.selected?"":"disabled"}></div>`;
+  }).join("")||'<div class="empty-state">Sunucu bulunamadı.</div>';
+  box.querySelectorAll(".character-server input[type=checkbox]").forEach(check=>check.onchange=()=>{check.closest(".character-server").querySelector(".character-name").disabled=!check.checked});
+}
+
+$("#profileForm").onsubmit=async e=>{
+  e.preventDefault();
+  try{
+    const playedServers=[...document.querySelectorAll(".character-server")].filter(x=>x.querySelector("input[type=checkbox]").checked).map(x=>({
+      serverId:Number(x.querySelector("input[type=checkbox]").value),
+      characterName:x.querySelector(".character-name").value
+    }));
+    await api("/api/profile",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({displayName:$("#displayName").value,gameAlias:$("#gameAlias").value,bio:$("#bio").value,playedServers})});
+    show("Profil güncellendi.","good");await init();
+  }catch(err){show(err.message,"bad")}
+};
+
+const notificationLink=document.createElement("a");
+notificationLink.className="outline notification-link";
+notificationLink.href="/bildirimler/";
+notificationLink.innerHTML="🔔 Bildirimler";
+document.querySelector(".topbar nav").prepend(notificationLink);

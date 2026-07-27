@@ -40,3 +40,18 @@ $("#serverForm").onsubmit=async e=>{e.preventDefault();const id=$("#serverId").v
 const editServerWithSchedule=window.editServer;window.editServer=id=>{editServerWithSchedule(id);const s=data.servers.find(x=>Number(x.id)===id);$("#serverBetaAt").value=s.beta_at||"";$("#serverLaunchAt").value=s.launch_at||"";$("#serverOperationalStatus").value=s.operational_status||"offline";$("#serverStatusNote").value=s.status_note||""};
 document.querySelectorAll(".brand").forEach(x=>x.innerHTML='<img class="admin-brand-logo" src="/sro-rating-header.png" alt="SRO RATING">');
 load();
+
+function renderUsers(){
+  const serverOptions='<option value="">Sunucu seçin</option>'+data.servers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+  $("#usersTable").innerHTML=`<table><thead><tr><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>Durum</th><th>Sunucu Sahipliği</th><th>Hesap</th></tr></thead><tbody>${data.users.map(u=>`<tr><td><b>${esc(u.display_name)}</b></td><td>${esc(u.email)}</td><td><span class="role-pill ${esc(u.account_role||"user")}">${u.account_role==="owner"?"Sunucu Sahibi":"Kullanıcı"}</span></td><td>${u.status==="active"?"Aktif":"Engelli"}</td><td><div class="owner-assign-control"><select id="owner-server-${u.id}">${serverOptions}</select><button class="tiny primary" onclick="assignServerOwner(${u.id})">Sahipliği Ata</button></div></td><td><div class="user-actions"><button class="tiny" onclick="setRole(${u.id},'${u.account_role==="owner"?"user":"owner"}')">${u.account_role==="owner"?"Normal Kullanıcı Yap":"Yalnızca Rol Ver"}</button><button class="tiny" onclick="toggleUser(${u.id},'${u.status==="active"?"blocked":"active"}')">${u.status==="active"?"Engelle":"Aç"}</button><button class="tiny danger" onclick="deleteUser(${u.id})">Sil</button></div></td></tr>`).join("")}</tbody></table>`;
+  const select=$("#serverOwner"),value=select.value;
+  select.innerHTML='<option value="">Atanmamış</option>'+data.users.filter(u=>u.status==="active").map(u=>`<option value="${u.id}">${esc(u.display_name)} · ${esc(u.email)}</option>`).join("");
+  select.value=value;
+}
+
+window.assignServerOwner=async userId=>{
+  const serverId=Number($(`#owner-server-${userId}`).value);
+  if(!serverId)return show("Önce bir sunucu seçin.","bad");
+  await api(`/api/admin/users/${userId}/assign-server`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({serverId})});
+  await load();show("Sunucu sahipliği ve panel yetkisi birlikte atandı.","good");
+};
