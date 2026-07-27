@@ -16,6 +16,12 @@ try{
   dashboard=(await call("/api/admin/dashboard",{cookie:adminCookie})).data;const server=dashboard.servers.find(x=>x.name===`Bot Server ${stamp}`);created.server=server.id;
   await call(`/api/admin/users/${owner.id}/assign-server`,{method:"POST",cookie:adminCookie,...jsonBody({serverId:server.id})});
   const ownerDash=(await call("/api/owner/dashboard",{cookie:ownerCookie})).data;if(!ownerDash.servers.some(x=>x.id===server.id))throw new Error("Sahip ataması görünmedi");
+  const ownerVote=await fetch(`${base}/api/servers/${server.id}/reviews`,{method:"POST",headers:{"content-type":"application/json",cookie:ownerCookie,origin:base},body:JSON.stringify({rating:5,comment:"Kendi sunucuma oy"})});if(ownerVote.status!==409)throw new Error("Sunucu sahibinin kendi sunucusuna oy vermesi engellenmedi");
+  await call(`/api/admin/users/${user.id}/assign-server`,{method:"POST",cookie:adminCookie,...jsonBody({serverId:server.id})});
+  dashboard=(await call("/api/admin/dashboard",{cookie:adminCookie})).data;
+  if(dashboard.users.find(x=>x.id===owner.id)?.account_role!=="user")throw new Error("Eski sunucu sahibinin rolü uzlaştırılmadı");
+  if(dashboard.users.find(x=>x.id===user.id)?.account_role!=="owner")throw new Error("Yeni sunucu sahibinin rolü atanmadı");
+  await call(`/api/admin/users/${owner.id}/assign-server`,{method:"POST",cookie:adminCookie,...jsonBody({serverId:server.id})});
   await call(`/api/owner/servers/${server.id}/change-request`,{method:"POST",cookie:ownerCookie,...jsonBody({description:"Sahip tarafından doğrudan güncellendi",operational_status:"online",status_note:"Çevrimiçi"})});
   const review=await call(`/api/servers/${server.id}/reviews`,{method:"POST",cookie:userCookie,...jsonBody({rating:4,comment:"Otomatik kullanıcı testi"})});
   const detail=(await call(`/api/servers/${server.id}`,{cookie:userCookie})).data,reviewId=detail.reviews[0].id;
