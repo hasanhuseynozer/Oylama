@@ -18,6 +18,10 @@ export default {
         return await handleApi(request, env, url);
       }
 
+      if (url.pathname.startsWith("/media/") && request.method === "GET") {
+        return secureResponse(await handleMedia(env.DB,url.pathname));
+      }
+
       const response = await env.ASSETS.fetch(request);
       return secureResponse(response);
     } catch (error) {
@@ -33,7 +37,7 @@ async function handleApi(request, env, url) {
   const path = url.pathname;
 
   if (method === "GET" && path === "/api/config") {
-    const settings = await getSettings(env.DB);
+    const settings = await getPublicSettings(env.DB);
     return json({
       siteName: "SRO RATING",
       turnstileSiteKey: env.TURNSTILE_SITE_KEY || "",
@@ -44,7 +48,10 @@ async function handleApi(request, env, url) {
   if (method === "GET" && path === "/api/servers") {
     const currentUser=await getCurrentUser(request,env.DB);
     const result = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.beta_at, s.launch_at, s.operational_status, s.status_note, s.website_url, s.discord_url, s.promo_url, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
+      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.beta_at, s.launch_at, s.operational_status, s.status_note, s.website_url, s.discord_url, s.promo_url,
+        CASE WHEN EXISTS(SELECT 1 FROM site_settings WHERE setting_key='server_image_'||s.id AND setting_value!='')
+          THEN '/media/server/'||s.id||'?v='||COALESCE((SELECT strftime('%s',updated_at) FROM site_settings WHERE setting_key='server_image_'||s.id),'0') ELSE '' END image_url,
+        s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count,
         EXISTS(SELECT 1 FROM user_favorite_servers f WHERE f.server_id=s.id AND f.user_id=?) AS is_favorite,
@@ -77,7 +84,10 @@ async function handleApi(request, env, url) {
   if (method === "GET" && serverMatch) {
     const id = Number(serverMatch[1]);
     const server = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.beta_at, s.launch_at, s.operational_status, s.status_note, s.website_url, s.discord_url, s.promo_url, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
+      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.beta_at, s.launch_at, s.operational_status, s.status_note, s.website_url, s.discord_url, s.promo_url,
+        CASE WHEN EXISTS(SELECT 1 FROM site_settings WHERE setting_key='server_image_'||s.id AND setting_value!='')
+          THEN '/media/server/'||s.id||'?v='||COALESCE((SELECT strftime('%s',updated_at) FROM site_settings WHERE setting_key='server_image_'||s.id),'0') ELSE '' END image_url,
+        s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count
       FROM servers s LEFT JOIN reviews r ON r.server_id = s.id
@@ -671,6 +681,46 @@ function safeImage(value){
 async function getSettings(db) {
   const rows = await db.prepare("SELECT setting_key,setting_value FROM site_settings").all();
   return Object.fromEntries((rows.results || []).map(row => [row.setting_key, row.setting_value]));
+}
+
+async function getPublicSettings(db){
+  const publicKeys=new Set([
+    "logo_image","banner_text","banner_url","banner_image",
+    "left_ad_text","left_ad_url","left_ad_image",
+    "right_ad_text","right_ad_url","right_ad_image",
+    "contact_text","disclaimer_text","footer_tagline",
+    "twitch_url","kick_url","youtube_url"
+  ]);
+  const mediaKeys=new Set(["logo_image","banner_image","left_ad_image","right_ad_image"]);
+  const rows=await db.prepare("SELECT setting_key,setting_value,updated_at FROM site_settings").all();
+  return Object.fromEntries((rows.results||[]).filter(row=>publicKeys.has(row.setting_key)).map(row=>{
+    if(mediaKeys.has(row.setting_key)&&row.setting_value){
+      return [row.setting_key,`/media/settings/${row.setting_key}?v=${encodeURIComponent(row.updated_at||"0")}`];
+    }
+    return [row.setting_key,row.setting_value];
+  }));
+}
+
+async function handleMedia(db,path){
+  let settingKey="";
+  const server=path.match(/^\/media\/server\/(\d+)$/);
+  const setting=path.match(/^\/media\/settings\/(logo_image|banner_image|left_ad_image|right_ad_image)$/);
+  if(server)settingKey=`server_image_${Number(server[1])}`;
+  else if(setting)settingKey=setting[1];
+  else return new Response("Not found",{status:404});
+  const row=await db.prepare("SELECT setting_value FROM site_settings WHERE setting_key=?").bind(settingKey).first();
+  if(!row?.setting_value)return new Response("Not found",{status:404});
+  const match=String(row.setting_value).match(/^data:image\/(png|jpeg|webp|gif);base64,([A-Za-z0-9+/=]+)$/);
+  if(!match)return new Response("Not found",{status:404});
+  const binary=atob(match[2]),bytes=new Uint8Array(binary.length);
+  for(let index=0;index<binary.length;index++)bytes[index]=binary.charCodeAt(index);
+  return new Response(bytes,{
+    headers:{
+      "content-type":`image/${match[1]}`,
+      "cache-control":"public, max-age=300, stale-while-revalidate=86400",
+      "x-content-type-options":"nosniff"
+    }
+  });
 }
 
 async function getCurrentUser(request, db) {
