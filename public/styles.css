@@ -305,3 +305,44 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
   background:rgba(107,185,175,.1);
   box-shadow:0 0 0 3px rgba(107,185,175,.22),0 0 28px rgba(107,185,175,.12)
 }
+
+/* Header: reserve real space for logo, banner and account controls */
+.header-inner{
+  display:grid!important;
+  grid-template-columns:minmax(330px,420px) minmax(320px,1fr) max-content!important;
+  align-items:center!important;
+  gap:24px!important
+}
+.header-inner>.brand{
+  grid-column:1!important;
+  justify-self:start!important;
+  min-width:0
+}
+.header-inner>.banner{
+  position:relative!important;
+  grid-column:2!important;
+  left:auto!important;
+  transform:none!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  justify-self:stretch!important
+}
+.header-inner>.account-actions{
+  grid-column:3!important;
+  justify-self:end!important;
+  min-width:max-content
+}
+@media(max-width:1500px){
+  .header-inner{grid-template-columns:minmax(280px,350px) minmax(260px,1fr) max-content!important;gap:16px!important}
+  .header-inner>.banner{width:100%!important}
+}
+@media(max-width:1120px){
+  .header-inner{grid-template-columns:minmax(250px,300px) minmax(220px,1fr) max-content!important;gap:12px!important}
+  .header-inner>.account-actions{gap:6px!important}
+}
+@media(max-width:900px){
+  .header-inner{grid-template-columns:1fr auto!important}
+  .header-inner>.banner{display:none!important}
+  .header-inner>.account-actions{grid-column:2!important}
+}
