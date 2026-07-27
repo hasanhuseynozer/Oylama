@@ -77,8 +77,10 @@ async function handleApi(request, env, url) {
 
     const reviews = await env.DB.prepare(`
       SELECT r.id, r.rating, r.comment, r.created_at,
-        COALESCE(u.display_name, 'Eski kullanıcı') AS display_name
+        COALESCE(u.display_name, 'Eski kullanıcı') AS display_name,
+        rr.reply AS owner_reply, rr.updated_at AS owner_reply_at
       FROM reviews r LEFT JOIN users u ON u.id = r.user_id
+      LEFT JOIN review_replies rr ON rr.review_id=r.id
       WHERE r.server_id = ?
       ORDER BY datetime(r.created_at) DESC LIMIT 200
     `).bind(id).all();
@@ -96,6 +98,9 @@ async function handleApi(request, env, url) {
     if (!isValidEmail(email)) return json({ error: "Geçerli bir e-posta adresi yazın." }, 400);
     if (displayName.length < 2 || displayName.length > 40) return json({ error: "Kullanıcı adı 2–40 karakter olmalıdır." }, 400);
     if (!isValidPassword(password)) return json({ error: "Şifre en az 8 karakter olmalı ve harf ile rakam içermelidir." }, 400);
+
+    const nameExists = await env.DB.prepare("SELECT id FROM users WHERE lower(display_name)=lower(?)").bind(displayName).first();
+    if (nameExists) return json({ error: "Bu kullanıcı adı zaten kullanılıyor." }, 409);
 
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const allowed = await rateLimit(env.DB, "register", await keyedHash(env, ip), 5, 60 * 60);
@@ -119,7 +124,7 @@ async function handleApi(request, env, url) {
         "Set-Cookie": userCookie(token, request)
       });
     } catch (error) {
-      if (String(error).toLowerCase().includes("unique")) return json({ error: "Bu e-posta adresi zaten kayıtlı." }, 409);
+      if (String(error).toLowerCase().includes("unique")) return json({ error: "E-posta adresi veya kullanıcı adı zaten kayıtlı." }, 409);
       throw error;
     }
   }
@@ -168,6 +173,8 @@ async function handleApi(request, env, url) {
     const body = await readJson(request);
     const displayName = cleanText(body.displayName);
     if (displayName.length < 2 || displayName.length > 40) return json({ error: "Kullanıcı adı 2–40 karakter olmalıdır." }, 400);
+    const nameExists = await env.DB.prepare("SELECT id FROM users WHERE lower(display_name)=lower(?) AND id<>?").bind(displayName,user.id).first();
+    if (nameExists) return json({ error: "Bu kullanıcı adı zaten kullanılıyor." }, 409);
     await env.DB.prepare("UPDATE users SET display_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
       .bind(displayName, user.id).run();
     return json({ message: "Profil güncellendi." });
@@ -202,6 +209,55 @@ async function handleApi(request, env, url) {
       WHERE r.user_id = ? ORDER BY datetime(r.created_at) DESC
     `).bind(user.id).all();
     return json({ reviews: result.results || [] });
+  }
+
+  if (method === "GET" && path === "/api/profile/community") {
+    const user = await requireUser(request, env.DB);
+    const requests = await env.DB.prepare("SELECT id,server_name,description,website_url,status,admin_note,created_at FROM server_requests WHERE user_id=? ORDER BY datetime(created_at) DESC").bind(user.id).all();
+    const suggestions = await env.DB.prepare("SELECT id,subject,message,status,created_at FROM suggestions WHERE user_id=? ORDER BY datetime(created_at) DESC").bind(user.id).all();
+    const owned = await env.DB.prepare("SELECT s.id,s.name FROM server_owners o JOIN servers s ON s.id=o.server_id WHERE o.user_id=? ORDER BY s.name").bind(user.id).all();
+    return json({ requests: requests.results || [], suggestions: suggestions.results || [], ownedServers: owned.results || [] });
+  }
+
+  if (method === "POST" && path === "/api/profile/server-requests") {
+    verifyOrigin(request); requireJson(request);
+    const user = await requireUser(request, env.DB), body = await readJson(request);
+    const name=cleanText(body.serverName), description=cleanText(body.description), website=cleanUrl(body.websiteUrl);
+    if(name.length<2||name.length>80||description.length<20||description.length>800) return json({error:"Sunucu adı 2–80, açıklama 20–800 karakter olmalıdır."},400);
+    await env.DB.prepare("INSERT INTO server_requests(user_id,server_name,description,website_url) VALUES(?,?,?,?)").bind(user.id,name,description,website).run();
+    return json({message:"Sunucu ekleme isteğiniz yöneticiye gönderildi."},201);
+  }
+
+  if (method === "POST" && path === "/api/profile/suggestions") {
+    verifyOrigin(request); requireJson(request);
+    const user = await requireUser(request, env.DB), body = await readJson(request);
+    const subject=cleanText(body.subject), message=cleanText(body.message);
+    if(subject.length<3||subject.length>100||message.length<10||message.length>1000) return json({error:"Öneri bilgileri geçersiz."},400);
+    await env.DB.prepare("INSERT INTO suggestions(user_id,subject,message) VALUES(?,?,?)").bind(user.id,subject,message).run();
+    return json({message:"Öneriniz alındı. Teşekkürler!"},201);
+  }
+
+  if (method === "GET" && path === "/api/owner/dashboard") {
+    const user = await requireUser(request, env.DB);
+    const servers = await env.DB.prepare("SELECT s.id,s.name,s.description FROM server_owners o JOIN servers s ON s.id=o.server_id WHERE o.user_id=?").bind(user.id).all();
+    const reviews = await env.DB.prepare(`SELECT r.id,r.server_id,r.rating,r.comment,r.created_at,s.name server_name,
+      COALESCE(u.display_name,'Eski kullanıcı') display_name,rr.reply,rr.updated_at reply_updated_at
+      FROM reviews r JOIN server_owners o ON o.server_id=r.server_id AND o.user_id=?
+      JOIN servers s ON s.id=r.server_id LEFT JOIN users u ON u.id=r.user_id
+      LEFT JOIN review_replies rr ON rr.review_id=r.id ORDER BY datetime(r.created_at) DESC LIMIT 300`).bind(user.id).all();
+    return json({servers:servers.results||[],reviews:reviews.results||[]});
+  }
+
+  const ownerReply = path.match(/^\/api\/owner\/reviews\/(\d+)\/reply$/);
+  if (method === "PUT" && ownerReply) {
+    verifyOrigin(request); requireJson(request);
+    const user=await requireUser(request,env.DB), reviewId=Number(ownerReply[1]), body=await readJson(request), reply=cleanText(body.reply);
+    if(reply.length<2||reply.length>500)return json({error:"Cevap 2–500 karakter arasında olmalıdır."},400);
+    const review=await env.DB.prepare("SELECT r.server_id FROM reviews r JOIN server_owners o ON o.server_id=r.server_id WHERE r.id=? AND o.user_id=?").bind(reviewId,user.id).first();
+    if(!review)return json({error:"Bu yoruma cevap verme yetkiniz yok."},403);
+    await env.DB.prepare(`INSERT INTO review_replies(review_id,server_id,user_id,reply,updated_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP)
+      ON CONFLICT(review_id) DO UPDATE SET reply=excluded.reply,user_id=excluded.user_id,updated_at=CURRENT_TIMESTAMP`).bind(reviewId,review.server_id,user.id,reply).run();
+    return json({message:"Sunucu sahibi cevabı yayınlandı."});
   }
 
   const reviewMatch = path.match(/^\/api\/servers\/(\d+)\/reviews$/);
@@ -279,7 +335,29 @@ async function handleApi(request, env, url) {
       const users = await env.DB.prepare(`
         SELECT id,email,display_name,role,status,created_at FROM users ORDER BY datetime(created_at) DESC LIMIT 500
       `).all();
-      return json({ servers: servers.results || [], reviews: reviews.results || [], users: users.results || [], settings: await getSettings(env.DB) });
+      const requests = await env.DB.prepare(`SELECT q.*,u.display_name,u.email FROM server_requests q JOIN users u ON u.id=q.user_id ORDER BY CASE q.status WHEN 'pending' THEN 0 ELSE 1 END,datetime(q.created_at) DESC`).all();
+      const suggestions = await env.DB.prepare(`SELECT g.*,u.display_name,u.email FROM suggestions g JOIN users u ON u.id=g.user_id ORDER BY CASE g.status WHEN 'new' THEN 0 ELSE 1 END,datetime(g.created_at) DESC`).all();
+      return json({ servers: servers.results || [], reviews: reviews.results || [], users: users.results || [], requests:requests.results||[], suggestions:suggestions.results||[], settings: await getSettings(env.DB) });
+    }
+
+    const requestAction=path.match(/^\/api\/admin\/server-requests\/(\d+)$/);
+    if(requestAction&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),id=Number(requestAction[1]),status=["approved","rejected"].includes(body.status)?body.status:"rejected";
+      const item=await env.DB.prepare("SELECT * FROM server_requests WHERE id=?").bind(id).first();
+      if(!item)return json({error:"İstek bulunamadı."},404);
+      if(status==="approved"&&item.status!=="approved"){
+        const created=await env.DB.prepare("INSERT INTO servers(name,description,is_active) VALUES(?,?,1)").bind(item.server_name,item.description).run();
+        await env.DB.prepare("INSERT OR IGNORE INTO server_owners(server_id,user_id) VALUES(?,?)").bind(Number(created.meta.last_row_id),item.user_id).run();
+      }
+      await env.DB.prepare("UPDATE server_requests SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,cleanText(body.note),id).run();
+      return json({message:status==="approved"?"Sunucu onaylandı ve sahip paneli açıldı.":"İstek reddedildi."});
+    }
+
+    const suggestionAction=path.match(/^\/api\/admin\/suggestions\/(\d+)$/);
+    if(suggestionAction&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),status=["reviewed","closed"].includes(body.status)?body.status:"reviewed";
+      await env.DB.prepare("UPDATE suggestions SET status=? WHERE id=?").bind(status,Number(suggestionAction[1])).run();
+      return json({message:"Öneri durumu güncellendi."});
     }
 
     if (method === "POST" && path === "/api/admin/servers") {
@@ -483,6 +561,10 @@ function requireJson(request) {
 }
 async function readJson(request) { try { return await request.json(); } catch { throw new HttpError("Geçersiz veri.",400); } }
 function cleanText(value) { return String(value || "").replace(/<[^>]*>/g,"").replace(/[\u0000-\u001F\u007F]/g," ").replace(/\s+/g," ").trim(); }
+function cleanUrl(value) {
+  const raw=String(value||"").trim(); if(!raw)return "";
+  try { const url=new URL(raw); return ["http:","https:"].includes(url.protocol)?url.toString():""; } catch { throw new HttpError("Geçerli bir web adresi yazın.",400); }
+}
 function normalizeEmail(value) { return String(value || "").trim().toLowerCase(); }
 function isValidEmail(email) { return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email); }
 function maskEmail(email) { const [local,domain]=email.split("@"); return `${local.slice(0,1)}${"*".repeat(Math.max(3,Math.min(8,local.length-1)))}@${domain}`; }

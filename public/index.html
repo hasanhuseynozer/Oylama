@@ -1,7 +1,7 @@
 <!doctype html><html lang="tr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="SRO Rating - Silkroad Online private server değerlendirme platformu">
-<title>SRO Rating</title><link rel="stylesheet" href="/styles.css?v=20260727-3">
+<title>SRO Rating</title><link rel="stylesheet" href="/styles.css?v=20260727-4">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head><body>
 <header class="site-header"><div class="shell header-inner">
@@ -21,11 +21,11 @@
 </div>
 <footer class="site-footer"><div class="footer-inner"><div class="footer-brand"><a class="brand" href="/">SRO <span>Rating</span></a><p id="footerTagline">Silkroad topluluğunun buluşma noktası.</p></div><div class="footer-box"><span class="footer-icon">✉</span><div><strong>İletişim</strong><p id="contactText"></p></div></div><div class="footer-box"><span class="footer-icon">⚖</span><div><strong>Topluluk İlkeleri</strong><p id="disclaimerText"></p></div></div><div class="footer-box"><span class="footer-icon">▶</span><div><strong>Bizi Takip Et</strong><div id="socials" class="socials"></div></div></div></div><div class="footer-bottom">© <span id="footerYear"></span> SRO Rating · Oyunu keşfet, topluluğa katıl.</div></footer>
 <dialog id="reviewDialog"><form id="reviewForm" class="modal">
-<button id="closeDialog" class="close" type="button">×</button><h2 id="reviewServerName">Oy ve Yorum</h2>
+<button id="closeDialog" class="close" type="button">×</button><p class="eyebrow">DENEYİMİNİ PAYLAŞ</p><h2 id="reviewServerName">Oy ve Yorum</h2><p class="modal-lead">Puanın ve yorumun diğer oyuncuların doğru sunucuyu bulmasına yardımcı olur.</p>
 <p id="loginRequired" class="message hidden">Oy vermek için giriş yapmalısınız.</p>
 <input type="hidden" id="serverId"><div class="rating-buttons" id="ratingButtons">
-<button type="button" data-rating="1">★</button><button type="button" data-rating="2">★</button><button type="button" data-rating="3">★</button><button type="button" data-rating="4">★</button><button type="button" data-rating="5">★</button></div>
-<input type="hidden" id="rating"><label>Yorum<textarea id="comment" minlength="3" maxlength="500" required rows="5"></textarea></label>
+<button type="button" data-rating="1" aria-label="1 puan">★</button><button type="button" data-rating="2" aria-label="2 puan">★</button><button type="button" data-rating="3" aria-label="3 puan">★</button><button type="button" data-rating="4" aria-label="4 puan">★</button><button type="button" data-rating="5" aria-label="5 puan">★</button></div><div id="ratingLabel" class="rating-label">Bir puan seçin</div>
+<input type="hidden" id="rating"><label>Deneyiminiz<textarea id="comment" minlength="3" maxlength="500" required rows="5" placeholder="Sunucunun topluluğu, yönetimi ve oyun deneyimi nasıldı?"></textarea></label><div class="review-meta"><span>Saygılı ve gerçek deneyime dayalı yazın.</span><strong><span id="commentCount">0</span>/500</strong></div>
 <div id="turnstile"></div><button class="primary" type="submit">Yayımla</button><p id="formMessage"></p>
 </form></dialog>
-<script src="/app.js?v=20260727-3" defer></script></body></html>
+<script src="/app.js?v=20260727-4" defer></script></body></html>

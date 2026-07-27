@@ -1,8 +1,15 @@
 <!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Profil — SRO Rating</title><link rel="stylesheet" href="/styles.css"></head><body>
-<main class="profile-shell"><header class="topbar"><a class="brand" href="/">SRO <span>Rating</span></a><div><a class="outline" href="/">Siteye Dön</a> <button id="logout" class="outline">Çıkış</button></div></header>
+<title>Profil — SRO Rating</title><link rel="stylesheet" href="/styles.css?v=20260727-4"></head><body>
+<main class="profile-shell"><header class="topbar"><a class="brand" href="/">SRO <span>Rating</span></a><div><a id="ownerPanelLink" class="primary hidden" href="/sunucu-paneli/">Sunucu Sahibi Paneli</a> <a class="outline" href="/">Siteye Dön</a> <button id="logout" class="outline">Çıkış</button></div></header>
+<div class="profile-hero"><p class="eyebrow">TOPLULUK PROFİLİ</p><h1 id="profileGreeting">Profilim</h1><p>Oylarını yönet, sunucunu öner ve platformu birlikte geliştirelim.</p></div>
 <div id="profileMessage"></div><div class="two-col">
 <form id="profileForm" class="panel"><h2>Profil Bilgileri</h2><label>Kullanıcı adı<input id="displayName" required minlength="2" maxlength="40"></label><label>E-posta<input id="email" disabled></label><button class="primary">Kaydet</button></form>
 <form id="passwordForm" class="panel"><h2>Şifre Değiştir</h2><label>Mevcut şifre<input id="oldPassword" type="password" required></label><label>Yeni şifre<input id="newPassword" type="password" required minlength="8"></label><button class="primary">Şifreyi Değiştir</button></form>
-</div><section class="panel"><h2>Oylarım ve Yorumlarım</h2><div id="myReviews" class="table-wrap"></div></section></main>
-<script src="/profile.js" defer></script></body></html>
+</div>
+<div class="two-col">
+<form id="serverRequestForm" class="panel"><p class="eyebrow">SUNUCU SAHİPLERİ</p><h2>Sunucu Ekleme İsteği</h2><label>Sunucu adı<input id="requestServerName" required maxlength="80"></label><label>Web sitesi<input id="requestWebsite" type="url" placeholder="https://"></label><label>Açıklama<textarea id="requestDescription" required minlength="20" maxlength="800" rows="6"></textarea></label><button class="primary">İsteği Gönder</button></form>
+<form id="suggestionForm" class="panel"><p class="eyebrow">BİRLİKTE GELİŞTİRELİM</p><h2>İyileştirme Önerisi</h2><label>Konu<input id="suggestionSubject" required maxlength="100"></label><label>Öneriniz<textarea id="suggestionMessage" required minlength="10" maxlength="1000" rows="8"></textarea></label><button class="primary">Öneriyi Gönder</button></form>
+</div>
+<section class="panel"><h2>Başvurularım ve Önerilerim</h2><div id="communityHistory" class="request-grid"></div></section>
+<section class="panel"><h2>Oylarım ve Yorumlarım</h2><div id="myReviews" class="table-wrap"></div></section></main>
+<script src="/profile.js?v=20260727-4" defer></script></body></html>
