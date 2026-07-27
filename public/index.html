@@ -1,12 +1,12 @@
 <!doctype html><html lang="tr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="SRO Rating - Silkroad Online private server değerlendirme platformu">
-<title>SRO Rating</title><link rel="icon" type="image/png" href="/sro-rating-logo.png"><link rel="stylesheet" href="/styles.css?v=20260727-5">
+<meta name="description" content="SRO RATING - Silkroad Online private server değerlendirme platformu">
+<title>SRO RATING</title><link rel="icon" type="image/png" href="/sro-rating-logo.png"><link rel="stylesheet" href="/styles.css?v=20260727-6">
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head><body>
 <header class="site-header"><div class="shell header-inner">
-<a class="brand" href="/" aria-label="SRO Rating ana sayfa"><img id="siteLogo" class="site-logo" src="/sro-rating-logo.png" alt="SRO Rating"><span class="brand-text hidden">SRO Rating</span></a>
-<a id="banner" class="banner" href="#" rel="nofollow">SRO Rating</a>
+<a class="brand" href="/" aria-label="SRO RATING ana sayfa"><img id="siteLogo" class="site-logo" src="/sro-rating-header.png" alt="SRO RATING"><span class="brand-text hidden">SRO RATING</span></a>
+<a id="banner" class="banner" href="#" rel="nofollow">SRO RATING</a>
 <div id="accountActions" class="account-actions">
 <a class="outline" href="/giris/">Giriş Yap</a><a class="primary" href="/kayit/">Kayıt Ol</a>
 </div></div></header>
@@ -14,7 +14,7 @@
 <a id="leftSponsor" class="sponsor-rail" href="#" rel="nofollow">Reklam alanı</a>
 <main class="content">
 <div class="toolbar"><div><p class="eyebrow">SRO RATING</p><h1>Sunucu Değerlendirmeleri</h1></div>
-<div class="filters"><input id="searchInput" type="search" placeholder="Sunucu ara…"><select id="sortSelect" aria-label="Sıralama"><option value="trust">En güvenilir</option><option value="comments">En çok yorum alan</option><option value="newest">Yeni açılanlar</option></select><select id="capFilter" aria-label="CAP"><option value="">Tüm CAP'ler</option></select><select id="rateFilter" aria-label="Rates"><option value="">Tüm Rates</option></select><select id="typeFilter" aria-label="Sunucu türü"><option value="">EU + CH</option><option value="EU">EU</option><option value="CH">CH</option></select><label class="new-filter"><input id="newOnly" type="checkbox"> Yalnızca yeni</label><button id="clearFilters" class="tiny" type="button">Temizle</button></div></div>
+<div class="filters"><input id="searchInput" type="search" placeholder="Sunucu ara…"><select id="sortSelect" aria-label="Sıralama"><option value="trust">En güvenilir</option><option value="comments">En çok yorum alan</option><option value="newest">Yeni açılanlar</option></select><select id="capFilter" aria-label="CAP"><option value="">Tüm CAP'ler</option></select><select id="typeFilter" aria-label="Sunucu türü"><option value="">Tüm türler</option><option value="EU/CH">EU/CH</option><option value="CH">CH</option></select><label class="new-filter"><input id="newOnly" type="checkbox"> Yalnızca yeni</label><button id="clearFilters" class="tiny" type="button">Temizle</button></div></div>
 <div id="serverGrid" class="server-grid"><div class="panel">Yükleniyor…</div></div>
 </main>
 <a id="rightSponsor" class="sponsor-rail" href="#" rel="nofollow">Reklam alanı</a>
@@ -28,4 +28,5 @@
 <input type="hidden" id="rating"><label>Deneyiminiz<textarea id="comment" minlength="3" maxlength="500" required rows="5" placeholder="Sunucunun topluluğu, yönetimi ve oyun deneyimi nasıldı?"></textarea></label><div class="review-meta"><span>Saygılı ve gerçek deneyime dayalı yazın.</span><strong><span id="commentCount">0</span>/500</strong></div>
 <div id="turnstile"></div><button class="primary" type="submit">Yayımla</button><p id="formMessage"></p>
 </form></dialog>
-<script src="/app.js?v=20260727-5" defer></script></body></html>
+<dialog id="serverDialog" class="server-detail-dialog"><article class="server-detail"><button id="closeServerDialog" class="close" type="button" aria-label="Kapat">×</button><div id="serverDetailHero" class="server-detail-hero"></div><div class="server-detail-content"><div id="serverDetailBadges" class="server-badges"></div><h2 id="serverDetailName"></h2><p id="serverDetailDescription" class="detail-description"></p><div id="serverDetailScore" class="detail-score"></div><div class="detail-actions"><button id="detailReviewButton" class="primary" type="button">Oy Ver / Yorum Yap</button></div><section class="detail-comments"><div class="section-heading"><h3>Topluluk Yorumları</h3><span id="serverDetailCount"></span></div><div id="serverDetailComments"></div></section></div></article></dialog>
+<script src="/app.js?v=20260727-6" defer></script></body></html>

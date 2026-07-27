@@ -35,7 +35,7 @@ async function handleApi(request, env, url) {
   if (method === "GET" && path === "/api/config") {
     const settings = await getSettings(env.DB);
     return json({
-      siteName: env.SITE_NAME || "SRO Rating",
+      siteName: "SRO RATING",
       turnstileSiteKey: env.TURNSTILE_SITE_KEY || "",
       settings
     });
@@ -556,7 +556,7 @@ async function readJson(request) { try { return await request.json(); } catch { 
 function cleanText(value) { return String(value || "").replace(/<[^>]*>/g,"").replace(/[\u0000-\u001F\u007F]/g," ").replace(/\s+/g," ").trim(); }
 function validCap(value) { const cap=Number(value); return Number.isInteger(cap)&&cap>=1&&cap<=200 ? cap : 110; }
 function validRates(value) { const rates=cleanText(value).slice(0,30); return rates || "1x"; }
-function validServerType(value) { return String(value).toUpperCase()==="CH" ? "CH" : "EU"; }
+function validServerType(value) { return String(value).toUpperCase()==="CH" ? "CH" : "EU/CH"; }
 function validDate(value) { const date=String(value||""); return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : ""; }
 function cleanUrl(value) {
   const raw=String(value||"").trim(); if(!raw)return "";
