@@ -288,9 +288,10 @@ async function handleApi(request, env, url) {
     if(!owned)return json({error:"Bu sunucuyu düzenleme yetkiniz yok."},403);
     const description=cleanText(body.description),image=safeImage(body.image_url),website=cleanUrl(body.website_url),discord=cleanUrl(body.discord_url),promo=cleanUrl(body.promo_url);
     if(description.length<3||description.length>800||hasProfanity(description))return json({error:"Açıklama geçersiz veya yasaklı ifade içeriyor."},400);
-    await env.DB.prepare(`INSERT INTO server_change_requests(server_id,user_id,description,image_url,website_url,discord_url,promo_url,beta_at,launch_at,operational_status,status_note)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?)`).bind(serverId,user.id,description,image,website,discord,promo,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120)).run();
-    return json({message:"Değişiklikler yönetici onayına gönderildi."},201);
+    await env.DB.prepare("UPDATE servers SET description=?,website_url=?,discord_url=?,promo_url=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+      .bind(description,website,discord,promo,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),serverId).run();
+    if(image)await saveSetting(env.DB,`server_image_${serverId}`,image);
+    return json({message:"Sunucu bilgileriniz yayımlandı."});
   }
 
   const ownerReport=path.match(/^\/api\/owner\/reviews\/(\d+)\/report$/);
