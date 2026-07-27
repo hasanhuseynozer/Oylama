@@ -13,6 +13,7 @@ async function api(url,options={}){
 }
 
 async function init(){
+  syncStickyHeaderOffset();
   const query=new URLSearchParams(location.search);
   const requestedServer=Number(query.get("server")||0);
   const requestedReview=Number(query.get("review")||0);
@@ -21,6 +22,7 @@ async function init(){
   state.turnstileKey=config.turnstileSiteKey||"";
   state.user=me.user;
   applySettings();
+  syncStickyHeaderOffset();
   renderAccount();
   setupCalendar();
   setupDiscovery();
@@ -30,6 +32,15 @@ async function init(){
     history.replaceState(null,"",location.pathname);
     await openServer(requestedServer,false,requestedReview);
   }
+}
+
+function syncStickyHeaderOffset(){
+  const header=document.querySelector(".site-header");
+  if(!header)return;
+  const update=()=>document.documentElement.style.setProperty("--site-header-offset",`${Math.ceil(header.getBoundingClientRect().height+18)}px`);
+  update();
+  window.addEventListener("resize",update,{passive:true});
+  if(window.ResizeObserver)new ResizeObserver(update).observe(header);
 }
 
 function applySettings(){

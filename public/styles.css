@@ -812,3 +812,16 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
 @media(max-width:1450px){.page-layout{grid-template-columns:112px minmax(0,1fr) 112px!important;gap:14px!important}.sponsor-rail{width:112px!important}.filters{display:flex!important;flex-wrap:wrap!important}.filters #searchInput{flex:1 1 260px}.filters select{flex:1 1 125px}}
 @media(max-width:1050px){.page-layout{grid-template-columns:1fr!important}.sponsor-rail{display:none!important}.detail-layout{grid-template-columns:1fr!important;overflow:auto!important}.detail-info{position:relative!important;height:auto!important;grid-template-rows:240px auto!important;border-right:0!important}.detail-community{min-height:620px}.admin-server-directory{grid-template-columns:1fr}.admin-section-toolbar{align-items:stretch;flex-direction:column}.admin-server-picker{flex-direction:column}.admin-server-picker select{min-width:0}.admin-server-row{grid-template-columns:1fr}.admin-server-metrics{flex-wrap:wrap}.admin-filter-bar{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.public-server-list{grid-template-columns:1fr!important}.profile-preview-cover,.profile-preview-body{padding:20px}.profile-preview-head{align-items:flex-start;flex-direction:column}.detail-tabs{padding-right:54px;overflow-x:auto}.detail-tabs button{min-width:max-content}.detail-tab-panel{padding:16px}.detail-fact-grid{grid-template-columns:1fr}.admin-filter-bar{grid-template-columns:1fr}}
+
+/* Hotfix: preserve the sticky header clearance and isolate the detail modal from legacy grid rules */
+.sponsor-rail{top:var(--site-header-offset,158px)!important}
+.filters{grid-template-columns:minmax(210px,1.6fr) repeat(6,minmax(100px,auto)) auto auto auto!important}
+.server-detail-dialog{padding:0!important}
+.server-detail{display:block!important;grid-template-columns:none!important;grid-template-rows:none!important;width:100%!important;height:min(850px,calc(100vh - 34px))!important}
+.server-detail-content{display:block!important;width:100%!important;height:100%!important;padding:0!important}
+.server-detail-content>.detail-layout{display:grid!important;width:100%!important;height:100%!important;grid-template-columns:minmax(390px,42%) minmax(0,58%)!important;grid-template-rows:minmax(0,1fr)!important;gap:0!important}
+.server-detail-content .detail-info{grid-column:auto!important;grid-row:auto!important;padding:0!important;position:relative!important;top:auto!important;align-self:stretch!important}
+.server-detail-content .detail-community{grid-column:auto!important;grid-row:auto!important;width:auto!important;height:100%!important}
+.server-detail>.close{position:absolute!important;right:18px!important;top:18px!important}
+@media(max-width:1450px){.sponsor-rail{top:var(--site-header-offset,158px)!important}.filters{display:flex!important;flex-wrap:wrap!important}.filters #clearFilters{flex:0 0 auto!important}}
+@media(max-width:1050px){.server-detail{overflow:auto!important}.server-detail-content{height:auto!important}.server-detail-content>.detail-layout{grid-template-columns:1fr!important;grid-template-rows:auto auto!important;height:auto!important}.server-detail-content .detail-info{height:auto!important}.server-detail-content .detail-community{height:auto!important;min-height:560px!important}}
