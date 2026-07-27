@@ -43,7 +43,7 @@ async function handleApi(request, env, url) {
 
   if (method === "GET" && path === "/api/servers") {
     const result = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.is_verified, s.website_url, s.discord_url, s.promo_url, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
+      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.beta_at, s.launch_at, s.operational_status, s.status_note, s.website_url, s.discord_url, s.promo_url, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count,
         ROUND(((COALESCE(AVG(r.rating),3.5)*COUNT(r.id)+17.5)/(COUNT(r.id)+5))+(s.is_verified*0.35),2) AS trust_score
@@ -60,7 +60,7 @@ async function handleApi(request, env, url) {
   if (method === "GET" && serverMatch) {
     const id = Number(serverMatch[1]);
     const server = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.is_verified, s.website_url, s.discord_url, s.promo_url, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
+      SELECT s.id, s.name, s.description, s.cap, s.server_type, s.opened_at, s.beta_at, s.launch_at, s.operational_status, s.status_note, s.website_url, s.discord_url, s.promo_url, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count
       FROM servers s LEFT JOIN reviews r ON r.server_id = s.id
@@ -73,8 +73,9 @@ async function handleApi(request, env, url) {
       SELECT r.id, r.user_id, r.rating, r.comment, r.created_at,
         COALESCE(u.display_name, 'Eski kullanıcı') AS display_name,
         rr.reply AS owner_reply, rr.updated_at AS owner_reply_at,
-        (SELECT COUNT(*) FROM review_likes l WHERE l.review_id=r.id) AS like_count,
-        EXISTS(SELECT 1 FROM review_likes l WHERE l.review_id=r.id AND l.user_id=?) AS liked
+        (SELECT COUNT(*) FROM review_reactions x WHERE x.review_id=r.id AND x.reaction='like') AS like_count,
+        (SELECT COUNT(*) FROM review_reactions x WHERE x.review_id=r.id AND x.reaction='dislike') AS dislike_count,
+        COALESCE((SELECT reaction FROM review_reactions x WHERE x.review_id=r.id AND x.user_id=?),'') AS my_reaction
       FROM reviews r LEFT JOIN users u ON u.id = r.user_id
       LEFT JOIN review_replies rr ON rr.review_id=r.id
       WHERE r.server_id = ?
@@ -192,8 +193,8 @@ async function handleApi(request, env, url) {
     if(!profile)return json({error:"Kullanıcı bulunamadı."},404);
     const servers=await env.DB.prepare("SELECT s.id,s.name FROM user_playing_servers p JOIN servers s ON s.id=p.server_id WHERE p.user_id=? AND s.is_active=1 ORDER BY s.name").bind(userId).all();
     const stats=await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM reviews WHERE user_id=?) reviews,
-      (SELECT COUNT(*) FROM review_comments WHERE user_id=?) replies,
-      (SELECT COUNT(*) FROM review_likes WHERE user_id=?) likes`).bind(userId,userId,userId).first();
+      0 replies,
+      (SELECT COUNT(*) FROM review_reactions WHERE user_id=? AND reaction='like') likes`).bind(userId,userId).first();
     return json({profile,servers:servers.results||[],stats});
   }
 
@@ -254,7 +255,7 @@ async function handleApi(request, env, url) {
 
   if (method === "GET" && path === "/api/owner/dashboard") {
     const user = await requireUser(request, env.DB);
-    const servers = await env.DB.prepare(`SELECT s.id,s.name,s.description,s.website_url,s.discord_url,s.promo_url,
+    const servers = await env.DB.prepare(`SELECT s.id,s.name,s.description,s.website_url,s.discord_url,s.promo_url,s.beta_at,s.launch_at,s.operational_status,s.status_note,
       COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,
       (SELECT status FROM server_change_requests c WHERE c.server_id=s.id ORDER BY c.id DESC LIMIT 1) change_status
       FROM server_owners o JOIN servers s ON s.id=o.server_id WHERE o.user_id=?`).bind(user.id).all();
@@ -287,8 +288,8 @@ async function handleApi(request, env, url) {
     if(!owned)return json({error:"Bu sunucuyu düzenleme yetkiniz yok."},403);
     const description=cleanText(body.description),image=safeImage(body.image_url),website=cleanUrl(body.website_url),discord=cleanUrl(body.discord_url),promo=cleanUrl(body.promo_url);
     if(description.length<3||description.length>800||hasProfanity(description))return json({error:"Açıklama geçersiz veya yasaklı ifade içeriyor."},400);
-    await env.DB.prepare(`INSERT INTO server_change_requests(server_id,user_id,description,image_url,website_url,discord_url,promo_url)
-      VALUES(?,?,?,?,?,?,?)`).bind(serverId,user.id,description,image,website,discord,promo).run();
+    await env.DB.prepare(`INSERT INTO server_change_requests(server_id,user_id,description,image_url,website_url,discord_url,promo_url,beta_at,launch_at,operational_status,status_note)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?)`).bind(serverId,user.id,description,image,website,discord,promo,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120)).run();
     return json({message:"Değişiklikler yönetici onayına gönderildi."},201);
   }
 
@@ -300,6 +301,18 @@ async function handleApi(request, env, url) {
     if(!review)return json({error:"Bildirim yetkiniz yok."},403);
     await env.DB.prepare("INSERT OR IGNORE INTO content_reports(review_id,server_id,reporter_user_id,reason) VALUES(?,?,?,?)").bind(reviewId,review.server_id,user.id,reason).run();
     return json({message:"Bildirim yönetici incelemesine gönderildi."},201);
+  }
+
+  const reactionMatch=path.match(/^\/api\/reviews\/(\d+)\/reaction$/);
+  if(method==="POST"&&reactionMatch){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),reviewId=Number(reactionMatch[1]),body=await readJson(request),reaction=["like","dislike"].includes(body.reaction)?body.reaction:"";
+    if(!reaction)return json({error:"Tepki geçersiz."},400);
+    const old=await env.DB.prepare("SELECT reaction FROM review_reactions WHERE review_id=? AND user_id=?").bind(reviewId,user.id).first();
+    if(old?.reaction===reaction)await env.DB.prepare("DELETE FROM review_reactions WHERE review_id=? AND user_id=?").bind(reviewId,user.id).run();
+    else await env.DB.prepare(`INSERT INTO review_reactions(review_id,user_id,reaction,updated_at) VALUES(?,?,?,CURRENT_TIMESTAMP)
+      ON CONFLICT(review_id,user_id) DO UPDATE SET reaction=excluded.reaction,updated_at=CURRENT_TIMESTAMP`).bind(reviewId,user.id,reaction).run();
+    return json({message:"Tepki güncellendi."});
   }
 
   const likeMatch=path.match(/^\/api\/reviews\/(\d+)\/like$/);
@@ -314,6 +327,7 @@ async function handleApi(request, env, url) {
 
   const commentMatch=path.match(/^\/api\/reviews\/(\d+)\/comments$/);
   if(method==="POST"&&commentMatch){
+    return json({error:"Kullanıcı yanıtları kapalıdır. Yalnızca atanmış sunucu sahibi resmi cevap verebilir."},403);
     verifyOrigin(request);requireJson(request);
     const user=await requireUser(request,env.DB),reviewId=Number(commentMatch[1]),body=await readJson(request),comment=cleanText(body.comment);
     if(comment.length<2||comment.length>500||hasProfanity(comment))return json({error:"Yanıt geçersiz veya yasaklı ifade içeriyor."},400);
@@ -402,7 +416,7 @@ async function handleApi(request, env, url) {
 
     if (method === "GET" && path === "/api/admin/dashboard") {
       const servers = await env.DB.prepare(`
-        SELECT s.id,s.name,s.description,s.cap,s.rates,s.server_type,s.opened_at,s.is_verified,s.website_url,s.discord_url,s.promo_url,(SELECT user_id FROM server_owners WHERE server_id=s.id LIMIT 1) owner_user_id,COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,s.is_active,s.created_at,
+        SELECT s.id,s.name,s.description,s.cap,s.rates,s.server_type,s.opened_at,s.beta_at,s.launch_at,s.operational_status,s.status_note,s.website_url,s.discord_url,s.promo_url,(SELECT user_id FROM server_owners WHERE server_id=s.id LIMIT 1) owner_user_id,COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,s.is_active,s.created_at,
           COALESCE(ROUND(AVG(r.rating),1),0) average_rating,COUNT(r.id) vote_count
         FROM servers s LEFT JOIN reviews r ON r.server_id=s.id GROUP BY s.id ORDER BY s.created_at DESC
       `).all();
@@ -428,7 +442,7 @@ async function handleApi(request, env, url) {
       const item=await env.DB.prepare("SELECT * FROM server_change_requests WHERE id=?").bind(id).first();
       if(!item)return json({error:"Değişiklik isteği bulunamadı."},404);
       if(status==="approved"&&item.status==="pending"){
-        await env.DB.prepare("UPDATE servers SET description=?,website_url=?,discord_url=?,promo_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(item.description,item.website_url,item.discord_url,item.promo_url,item.server_id).run();
+        await env.DB.prepare("UPDATE servers SET description=?,website_url=?,discord_url=?,promo_url=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(item.description,item.website_url,item.discord_url,item.promo_url,item.beta_at,item.launch_at,item.operational_status,item.status_note,item.server_id).run();
         if(item.image_url)await saveSetting(env.DB,`server_image_${item.server_id}`,safeImage(item.image_url));
       }
       await env.DB.prepare("UPDATE server_change_requests SET status=?,admin_note=?,resolved_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,cleanText(body.note),id).run();
@@ -468,7 +482,7 @@ async function handleApi(request, env, url) {
       requireJson(request); const body = await readJson(request);
       const name = cleanText(body.name), description = cleanText(body.description), cap=validCap(body.cap), rates=validRates(body.rates), serverType=validServerType(body.server_type), openedAt=validDate(body.opened_at);
       if (name.length < 2 || name.length > 80 || description.length < 3 || description.length > 600) return json({ error: "Sunucu bilgileri geçersiz." }, 400);
-      const result = await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,is_verified,is_active,website_url,discord_url,promo_url) VALUES(?,?,?,?,?,?,?,?,?,?,?)").bind(name,description,cap,rates,serverType,openedAt,body.is_verified?1:0,body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url)).run();
+      const result = await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,beta_at,launch_at,operational_status,status_note,is_verified,is_active,website_url,discord_url,promo_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(name,description,cap,rates,serverType,openedAt,validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),0,body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url)).run();
       const ownerId=Number(body.owner_user_id||0);
       if(ownerId){await env.DB.prepare("INSERT OR IGNORE INTO server_owners(server_id,user_id) VALUES(?,?)").bind(Number(result.meta.last_row_id),ownerId).run();await env.DB.prepare("UPDATE users SET account_role='owner' WHERE id=?").bind(ownerId).run()}
       await saveSetting(env.DB, `server_image_${Number(result.meta.last_row_id)}`, safeImage(body.image_url));
@@ -479,8 +493,8 @@ async function handleApi(request, env, url) {
     if (adminServer && method === "PUT") {
       requireJson(request); const body = await readJson(request);
       const serverId=Number(adminServer[1]);
-      await env.DB.prepare("UPDATE servers SET name=?,description=?,cap=?,rates=?,server_type=?,opened_at=?,is_verified=?,is_active=?,website_url=?,discord_url=?,promo_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
-        .bind(cleanText(body.name),cleanText(body.description),validCap(body.cap),validRates(body.rates),validServerType(body.server_type),validDate(body.opened_at),body.is_verified?1:0,body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url),serverId).run();
+      await env.DB.prepare("UPDATE servers SET name=?,description=?,cap=?,rates=?,server_type=?,opened_at=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,is_verified=0,is_active=?,website_url=?,discord_url=?,promo_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+        .bind(cleanText(body.name),cleanText(body.description),validCap(body.cap),validRates(body.rates),validServerType(body.server_type),validDate(body.opened_at),validDateTime(body.beta_at),validDateTime(body.launch_at),validOperationalStatus(body.operational_status),cleanText(body.status_note).slice(0,120),body.is_active ? 1 : 0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url),serverId).run();
       await saveSetting(env.DB, `server_image_${serverId}`, safeImage(body.image_url));
       await env.DB.prepare("DELETE FROM server_owners WHERE server_id=?").bind(serverId).run();
       const ownerId=Number(body.owner_user_id||0);
@@ -688,6 +702,8 @@ function validCap(value) { const cap=Number(value); return Number.isInteger(cap)
 function validRates(value) { const rates=cleanText(value).slice(0,30); return rates || "1x"; }
 function validServerType(value) { return String(value).toUpperCase()==="CH" ? "CH" : "EU/CH"; }
 function validDate(value) { const date=String(value||""); return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : ""; }
+function validDateTime(value){const date=String(value||"");return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(date)?date:"";}
+function validOperationalStatus(value){return ["online","maintenance","offline"].includes(value)?value:"offline";}
 function cleanUrl(value) {
   const raw=String(value||"").trim(); if(!raw)return "";
   try { const url=new URL(raw); return ["http:","https:"].includes(url.protocol)?url.toString():""; } catch { throw new HttpError("Geçerli bir web adresi yazın.",400); }
