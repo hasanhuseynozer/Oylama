@@ -222,3 +222,12 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
 @media(max-width:1400px){.header-inner{grid-template-columns:420px minmax(330px,1fr) auto!important}.site-logo{width:405px!important;height:100px!important}}
 @media(max-width:1050px){.header-inner{grid-template-columns:300px minmax(280px,1fr) auto!important}.site-logo{width:290px!important;height:84px!important}}
 @media(max-width:900px){.header-inner{grid-template-columns:260px 1fr!important}.site-logo{width:250px!important;height:78px!important}}
+
+/* Keep the banner centered independently from the wide logo */
+.header-inner{position:relative!important;display:grid!important;grid-template-columns:1fr auto!important}
+.header-inner>.brand{grid-column:1;justify-self:start;z-index:2}
+.header-inner>.banner{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;width:min(58vw,1120px)!important;z-index:1}
+.header-inner>.account-actions{grid-column:2;justify-self:end;z-index:2}
+@media(max-width:1400px){.header-inner>.banner{width:48vw!important}}
+@media(max-width:1050px){.header-inner>.banner{width:36vw!important}}
+@media(max-width:900px){.header-inner>.banner{display:none!important}}
