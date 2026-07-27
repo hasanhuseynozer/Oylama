@@ -748,3 +748,26 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
   .account-menu-trigger>span,.account-menu-trigger>i{display:none}
   .account-menu-trigger img{width:38px;height:38px}
 }
+
+/* Final responsive layout: never trade usable content for horizontal scrollbars */
+.filters{
+  flex-wrap:wrap!important;
+  overflow:visible!important
+}
+.filters #searchInput{flex:1 1 190px!important;width:auto!important}
+.filters select{flex:0 1 auto!important}
+.filters .new-filter,.filters .tiny{flex:0 0 auto!important}
+@media(max-width:1399px){
+  .page-layout{grid-template-columns:minmax(0,1fr)!important}
+  .sponsor-rail{display:none!important}
+  .server-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:900px){
+  .server-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:600px){
+  .filters{display:grid!important;grid-template-columns:1fr 1fr!important}
+  .filters>*{width:100%!important;max-width:none!important}
+  .filters #searchInput{grid-column:1/-1!important}
+  .server-grid{grid-template-columns:1fr!important}
+}

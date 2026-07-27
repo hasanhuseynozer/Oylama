@@ -101,7 +101,8 @@ async function handleApi(request, env, url) {
     const reviewComments=await env.DB.prepare(`SELECT c.id,c.review_id,c.user_id,c.comment,c.created_at,COALESCE(u.display_name,'Eski kullanıcı') display_name
       FROM review_comments c LEFT JOIN users u ON u.id=c.user_id JOIN reviews r ON r.id=c.review_id
       WHERE r.server_id=? ORDER BY datetime(c.created_at) ASC LIMIT 500`).bind(id).all();
-    return json({ server, reviews: reviews.results || [], reviewComments:reviewComments.results||[] });
+    const isOwner=currentUser?Boolean(await env.DB.prepare("SELECT 1 FROM server_owners WHERE server_id=? AND user_id=?").bind(id,currentUser.id).first()):false;
+    return json({ server, reviews: reviews.results || [], reviewComments:reviewComments.results||[], viewer:{isOwner,canReview:Boolean(currentUser&&!isOwner)} });
   }
 
   // User registration

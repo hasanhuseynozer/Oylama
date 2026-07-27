@@ -1,178 +1,369 @@
-const state={servers:[],user:null,settings:{},rating:0,turnstileKey:"",widget:null,query:"",editReviewId:null};
-const $=s=>document.querySelector(s);
-async function api(url,opt={}){const r=await fetch(url,opt),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"İşlem başarısız.");return d}
-async function init(){const [cfg,me]=await Promise.all([api("/api/config"),api("/api/auth/me")]);state.settings=cfg.settings||{};state.turnstileKey=cfg.turnstileSiteKey||"";state.user=me.user;applySettings();renderAccount();await loadServers()}
-function applySettings(){const s=state.settings;setVisual($("#banner"),s.banner_image);setVisual($("#leftSponsor"),s.left_ad_image);setVisual($("#rightSponsor"),s.right_ad_image);$("#leftSponsor").classList.toggle("empty-sponsor",!s.left_ad_image);$("#rightSponsor").classList.toggle("empty-sponsor",!s.right_ad_image);$("#footerTagline").textContent=s.footer_tagline||"Silkroad topluluğunun buluşma noktası.";$("#footerYear").textContent=new Date().getFullYear();$("#banner").textContent=(s.banner_text||"SRO RATING").replaceAll("Rating","RATING").replaceAll("RATİNG","RATING");setLink($("#banner"),s.banner_url);$("#leftSponsor").textContent=s.left_ad_text||"Reklam alanı";setLink($("#leftSponsor"),s.left_ad_url);$("#rightSponsor").textContent=s.right_ad_text||"Reklam alanı";setLink($("#rightSponsor"),s.right_ad_url);$("#contactText").textContent=(s.contact_text||"").replaceAll("Rating","RATING").replaceAll("RATİNG","RATING");$("#disclaimerText").textContent=(s.disclaimer_text||"").replaceAll("Rating","RATING").replaceAll("RATİNG","RATING");$("#socials").innerHTML=[["Twitch",s.twitch_url],["Kick",s.kick_url],["YouTube",s.youtube_url]].filter(x=>x[1]).map(x=>`<a href="${escapeAttr(x[1])}" target="_blank" rel="noopener">${x[0]}</a>`).join("")||"Bağlantı eklenmedi."}
-function setVisual(el,url){if(url){el.style.backgroundImage=`linear-gradient(rgba(9,9,9,.12),rgba(9,9,9,.58)),url("${url}")`;el.classList.add("has-image")}}
-function setLink(el,url){if(url){el.href=url;el.target="_blank";el.rel="noopener nofollow"}else el.removeAttribute("href")}
-function renderAccount(){const box=$("#accountActions");if(!state.user)return;box.innerHTML=`<a class="profile-chip" href="/profil/"><span>${esc(state.user.displayName)}</span><small>Profilim</small></a><button id="logoutBtn" class="outline">Çıkış</button>`;$("#logoutBtn").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.reload()}}
-async function loadServers(){const d=await api("/api/servers");state.servers=d.servers||[];fillFilters();renderServers()}
-function fillFilters(){const e=$("#capFilter"),current=e.value;[...e.options].slice(1).forEach(x=>x.remove());[...new Set(state.servers.map(s=>s.cap).filter(Boolean))].sort((a,b)=>a-b).forEach(v=>e.add(new Option(`CAP ${v}`,v)));e.value=current}
-function renderServers(){const q=state.query.toLocaleLowerCase("tr-TR"),cap=$("#capFilter").value,type=$("#typeFilter").value,newOnly=$("#newOnly").checked,cutoff=Date.now()-45*86400000;let list=state.servers.filter(s=>`${s.name} ${s.description} ${s.cap}`.toLocaleLowerCase("tr-TR").includes(q)&&(!cap||String(s.cap)===cap)&&(!type||s.server_type===type)&&(!newOnly||new Date((s.opened_at||s.created_at)+"Z").getTime()>=cutoff));const sort=$("#sortSelect").value;list.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):sort==="newest"?new Date(b.opened_at||b.created_at)-new Date(a.opened_at||a.created_at):Number(b.trust_score)-Number(a.trust_score)||Number(b.vote_count)-Number(a.vote_count));$("#serverGrid").innerHTML=list.length?list.map(card).join(""):'<div class="panel empty-results"><h3>Bu filtrelere uygun sunucu bulunamadı.</h3><p>Filtreleri temizleyerek tekrar deneyin.</p></div>';document.querySelectorAll("[data-server]").forEach(card=>card.onclick=e=>{if(!e.target.closest("button"))openServer(Number(card.dataset.server))});document.querySelectorAll("[data-detail]").forEach(b=>b.onclick=()=>openServer(Number(b.dataset.detail)));document.querySelectorAll("[data-review]").forEach(b=>b.onclick=()=>openReview(Number(b.dataset.review)))}
-function card(s){const rating=Number(s.average_rating||0),fresh=Date.now()-new Date((s.opened_at||s.created_at)+"Z").getTime()<45*86400000;return `<article class="server-card" data-server="${s.id}" tabindex="0">${s.image_url?`<div class="server-cover" style="background-image:url('${s.image_url}')"></div>`:`<div class="server-cover server-cover-placeholder"><span>Sunucu görseli</span><small>Bu alana görsel ekleyebilirsiniz</small></div>`}<div class="server-card-body"><div class="server-badges"><span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div><h2>${esc(s.name)}</h2><p class="desc card-summary">${esc(compactDescription(s.description,110))}</p><div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${s.vote_count} değerlendirme</small></div><div class="stars">${stars(rating)}</div></div><div class="card-actions"><button class="outline" data-detail="${s.id}">Detaylar / Yorumlar</button><button class="primary" data-review="${s.id}">Oy Ver</button></div></div></article>`}
-async function openServer(id){const s=state.servers.find(x=>Number(x.id)===id),d=await api(`/api/servers/${id}`),rating=Number(s.average_rating||0),comments=d.reviewComments||[];$("#serverDetailName").textContent=s.name;$("#serverDetailDescription").textContent=compactDescription(s.description,300);$("#serverDetailHero").className=`server-detail-hero${s.image_url?"":" placeholder"}`;$("#serverDetailHero").style.backgroundImage=s.image_url?`linear-gradient(180deg,transparent,rgba(5,5,5,.82)),url("${s.image_url}")`:"";$("#serverDetailHero").innerHTML=s.image_url?"":'<div><strong>Sunucu görseli</strong><span>Yönetici panelinden görsel ekleyebilirsiniz</span></div>';$("#serverDetailBadges").innerHTML=`<span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span>${s.is_verified?'<span class="verified">✓ Doğrulandı</span>':""}`;const links=[["Web Sitesi",d.server.website_url],["Discord",d.server.discord_url],["Tanıtım",d.server.promo_url]].filter(x=>x[1]);$("#serverDetailLinks").innerHTML=links.map(x=>`<a class="outline" href="${escapeAttr(x[1])}" target="_blank" rel="noopener nofollow">${x[0]} ↗</a>`).join("");$("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars">${stars(rating)}</span><small>${d.reviews.length} topluluk yorumu</small>`;$("#serverDetailCount").textContent=`${d.reviews.length} yorum`;$("#serverDetailComments").innerHTML=d.reviews.length?d.reviews.map(r=>reviewBlock(r,comments.filter(c=>Number(c.review_id)===Number(r.id)))).join(""):'<div class="empty-comments"><strong>Henüz yorum yok</strong><p>İlk deneyimi paylaşan siz olun.</p></div>';$("#detailReviewButton").onclick=()=>{$("#serverDialog").close();openReview(id)};document.querySelectorAll("[data-like]").forEach(b=>b.onclick=async()=>{if(!state.user)return location.href="/giris/";await api(`/api/reviews/${b.dataset.like}/like`,{method:"POST"});await openServer(id)});document.querySelectorAll("[data-comment-form]").forEach(f=>f.onsubmit=async e=>{e.preventDefault();if(!state.user)return location.href="/giris/";try{await api(`/api/reviews/${f.dataset.commentForm}/comments`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({comment:f.querySelector("input").value})});await openServer(id)}catch(err){alert(err.message)}});if(!$("#serverDialog").open)$("#serverDialog").showModal()}
-function reviewBlock(r,replies){return `<article class="detail-comment"><header><button class="user-link" data-profile="${r.user_id}">${esc(r.display_name)}</button><span>${"★".repeat(r.rating)}${"☆".repeat(5-r.rating)}</span></header><p>${esc(r.comment)}</p>${r.owner_reply?`<div class="owner-reply"><strong>✓ Sunucu sahibi yanıtı</strong><p>${esc(r.owner_reply)}</p></div>`:""}<div class="review-actions"><button class="like-button ${r.liked?"liked":""}" data-like="${r.id}"><span>♥</span><strong>${r.like_count||0}</strong><small>Beğen</small></button><span>${replies.length?`${replies.length} yanıt`:"Henüz yanıt yok"}</span><button class="tiny reply-toggle" type="button">Yanıtla</button></div>${replies.length?`<div class="review-thread-list">${replies.map(c=>`<div class="review-thread"><button class="user-link" data-profile="${c.user_id||""}">${esc(c.display_name)}</button><p>${esc(c.comment)}</p></div>`).join("")}</div>`:""}<form class="inline-reply hidden" data-comment-form="${r.id}"><input maxlength="500" required placeholder="Yanıtınızı yazın…"><button class="tiny">Gönder</button></form></article>`}
-function openReview(id){const server=state.servers.find(s=>Number(s.id)===id);$("#serverId").value=id;$("#reviewServerName").textContent=server.name;$("#comment").value="";$("#commentCount").textContent="0";$("#ratingLabel").textContent="Bir puan seçin";state.rating=0;document.querySelectorAll("#ratingButtons button").forEach(b=>b.classList.remove("active"));$("#loginRequired").classList.toggle("hidden",!!state.user);$("#reviewForm button[type=submit]").disabled=!state.user;renderTurnstile();$("#reviewDialog").showModal()}
-function renderTurnstile(){const box=$("#turnstile");box.innerHTML="";state.widget=null;if(!state.turnstileKey)return;const go=()=>window.turnstile?state.widget=window.turnstile.render(box,{sitekey:state.turnstileKey,theme:"dark"}):setTimeout(go,200);go()}
-$("#sortSelect").onchange=renderServers;["#capFilter","#typeFilter","#newOnly"].forEach(id=>$(id).onchange=renderServers);$("#clearFilters").onclick=()=>{$("#sortSelect").value="trust";$("#capFilter").value="";$("#typeFilter").value="";$("#newOnly").checked=false;$("#searchInput").value="";state.query="";renderServers()};$("#searchInput").oninput=e=>{state.query=e.target.value;renderServers()};$("#closeDialog").onclick=()=>$("#reviewDialog").close();$("#closeServerDialog").onclick=()=>$("#serverDialog").close();$("#comment").oninput=e=>$("#commentCount").textContent=e.target.value.length;document.querySelectorAll("#ratingButtons button").forEach(b=>b.onclick=()=>{state.rating=Number(b.dataset.rating);$("#rating").value=state.rating;$("#ratingLabel").textContent=["","Çok kötü","Geliştirilmeli","Ortalama","Çok iyi","Mükemmel"][state.rating];document.querySelectorAll("#ratingButtons button").forEach(x=>x.classList.toggle("active",Number(x.dataset.rating)<=state.rating))});
-$("#reviewForm").onsubmit=async e=>{e.preventDefault();if(!state.user)return location.href="/giris/";if(!state.rating)return $("#formMessage").textContent="Puan seçin.";try{const token=state.widget!==null&&window.turnstile?window.turnstile.getResponse(state.widget):"";await api(`/api/servers/${$("#serverId").value}/reviews`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({rating:state.rating,comment:$("#comment").value,turnstileToken:token})});$("#formMessage").textContent="Yorum yayımlandı.";await loadServers();setTimeout(()=>$("#reviewDialog").close(),700)}catch(e){$("#formMessage").textContent=e.message}};
-async function openProfile(id){if(!id)return;const d=await api(`/api/users/${id}/profile`),p=d.profile,s=d.stats,badges=["Topluluk Üyesi",Number(s.reviews)>=1&&"İlk Değerlendirme",Number(s.reviews)>=5&&"Deneyimli Yorumcu",Number(s.replies)>=5&&"Sohbet Ustası",p.account_role==="owner"&&"Sunucu Sahibi"].filter(Boolean);$("#profilePreviewContent").innerHTML=`<div class="profile-preview-head"><img src="/sro-rating-logo.png" alt=""><div><p class="eyebrow">${esc(p.account_role==="owner"?"SUNUCU SAHİBİ":"TOPLULUK ÜYESİ")}</p><h2>${esc(p.display_name)}</h2>${p.game_alias?`<strong>Oyun içi: ${esc(p.game_alias)}</strong>`:""}</div></div>${p.bio?`<p class="profile-bio">${esc(p.bio)}</p>`:""}<div class="badge-wall">${badges.map(x=>`<span class="profile-badge">✦ ${x}</span>`).join("")}</div><h3>Oynadığı Sunucular</h3><div class="playing-list">${d.servers.length?d.servers.map(x=>`<span>${esc(x.name)}</span>`).join(""):"Henüz sunucu seçmedi."}</div><div class="profile-stats"><span><strong>${s.reviews}</strong> Değerlendirme</span><span><strong>${s.replies}</strong> Yanıt</span><span><strong>${s.likes}</strong> Beğeni</span></div>`;$("#profilePreviewDialog").showModal()}
-function stars(n){n=Math.round(n);return"★".repeat(n)+"☆".repeat(5-n)}function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}function escapeAttr(v){return esc(v)}
-["serverDialog","reviewDialog","profilePreviewDialog"].forEach(id=>{const dialog=document.getElementById(id);dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close()})});$("#closeProfilePreview").onclick=()=>$("#profilePreviewDialog").close();document.addEventListener("click",e=>{const reply=e.target.closest(".reply-toggle");if(reply)reply.closest(".detail-comment").querySelector(".inline-reply").classList.toggle("hidden");const profile=e.target.closest("[data-profile]");if(profile)openProfile(profile.dataset.profile)});
-function renderServers(){const q=state.query.toLocaleLowerCase("tr-TR"),cap=$("#capFilter").value,type=$("#typeFilter").value,newOnly=$("#newOnly").checked,cutoff=Date.now()-45*86400000;let list=state.servers.filter(s=>`${s.name} ${s.description} ${s.cap}`.toLocaleLowerCase("tr-TR").includes(q)&&(!cap||String(s.cap)===cap)&&(!type||s.server_type===type)&&(!newOnly||new Date((s.opened_at||s.created_at)+"Z").getTime()>=cutoff));const sort=$("#sortSelect").value;list.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):sort==="newest"?new Date(b.opened_at||b.created_at)-new Date(a.opened_at||a.created_at):Number(b.average_rating)-Number(a.average_rating)||Number(b.vote_count)-Number(a.vote_count));$("#serverGrid").innerHTML=list.length?list.map(card).join(""):'<div class="panel empty-results"><h3>Bu filtrelere uygun sunucu bulunamadı.</h3><p>Filtreleri temizleyerek tekrar deneyin.</p></div>';document.querySelectorAll("[data-server]").forEach(x=>x.onclick=e=>{if(!e.target.closest("button"))openServer(Number(x.dataset.server))});document.querySelectorAll("[data-detail]").forEach(x=>x.onclick=()=>openServer(Number(x.dataset.detail)));document.querySelectorAll("[data-review]").forEach(x=>x.onclick=()=>openReview(Number(x.dataset.review)))}
-async function openServer(id){const s=state.servers.find(x=>Number(x.id)===id),d=await api(`/api/servers/${id}`),rating=Number(s.average_rating||0),comments=d.reviewComments||[];$("#serverDetailName").textContent=s.name;$("#serverDetailDescription").textContent=compactDescription(s.description,300);$("#serverDetailHero").className=`server-detail-hero${s.image_url?"":" placeholder"}`;$("#serverDetailHero").style.backgroundImage=s.image_url?`linear-gradient(180deg,transparent,rgba(5,5,5,.82)),url("${s.image_url}")`:"";$("#serverDetailHero").innerHTML=s.image_url?"":'<div><strong>Sunucu görseli</strong><span>Yönetici panelinden görsel ekleyebilirsiniz</span></div>';$("#serverDetailBadges").innerHTML=`<span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span>`;const links=[["Web Sitesi",d.server.website_url],["Discord",d.server.discord_url],["Tanıtım",d.server.promo_url]].filter(x=>x[1]);$("#serverDetailLinks").innerHTML=links.map(x=>`<a class="outline" href="${escapeAttr(x[1])}" target="_blank" rel="noopener nofollow">${x[0]} ↗</a>`).join("");$("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars">${stars(rating)}</span><small>${d.reviews.length} topluluk yorumu</small>`;$("#serverDetailCount").textContent=`${d.reviews.length} yorum`;$("#serverDetailComments").innerHTML=d.reviews.length?d.reviews.map(r=>reviewBlock(r,comments.filter(c=>Number(c.review_id)===Number(r.id)))).join(""):'<div class="empty-comments"><strong>Henüz yorum yok</strong><p>İlk deneyimi paylaşan siz olun.</p></div>';const mine=d.reviews.find(r=>Number(r.user_id)===Number(state.user?.id));$("#detailReviewButton").textContent=mine?"Puanımı / Yorumumu Düzenle":"Oy Ver / Yorum Yap";$("#detailReviewButton").onclick=()=>{$("#serverDialog").close();openReview(id,mine)};document.querySelectorAll("[data-like]").forEach(b=>b.onclick=async()=>{if(!state.user)return location.href="/giris/";await api(`/api/reviews/${b.dataset.like}/like`,{method:"POST"});await openServer(id)});document.querySelectorAll("[data-comment-form]").forEach(f=>f.onsubmit=async e=>{e.preventDefault();if(!state.user)return location.href="/giris/";try{await api(`/api/reviews/${f.dataset.commentForm}/comments`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({comment:f.querySelector("input").value})});await openServer(id)}catch(err){alert(err.message)}});if(!$("#serverDialog").open)$("#serverDialog").showModal()}
-function openReview(id,review=null){const server=state.servers.find(s=>Number(s.id)===id);$("#serverId").value=id;$("#reviewServerName").textContent=server.name;$("#comment").value=review?.comment||"";$("#commentCount").textContent=$("#comment").value.length;state.editReviewId=review?.id||null;state.rating=Number(review?.rating||0);$("#rating").value=state.rating;$("#ratingLabel").textContent=state.rating?["","Çok kötü","Geliştirilmeli","Ortalama","Çok iyi","Mükemmel"][state.rating]:"Bir puan seçin";document.querySelectorAll("#ratingButtons button").forEach(b=>b.classList.toggle("active",Number(b.dataset.rating)<=state.rating));$("#loginRequired").classList.toggle("hidden",!!state.user);const submit=$("#reviewForm button[type=submit]");submit.disabled=!state.user;submit.textContent=review?"Değişiklikleri Kaydet":"Yayımla";renderTurnstile();$("#reviewDialog").showModal()}
-function applySettings(){const s=state.settings;setVisual($("#banner"),s.banner_image||"/sro-rating-banner.gif");setVisual($("#leftSponsor"),s.left_ad_image);setVisual($("#rightSponsor"),s.right_ad_image);$("#leftSponsor").classList.toggle("empty-sponsor",!s.left_ad_image);$("#rightSponsor").classList.toggle("empty-sponsor",!s.right_ad_image);$("#banner").textContent="";setLink($("#banner"),s.banner_url);$("#leftSponsor").textContent=s.left_ad_image?"":(s.left_ad_text||"Reklam alanı");setLink($("#leftSponsor"),s.left_ad_url);$("#rightSponsor").textContent=s.right_ad_image?"":(s.right_ad_text||"Reklam alanı");setLink($("#rightSponsor"),s.right_ad_url);$("#footerTagline").textContent=s.footer_tagline||"Silkroad topluluğunun buluşma noktası.";$("#footerYear").textContent=new Date().getFullYear();$("#contactText").textContent=s.contact_text||"";$("#disclaimerText").textContent=s.disclaimer_text||"";$("#socials").innerHTML=[["Twitch",s.twitch_url],["Kick",s.kick_url],["YouTube",s.youtube_url]].filter(x=>x[1]).map(x=>`<a href="${escapeAttr(x[1])}" target="_blank" rel="noopener">${x[0]}</a>`).join("")||"Bağlantı eklenmedi.";const footerBrand=document.querySelector(".footer-brand .brand");if(footerBrand)footerBrand.innerHTML='<img class="footer-logo" src="/sro-rating-header.png" alt="SRO RATING">'}
-$("#clearFilters").onclick=()=>{$("#sortSelect").value="rating";$("#capFilter").value="";$("#typeFilter").value="";$("#newOnly").checked=false;$("#searchInput").value="";state.query="";renderServers()};
-$("#reviewForm").onsubmit=async e=>{e.preventDefault();if(!state.user)return location.href="/giris/";if(!state.rating)return $("#formMessage").textContent="Puan seçin.";try{const token=state.widget!==null&&window.turnstile?window.turnstile.getResponse(state.widget):"",editing=state.editReviewId;await api(editing?`/api/reviews/${editing}`:`/api/servers/${$("#serverId").value}/reviews`,{method:editing?"PUT":"POST",headers:{"content-type":"application/json"},body:JSON.stringify({rating:state.rating,comment:$("#comment").value,turnstileToken:token})});$("#formMessage").textContent=editing?"Puanınız ve yorumunuz güncellendi.":"Yorum yayımlandı.";state.editReviewId=null;await loadServers();setTimeout(()=>$("#reviewDialog").close(),700)}catch(err){$("#formMessage").textContent=err.message}};
-function statusInfo(s){return({online:["online","Çevrimiçi"],maintenance:["maintenance","Bakımda"],offline:["offline","Kapalı"]})[s.operational_status]||["offline","Kapalı"]}
-function nextEvent(s){const now=Date.now(),events=[["Beta",s.beta_at],["Açılış",s.launch_at]].filter(x=>x[1]&&new Date(x[1]).getTime()>now).sort((a,b)=>new Date(a[1])-new Date(b[1]));return events[0]||null}
-function card(s){const rating=Number(s.average_rating||0),fresh=Date.now()-new Date((s.opened_at||s.created_at)+"Z").getTime()<45*86400000,[statusClass,statusText]=statusInfo(s),event=nextEvent(s);return `<article class="server-card" data-server="${s.id}" tabindex="0"><div class="server-status ${statusClass}" title="${esc(s.status_note||statusText)}"><i></i>${statusText}</div>${s.image_url?`<div class="server-cover" style="background-image:url('${s.image_url}')"></div>`:`<div class="server-cover server-cover-placeholder"><span>SRO RATING</span><small>Sunucu görseli bekleniyor</small></div>`}<div class="server-card-body"><div class="server-badges"><span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div><h2>${esc(s.name)}</h2>${event?`<div class="countdown" data-date="${event[1]}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></div>`:""}<p class="desc card-summary">${esc(compactDescription(s.description,110))}</p><div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${s.vote_count} değerlendirme</small></div><div class="stars">${stars(rating)}</div></div><div class="card-actions"><button class="outline" data-detail="${s.id}">Detaylar</button><button class="primary" data-review="${s.id}">Oy Ver</button></div></div></article>`}
-function commenterTone(value){const palette=["#79c8bd","#9da9e8","#d9a1cd","#e4ad73","#87c99a","#dd8f91"];const key=String(value||"0").split("").reduce((total,char)=>total+char.charCodeAt(0),0);return palette[key%palette.length]}
-function reviewBlock(r){return `<article class="detail-comment"><header><button class="user-link" style="--commenter-color:${commenterTone(r.user_id||r.display_name)}" data-profile="${r.user_id}">${esc(r.display_name)}</button><span>${"★".repeat(r.rating)}${"☆".repeat(5-r.rating)}</span></header><p>${esc(r.comment)}</p>${r.owner_reply?`<div class="owner-reply"><strong>✓ Sunucu sahibinin resmi cevabı</strong><p>${esc(r.owner_reply)}</p></div>`:""}<div class="review-actions"><button class="reaction-button ${r.my_reaction==="like"?"active":""}" data-reaction="like" data-review-id="${r.id}">👍 <strong>${r.like_count||0}</strong> Beğen</button><button class="reaction-button dislike ${r.my_reaction==="dislike"?"active":""}" data-reaction="dislike" data-review-id="${r.id}">👎 <strong>${r.dislike_count||0}</strong> Beğenme</button></div></article>`}
-async function openServer(id){const s=state.servers.find(x=>Number(x.id)===id),d=await api(`/api/servers/${id}`),rating=Number(s.average_rating||0),[statusClass,statusText]=statusInfo(s);$("#serverDetailName").textContent=s.name;$("#serverDetailDescription").textContent=compactDescription(s.description,300);$("#serverDetailHero").className=`server-detail-hero${s.image_url?"":" placeholder"}`;$("#serverDetailHero").style.backgroundImage=s.image_url?`linear-gradient(180deg,transparent,rgba(5,5,5,.82)),url("${s.image_url}")`:"";$("#serverDetailHero").innerHTML=`<div class="server-status ${statusClass}" title="${esc(s.status_note||statusText)}"><i></i>${statusText}</div>`;$("#serverDetailBadges").innerHTML=`<span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span>${nextEvent(s)?`<span>${nextEvent(s)[0]} · ${new Date(nextEvent(s)[1]).toLocaleString("tr-TR")}</span>`:""}`;const links=[["Web Sitesi",d.server.website_url],["Discord",d.server.discord_url],["Tanıtım",d.server.promo_url]].filter(x=>x[1]);$("#serverDetailLinks").innerHTML=links.map(x=>`<a class="outline" href="${escapeAttr(x[1])}" target="_blank" rel="noopener nofollow">${x[0]} ↗</a>`).join("");$("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars">${stars(rating)}</span><small>${d.reviews.length} topluluk yorumu</small>`;$("#serverDetailCount").textContent=`${d.reviews.length} yorum`;$("#serverDetailComments").innerHTML=d.reviews.length?d.reviews.map(r=>reviewBlock(r)).join(""):'<div class="empty-comments"><strong>Henüz yorum yok</strong><p>İlk deneyimi paylaşan siz olun.</p></div>';const mine=d.reviews.find(r=>Number(r.user_id)===Number(state.user?.id));$("#detailReviewButton").textContent=mine?"Puanımı / Yorumumu Düzenle":"Oy Ver / Yorum Yap";$("#detailReviewButton").onclick=()=>{$("#serverDialog").close();openReview(id,mine)};document.querySelectorAll("[data-reaction]").forEach(b=>b.onclick=async()=>{if(!state.user)return location.href="/giris/";await api(`/api/reviews/${b.dataset.reviewId}/reaction`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reaction:b.dataset.reaction})});await openServer(id)});if(!$("#serverDialog").open)$("#serverDialog").showModal()}
-async function openProfile(id){if(!id)return;$("#serverDialog").close();const d=await api(`/api/users/${id}/profile`),p=d.profile,s=d.stats,badges=["Topluluk Üyesi",Number(s.reviews)>=1&&"İlk Değerlendirme",Number(s.reviews)>=5&&"Deneyimli Yorumcu",p.account_role==="owner"&&"Sunucu Sahibi"].filter(Boolean);$("#profilePreviewContent").innerHTML=`<div class="profile-preview-head"><img src="/sro-rating-logo.png" alt=""><div><p class="eyebrow">${p.account_role==="owner"?"SUNUCU SAHİBİ":"TOPLULUK ÜYESİ"}</p><h2>${esc(p.display_name)}</h2>${p.game_alias?`<strong>Oyun içi: ${esc(p.game_alias)}</strong>`:""}</div></div>${p.bio?`<p class="profile-bio">${esc(p.bio)}</p>`:""}<div class="badge-wall">${badges.map(x=>`<span class="profile-badge">✦ ${x}</span>`).join("")}</div><h3>Oynadığı Sunucular</h3><div class="playing-list">${d.servers.length?d.servers.map(x=>`<span>${esc(x.name)}</span>`).join(""):"Henüz sunucu seçmedi."}</div><div class="profile-stats"><span><strong>${s.reviews}</strong> Değerlendirme</span><span><strong>${s.likes}</strong> Beğeni</span></div>`;$("#profilePreviewDialog").showModal()}
-function formatCountdown(value){const ms=new Date(value).getTime()-Date.now();if(ms<=0)return"Başladı";const days=Math.floor(ms/86400000),hours=Math.floor(ms%86400000/3600000),mins=Math.floor(ms%3600000/60000);return `${days}g ${hours}s ${mins}dk`}
-function setupExtras(){const actions=$("#accountActions"),menu=actions.querySelector(".account-menu-panel"),button=document.createElement("button");button.className=menu?"account-menu-item calendar-button":"outline calendar-button";button.type="button";button.innerHTML="<span>📅</span><span>Sunucu Takvimi</span>";(menu||actions).prepend(button);const dialog=document.createElement("dialog");dialog.className="calendar-dialog";dialog.innerHTML='<button class="close" type="button">×</button><p class="eyebrow">SUNUCU TAKVİMİ</p><h2>Beta ve Açılış Takvimi</h2><p class="panel-lead">Tarihler yerel saatinize göre gösterilir.</p><div class="calendar-events"></div>';document.body.append(dialog);button.onclick=()=>{menu?.classList.add("hidden");const events=state.servers.flatMap(s=>[["Beta",s.beta_at],["Açılış",s.launch_at]].filter(x=>x[1]).map(x=>({server:s.name,type:x[0],date:x[1]}))).sort((a,b)=>new Date(a.date)-new Date(b.date));dialog.querySelector(".calendar-events").innerHTML=events.length?events.map(x=>`<article><time>${new Date(x.date).toLocaleString("tr-TR")}</time><div><strong>${esc(x.server)}</strong><span>${x.type} · ${formatCountdown(x.date)}</span></div></article>`).join(""):'<div class="empty-state">Takvime eklenmiş etkinlik yok.</div>';dialog.showModal()};dialog.querySelector(".close").onclick=()=>dialog.close();dialog.onclick=e=>{if(e.target===dialog)dialog.close()};setInterval(()=>document.querySelectorAll(".countdown").forEach(x=>x.querySelector("span").textContent=formatCountdown(x.dataset.date)),60000)}
-function renderAccount(){const box=$("#accountActions");if(!state.user)return;const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":"✦ Üye";box.innerHTML=`<a class="profile-chip enhanced" href="/profil/"><img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span></a><button id="logoutBtn" class="outline">Çıkış</button>`;$("#logoutBtn").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.reload()}}
-init().then(()=>{setupExtras();setupAdvancedDiscovery();document.body.classList.remove("app-loading")}).catch(e=>{document.body.classList.remove("app-loading");$("#serverGrid").innerHTML=`<div class="panel bad">${esc(e.message)}</div>`});
+const state={
+  servers:[],user:null,settings:{},turnstileKey:"",widget:null,query:"",
+  favoriteOnly:false,page:1,openServerId:null
+};
+const $=selector=>document.querySelector(selector);
+const $$=selector=>[...document.querySelectorAll(selector)];
+
+async function api(url,options={}){
+  const response=await fetch(url,options);
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"İşlem başarısız.");
+  return data;
+}
+
+async function init(){
+  const query=new URLSearchParams(location.search);
+  const requestedServer=Number(query.get("server")||0);
+  const requestedReview=Number(query.get("review")||0);
+  const [config,me]=await Promise.all([api("/api/config"),api("/api/auth/me")]);
+  state.settings=config.settings||{};
+  state.turnstileKey=config.turnstileSiteKey||"";
+  state.user=me.user;
+  applySettings();
+  renderAccount();
+  setupCalendar();
+  setupDiscovery();
+  await loadServers();
+  document.body.classList.remove("app-loading");
+  if(requestedServer&&state.servers.some(server=>Number(server.id)===requestedServer)){
+    history.replaceState(null,"",location.pathname);
+    await openServer(requestedServer,false,requestedReview);
+  }
+}
+
+function applySettings(){
+  const settings=state.settings;
+  const logo=settings.logo_image||"/sro-rating-header.png";
+  $("#siteLogo").src=logo;
+  setVisual($("#banner"),settings.banner_image||"/sro-rating-banner.gif");
+  setVisual($("#leftSponsor"),settings.left_ad_image);
+  setVisual($("#rightSponsor"),settings.right_ad_image);
+  configureSponsor($("#leftSponsor"),settings.left_ad_image,settings.left_ad_text,settings.left_ad_url);
+  configureSponsor($("#rightSponsor"),settings.right_ad_image,settings.right_ad_text,settings.right_ad_url);
+  setLink($("#banner"),settings.banner_url);
+  $("#banner").textContent="";
+  $("#footerTagline").textContent=settings.footer_tagline||"Silkroad topluluğunun buluşma noktası.";
+  $("#footerYear").textContent=new Date().getFullYear();
+  $("#contactText").textContent=settings.contact_text||"";
+  $("#disclaimerText").textContent=settings.disclaimer_text||"";
+  const socials=[["Twitch",settings.twitch_url],["Kick",settings.kick_url],["YouTube",settings.youtube_url]].filter(([,url])=>url);
+  $("#socials").innerHTML=socials.length?socials.map(([name,url])=>`<a href="${esc(url)}" target="_blank" rel="noopener">${name}</a>`).join(""):"Bağlantı eklenmedi.";
+  const footerBrand=document.querySelector(".footer-brand .brand");
+  if(footerBrand)footerBrand.innerHTML=`<img class="footer-logo" src="${esc(logo)}" alt="SRO RATING">`;
+}
+
+function setVisual(element,url){
+  element.classList.toggle("has-image",Boolean(url));
+  element.style.backgroundImage=url?`url("${String(url).replaceAll('"',"%22")}")`:"";
+}
+
+function configureSponsor(element,image,text,url){
+  element.classList.toggle("empty-sponsor",!image);
+  element.textContent=image?"":(text||"Reklam alanı");
+  setLink(element,url);
+}
+
+function setLink(element,url){
+  if(url){element.href=url;element.target="_blank";element.rel="noopener nofollow"}
+  else element.removeAttribute("href");
+}
 
 function renderAccount(){
-  const box=$("#accountActions");if(!state.user)return;
+  const box=$("#accountActions");
+  if(!state.user)return;
   const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":"✦ Üye";
-  box.innerHTML=`<a class="notification-button" href="/bildirimler/" aria-label="Bildirimler">🔔<b id="notificationCount"></b></a><a class="profile-chip enhanced" href="/profil/"><img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span></a><button id="logoutBtn" class="outline logout-button">Çıkış</button>`;
+  box.innerHTML=`<div class="account-menu">
+    <button class="account-menu-trigger" type="button" aria-expanded="false" aria-haspopup="menu">
+      <img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span><i>⌄</i>
+    </button>
+    <div class="account-menu-panel hidden" role="menu">
+      <a class="account-menu-item" href="/profil/" role="menuitem"><span>👤</span><span>Profilim</span></a>
+      <button class="account-menu-item notification-menu-item" type="button" data-notification-toggle role="menuitem"><span>🔔</span><span>Bildirimler</span><b></b></button>
+      <button id="logoutBtn" class="account-menu-item account-menu-logout" type="button" role="menuitem"><span>↪</span><span>Çıkış Yap</span></button>
+    </div>
+  </div>`;
+  const trigger=box.querySelector(".account-menu-trigger");
+  const panel=box.querySelector(".account-menu-panel");
+  const closeMenu=()=>{panel.classList.add("hidden");trigger.setAttribute("aria-expanded","false")};
+  trigger.onclick=()=>{const open=panel.classList.toggle("hidden")===false;trigger.setAttribute("aria-expanded",String(open))};
+  box.querySelector("[data-notification-toggle]").onclick=closeMenu;
+  document.addEventListener("click",event=>{if(!box.contains(event.target))closeMenu()});
+  document.addEventListener("keydown",event=>{if(event.key==="Escape")closeMenu()});
   $("#logoutBtn").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.reload()};
-  api("/api/notifications").then(x=>{const count=$("#notificationCount");if(count&&x.unread){count.textContent=x.unread>99?"99+":x.unread;count.classList.add("visible")}}).catch(()=>{});
+}
+
+function setupCalendar(){
+  if(!state.user)return;
+  const panel=$(".account-menu-panel");
+  if(!panel)return;
+  const button=document.createElement("button");
+  button.className="account-menu-item calendar-button";
+  button.type="button";
+  button.innerHTML="<span>📅</span><span>Sunucu Takvimi</span>";
+  panel.prepend(button);
+  const dialog=document.createElement("dialog");
+  dialog.className="calendar-dialog";
+  dialog.innerHTML='<button class="close" type="button" aria-label="Kapat">×</button><p class="eyebrow">SUNUCU TAKVİMİ</p><h2>Beta ve Açılış Takvimi</h2><p class="panel-lead">Tarihler yerel saatinize göre gösterilir.</p><div class="calendar-events"></div>';
+  document.body.append(dialog);
+  button.onclick=()=>{
+    panel.classList.add("hidden");
+    const events=state.servers.flatMap(server=>[["Beta",server.beta_at],["Açılış",server.launch_at]]
+      .filter(([,date])=>date).map(([type,date])=>({server:server.name,type,date})))
+      .sort((a,b)=>new Date(a.date)-new Date(b.date));
+    dialog.querySelector(".calendar-events").innerHTML=events.length?events.map(event=>`<article><time>${new Date(event.date).toLocaleString("tr-TR")}</time><div><strong>${esc(event.server)}</strong><span>${event.type} · ${formatCountdown(event.date)}</span></div></article>`).join(""):'<div class="empty-state">Takvime eklenmiş etkinlik yok.</div>';
+    dialog.showModal();
+  };
+  dialog.querySelector(".close").onclick=()=>dialog.close();
+  dialog.onclick=event=>{if(event.target===dialog)dialog.close()};
+  setInterval(updateCountdowns,60000);
+}
+
+async function loadServers(){
+  const data=await api("/api/servers");
+  state.servers=data.servers||[];
+  fillFilters();
+  renderServers();
+}
+
+function fillFilters(){
+  const select=$("#capFilter");
+  const current=select.value;
+  [...select.options].slice(1).forEach(option=>option.remove());
+  [...new Set(state.servers.map(server=>Number(server.cap)).filter(Boolean))].sort((a,b)=>a-b)
+    .forEach(cap=>select.add(new Option(`CAP ${cap}`,String(cap))));
+  select.value=[...select.options].some(option=>option.value===current)?current:"";
+}
+
+function setupDiscovery(){
+  const filters=$(".filters");
+  const status=document.createElement("select");
+  status.id="statusFilter";status.setAttribute("aria-label","Sunucu durumu");
+  status.innerHTML='<option value="">Tüm durumlar</option><option value="online">Çevrimiçi</option><option value="maintenance">Bakımda</option><option value="offline">Kapalı</option>';
+  const rating=document.createElement("select");
+  rating.id="ratingFilter";rating.setAttribute("aria-label","Minimum puan");
+  rating.innerHTML='<option value="">Tüm puanlar</option><option value="4">4+ puan</option><option value="3">3+ puan</option><option value="1">Puanlanmış</option>';
+  const tag=document.createElement("select");
+  tag.id="tagFilter";tag.setAttribute("aria-label","Etiket");
+  tag.innerHTML='<option value="">Tüm etiketler</option><option value="new">Yeni</option><option value="popular">Popüler</option><option value="high">Yüksek puan</option><option value="favorite">Favorilerim</option>';
+  $("#typeFilter").after(status,rating,tag);
+  if(state.user){
+    const favorite=document.createElement("button");
+    favorite.id="favoriteFilter";favorite.className="tiny favorite-filter";favorite.type="button";favorite.textContent="♥ Favorilerim";
+    favorite.onclick=()=>{state.favoriteOnly=!state.favoriteOnly;favorite.classList.toggle("active",state.favoriteOnly);state.page=1;renderServers()};
+    $("#clearFilters").before(favorite);
+  }
+  [...filters.querySelectorAll("select,input")].forEach(control=>control.addEventListener(control.type==="search"?"input":"change",()=>{
+    state.query=$("#searchInput").value;
+    state.page=1;
+    renderServers();
+  }));
+  $("#clearFilters").onclick=()=>{
+    state.page=1;state.query="";state.favoriteOnly=false;
+    $("#searchInput").value="";$("#sortSelect").value="rating";
+    ["#capFilter","#typeFilter","#statusFilter","#ratingFilter","#tagFilter"].forEach(selector=>$(selector).value="");
+    $("#newOnly").checked=false;$("#favoriteFilter")?.classList.remove("active");renderServers();
+  };
+  const pagination=document.createElement("nav");
+  pagination.id="serverPagination";pagination.className="server-pagination";pagination.setAttribute("aria-label","Sunucu sayfaları");
+  $("#serverGrid").after(pagination);
+}
+
+function renderServers(){
+  const query=state.query.toLocaleLowerCase("tr-TR").trim();
+  const cap=$("#capFilter").value,type=$("#typeFilter").value,status=$("#statusFilter").value;
+  const minRating=Number($("#ratingFilter").value||0),tag=$("#tagFilter").value;
+  const newOnly=$("#newOnly").checked,cutoff=Date.now()-45*86400000;
+  let servers=state.servers.filter(server=>{
+    const tags=serverTags(server);
+    const text=`${server.name} ${server.description} ${server.cap} ${server.server_type} ${tags.join(" ")}`.toLocaleLowerCase("tr-TR");
+    return (!query||query.split(/\s+/).every(token=>text.includes(token)))&&
+      (!cap||String(server.cap)===cap)&&(!type||server.server_type===type)&&
+      (!status||server.operational_status===status)&&(!minRating||Number(server.average_rating)>=minRating)&&
+      (!tag||tags.includes(tag))&&(!newOnly||new Date((server.opened_at||server.created_at)+"Z").getTime()>=cutoff)&&
+      (!state.favoriteOnly||Boolean(server.is_favorite));
+  });
+  const sort=$("#sortSelect").value;
+  servers.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):
+    sort==="newest"?new Date(b.opened_at||b.created_at)-new Date(a.opened_at||a.created_at):
+    Number(b.average_rating)-Number(a.average_rating)||Number(b.vote_count)-Number(a.vote_count));
+  const pages=Math.max(1,Math.ceil(servers.length/8));
+  state.page=Math.min(Math.max(1,state.page||1),pages);
+  const visible=servers.slice((state.page-1)*8,state.page*8);
+  $("#serverGrid").innerHTML=visible.length?visible.map(serverCard).join(""):'<div class="panel empty-results"><h3>Bu filtrelere uygun sunucu bulunamadı.</h3><p>Arama veya filtreleri değiştirin.</p></div>';
+  $("#serverPagination").innerHTML=pages>1?Array.from({length:pages},(_,index)=>`<button type="button" data-page="${index+1}" class="${state.page===index+1?"active":""}">${index+1}</button>`).join(""):"";
+  bindServerCards();
+}
+
+function serverCard(server){
+  const rating=Number(server.average_rating||0);
+  const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<45*86400000;
+  const [statusClass,statusText]=statusInfo(server);
+  const event=nextEvent(server);
+  const cover=server.image_url?`<div class="server-cover" style="background-image:url('${esc(server.image_url)}')"></div>`:'<div class="server-cover server-cover-placeholder"><span>SRO RATING</span></div>';
+  return `<article class="server-card" data-server="${server.id}" tabindex="0" aria-label="${esc(server.name)} ayrıntılarını aç">
+    <button class="favorite-button ${server.is_favorite?"active":""}" data-favorite="${server.id}" type="button" aria-pressed="${Boolean(server.is_favorite)}" aria-label="${server.is_favorite?"Favorilerden çıkar":"Favorilere ekle"}">♥</button>
+    <div class="server-status ${statusClass}" title="${esc(server.status_note||statusText)}"><i></i>${statusText}</div>
+    ${cover}<div class="server-card-body"><div class="server-badges"><span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div>
+    <h2>${esc(server.name)}</h2>${event?`<div class="countdown" data-date="${esc(event[1])}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></div>`:""}
+    <p class="desc card-summary">${esc(compactDescription(server.description,110))}</p>
+    <div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${server.vote_count} değerlendirme</small></div><div class="stars card-stars">${stars(rating)}</div></div>
+    <div class="card-actions"><button class="outline" data-detail="${server.id}">Detaylar</button><button class="primary" data-review="${server.id}">Oy Ver</button></div></div>
+  </article>`;
+}
+
+function bindServerCards(){
+  $$("[data-server]").forEach(card=>{
+    card.onclick=event=>{if(!event.target.closest("button"))openServer(Number(card.dataset.server))};
+    card.onkeydown=event=>{if((event.key==="Enter"||event.key===" ")&&!event.target.closest("button")){event.preventDefault();openServer(Number(card.dataset.server))}};
+  });
+  $$("[data-detail]").forEach(button=>button.onclick=()=>openServer(Number(button.dataset.detail)));
+  $$("[data-review]").forEach(button=>button.onclick=()=>openServer(Number(button.dataset.review),true));
+  $$("[data-favorite]").forEach(button=>button.onclick=async()=>{
+    if(!state.user){location.href="/giris/";return}
+    const result=await api(`/api/servers/${button.dataset.favorite}/favorite`,{method:"POST"});
+    const server=state.servers.find(item=>Number(item.id)===Number(button.dataset.favorite));
+    server.is_favorite=result.favorite?1:0;renderServers();
+  });
+  $$("[data-page]").forEach(button=>button.onclick=()=>{state.page=Number(button.dataset.page);renderServers();$(".toolbar").scrollIntoView({behavior:"smooth",block:"start"})});
+}
+
+async function openServer(id,focusForm=false,focusReviewId=0){
+  state.openServerId=id;
+  const summary=state.servers.find(server=>Number(server.id)===id);
+  if(!summary)return;
+  const data=await api(`/api/servers/${id}`);
+  const server=data.server;
+  const rating=Number(server.average_rating||0);
+  const [statusClass,statusText]=statusInfo(server);
+  const mine=data.reviews.find(review=>Number(review.user_id)===Number(state.user?.id));
+  $("#serverDetailName").textContent=server.name;
+  $("#serverDetailDescription").textContent=compactDescription(server.description,300);
+  $("#serverDetailHero").className=`server-detail-hero${server.image_url?"":" placeholder"}`;
+  $("#serverDetailHero").style.backgroundImage=server.image_url?`url("${String(server.image_url).replaceAll('"',"%22")}")`:"";
+  $("#serverDetailHero").innerHTML=server.image_url?"":'<div><strong>Sunucu görseli bekleniyor</strong></div>';
+  $("#serverDetailBadges").innerHTML=`<span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span><span class="server-status inline ${statusClass}" title="${esc(server.status_note||statusText)}"><i></i>${statusText}</span>`;
+  const links=[["Web Sitesi",server.website_url],["Discord",server.discord_url],["Tanıtım",server.promo_url]].filter(([,url])=>url);
+  $("#serverDetailLinks").innerHTML=links.map(([name,url])=>`<a class="outline" href="${esc(url)}" target="_blank" rel="noopener nofollow">${name} ↗</a>`).join("");
+  $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars detail-stars">${stars(rating)}</span><small>${data.reviews.length} yorum</small>`;
+  $("#serverDetailCount").innerHTML='<label class="comment-sort-label">Sırala <select id="commentSort"><option value="ratingDesc">Puan: yüksekten düşüğe</option><option value="ratingAsc">Puan: düşükten yükseğe</option><option value="likes">En çok beğenilen</option><option value="dislikes">En çok beğenilmeyen</option><option value="newest">En yeni</option></select></label>';
+  renderReviewList(data.reviews,"ratingDesc");
+  $("#commentSort").onchange=event=>renderReviewList(data.reviews,event.target.value);
+  const actions=$(".detail-actions");
+  if(!state.user)actions.innerHTML='<a class="primary" href="/giris/">Oy vermek için giriş yap</a>';
+  else if(data.viewer?.isOwner)actions.innerHTML='<p class="message">Sunucu sahipleri kendi sunucularına puan veremez.</p>';
+  else actions.innerHTML=detailReviewForm(mine);
+  bindInlineReview(id,mine);
+  const dialog=$("#serverDialog");
+  if(!dialog.open)dialog.showModal();
+  requestAnimationFrame(()=>{
+    if(focusForm){
+      actions.classList.add("review-target");
+      actions.scrollIntoView({behavior:"smooth",block:"center"});
+      actions.querySelector("textarea,button,a")?.focus({preventScroll:true});
+      setTimeout(()=>actions.classList.remove("review-target"),1400);
+    }else if(focusReviewId){
+      const review=$(`[data-review-card="${focusReviewId}"]`);
+      if(review){review.classList.add("review-target");review.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(()=>review.classList.remove("review-target"),1800)}
+    }
+  });
+}
+
+function detailReviewForm(mine){
+  return `<form id="inlineDetailReview" class="inline-detail-review">
+    <div class="inline-rating" data-inline-rating aria-label="Puan">${[1,2,3,4,5].map(value=>`<button type="button" data-value="${value}" class="${Number(mine?.rating||0)>=value?"active":""}" aria-label="${value} puan">★</button>`).join("")}</div>
+    <textarea minlength="3" maxlength="500" required placeholder="Bu sunucu hakkındaki deneyiminiz…">${esc(mine?.comment||"")}</textarea>
+    <div><small><span data-review-count>${String(mine?.comment||"").length}</span>/500 karakter</small><button class="primary">${mine?"Puan ve Yorumu Güncelle":"Oy Ver ve Yorumla"}</button></div>
+    <p class="inline-review-message" role="status"></p>
+  </form>`;
+}
+
+function bindInlineReview(serverId,mine){
+  const form=$("#inlineDetailReview");
+  if(!form)return;
+  let chosen=Number(mine?.rating||0);
+  form.querySelectorAll("[data-value]").forEach(button=>button.onclick=()=>{
+    chosen=Number(button.dataset.value);
+    form.querySelectorAll("[data-value]").forEach(item=>item.classList.toggle("active",Number(item.dataset.value)<=chosen));
+  });
+  form.querySelector("textarea").oninput=event=>form.querySelector("[data-review-count]").textContent=event.target.value.length;
+  form.onsubmit=async event=>{
+    event.preventDefault();
+    const message=form.querySelector(".inline-review-message");
+    if(!chosen){message.textContent="Bir puan seçin.";return}
+    const submit=form.querySelector("button[type=submit],button.primary");
+    submit.disabled=true;message.textContent="Kaydediliyor…";
+    try{
+      await api(mine?`/api/reviews/${mine.id}`:`/api/servers/${serverId}/reviews`,{
+        method:mine?"PUT":"POST",headers:{"content-type":"application/json"},
+        body:JSON.stringify({rating:chosen,comment:form.querySelector("textarea").value})
+      });
+      await loadServers();await openServer(serverId,false,mine?.id||0);
+    }catch(error){message.textContent=error.message;submit.disabled=false}
+  };
 }
 
 function renderReviewList(reviews,mode){
   const list=[...reviews];
-  list.sort((a,b)=>mode==="ratingAsc"?a.rating-b.rating:mode==="likes"?Number(b.like_count)-Number(a.like_count):mode==="dislikes"?Number(b.dislike_count)-Number(a.dislike_count):b.rating-a.rating);
-  $("#serverDetailComments").innerHTML=list.length?list.map(r=>reviewBlock(r)).join(""):'<div class="empty-comments"><strong>Henüz yorum yok</strong><p>İlk deneyimi paylaşan siz olun.</p></div>';
-  document.querySelectorAll("[data-reaction]").forEach(b=>b.onclick=async()=>{if(!state.user)return location.href="/giris/";await api(`/api/reviews/${b.dataset.reviewId}/reaction`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reaction:b.dataset.reaction})});await openServer(Number(state.openServerId))});
-  document.querySelectorAll("[data-profile]").forEach(b=>b.onclick=()=>openProfile(b.dataset.profile));
+  list.sort((a,b)=>mode==="ratingAsc"?a.rating-b.rating:
+    mode==="likes"?Number(b.like_count)-Number(a.like_count):
+    mode==="dislikes"?Number(b.dislike_count)-Number(a.dislike_count):
+    mode==="newest"?new Date(b.created_at)-new Date(a.created_at):
+    b.rating-a.rating);
+  $("#serverDetailComments").innerHTML=list.length?list.map(reviewBlock).join(""):'<div class="empty-comments"><strong>Henüz yorum yok</strong><p>İlk deneyimi paylaşan siz olun.</p></div>';
+  $$("[data-reaction]").forEach(button=>button.onclick=async()=>{
+    if(!state.user){location.href="/giris/";return}
+    try{
+      await api(`/api/reviews/${button.dataset.reviewId}/reaction`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reaction:button.dataset.reaction})});
+      await openServer(state.openServerId,false,Number(button.dataset.reviewId));
+    }catch(error){button.title=error.message}
+  });
+  $$("[data-profile]").forEach(button=>button.onclick=()=>openProfile(button.dataset.profile));
 }
 
-async function openServer(id,focusReview=false){
-  state.openServerId=id;
-  const s=state.servers.find(x=>Number(x.id)===id),d=await api(`/api/servers/${id}`),rating=Number(s.average_rating||0),[statusClass,statusText]=statusInfo(s);
-  $("#serverDetailName").textContent=s.name;$("#serverDetailDescription").textContent=compactDescription(s.description,300);
-  $("#serverDetailHero").className=`server-detail-hero${s.image_url?"":" placeholder"}`;
-  $("#serverDetailHero").style.backgroundImage=s.image_url?`linear-gradient(180deg,transparent,rgba(5,5,5,.58)),url("${s.image_url}")`:"";
-  $("#serverDetailHero").innerHTML="";
-  $("#serverDetailBadges").innerHTML=`<span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span><span class="server-status inline ${statusClass}" title="${esc(s.status_note||statusText)}"><i></i>${statusText}</span>${nextEvent(s)?`<span>${nextEvent(s)[0]} · ${new Date(nextEvent(s)[1]).toLocaleString("tr-TR")}</span>`:""}`;
-  const links=[["Web Sitesi",d.server.website_url],["Discord",d.server.discord_url],["Tanıtım",d.server.promo_url]].filter(x=>x[1]);
-  $("#serverDetailLinks").innerHTML=links.map(x=>`<a class="outline" href="${escapeAttr(x[1])}" target="_blank" rel="noopener nofollow">${x[0]} ↗</a>`).join("");
-  $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars">${stars(rating)}</span><small>${d.reviews.length} topluluk yorumu</small>`;
-  $("#serverDetailCount").innerHTML=`<label class="comment-sort-label">Sırala <select id="commentSort"><option value="ratingDesc">Puan: yüksekten düşüğe</option><option value="ratingAsc">Puan: düşükten yükseğe</option><option value="likes">En çok beğenilen</option><option value="dislikes">En çok beğenilmeyen</option></select></label>`;
-  renderReviewList(d.reviews,"ratingDesc");$("#commentSort").onchange=e=>renderReviewList(d.reviews,e.target.value);
-  const mine=d.reviews.find(r=>Number(r.user_id)===Number(state.user?.id));$("#detailReviewButton").textContent=mine?"Puanımı / Yorumumu Düzenle":"Oy Ver / Yorum Yap";$("#detailReviewButton").onclick=()=>{$("#serverDialog").close();openReview(id,mine)};
-  if(!$("#serverDialog").open)$("#serverDialog").showModal();
-  if(focusReview){
-    const reviewArea=$(".detail-actions");
-    reviewArea.classList.remove("review-target");
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      reviewArea.classList.add("review-target");
-      reviewArea.scrollIntoView({behavior:"smooth",block:"center"});
-      (form?.querySelector("textarea")||reviewArea.querySelector("a,button"))?.focus({preventScroll:true});
-      setTimeout(()=>reviewArea.classList.remove("review-target"),1400);
-    }));
-  }
+function reviewBlock(review){
+  return `<article class="detail-comment" data-review-card="${review.id}">
+    <header><button class="user-link" style="--commenter-color:${commenterTone(review.user_id||review.display_name)}" data-profile="${review.user_id||""}">${esc(review.display_name)}</button><span class="stars">${stars(review.rating)}</span></header>
+    <p>${esc(review.comment)}</p>
+    ${review.owner_reply?`<div class="owner-reply"><strong>✓ Sunucu sahibinin resmî cevabı</strong><p>${esc(review.owner_reply)}</p></div>`:""}
+    <div class="review-actions"><button class="reaction-button ${review.my_reaction==="like"?"active":""}" data-reaction="like" data-review-id="${review.id}">👍 <strong>${review.like_count||0}</strong> Beğen</button><button class="reaction-button dislike ${review.my_reaction==="dislike"?"active":""}" data-reaction="dislike" data-review-id="${review.id}">👎 <strong>${review.dislike_count||0}</strong> Beğenme</button></div>
+  </article>`;
 }
 
 async function openProfile(id){
-  if(!id)return;$("#serverDialog").close();
-  const d=await api(`/api/users/${id}/profile`),p=d.profile,s=d.stats,badges=["Topluluk Üyesi",Number(s.reviews)>=1&&"İlk Değerlendirme",Number(s.reviews)>=5&&"Deneyimli Yorumcu",p.account_role==="owner"&&"Sunucu Sahibi"].filter(Boolean);
-  $("#profilePreviewContent").innerHTML=`<div class="profile-preview-head"><img src="/sro-rating-logo.png" alt=""><div><p class="eyebrow">${p.account_role==="owner"?"SUNUCU SAHİBİ":"TOPLULUK ÜYESİ"}</p><h2>${esc(p.display_name)}</h2></div></div>${p.bio?`<p class="profile-bio">${esc(p.bio)}</p>`:""}<div class="badge-wall">${badges.map(x=>`<span class="profile-badge">✦ ${x}</span>`).join("")}</div><h3>Oynadığı Sunucular ve Karakterleri</h3><div class="public-server-list">${d.servers.length?d.servers.map(x=>`<article><span>${esc(x.name)}</span><strong>${esc(x.character_name||"Karakter adı paylaşılmadı")}</strong></article>`).join(""):"<p>Henüz sunucu seçmedi.</p>"}</div><div class="profile-stats"><span><strong>${s.reviews}</strong> Değerlendirme</span><span><strong>${s.likes}</strong> Beğeni</span></div>`;
+  if(!id)return;
+  $("#serverDialog").close();
+  const data=await api(`/api/users/${id}/profile`),profile=data.profile,stats=data.stats;
+  const badges=["Topluluk Üyesi",Number(stats.reviews)>=1&&"İlk Değerlendirme",Number(stats.reviews)>=5&&"Deneyimli Yorumcu",profile.account_role==="owner"&&"Sunucu Sahibi"].filter(Boolean);
+  $("#profilePreviewContent").innerHTML=`<div class="profile-preview-head"><img src="/sro-rating-logo.png" alt=""><div><p class="eyebrow">${profile.account_role==="owner"?"SUNUCU SAHİBİ":"TOPLULUK ÜYESİ"}</p><h2>${esc(profile.display_name)}</h2></div></div>
+    ${profile.bio?`<p class="profile-bio">${esc(profile.bio)}</p>`:""}<div class="badge-wall">${badges.map(badge=>`<span class="profile-badge">✦ ${badge}</span>`).join("")}</div>
+    <h3>Oynadığı Sunucular ve Karakterleri</h3><div class="public-server-list">${data.servers.length?data.servers.map(server=>`<article><span>${esc(server.name)}</span><strong>${esc(server.character_name||"Karakter adı paylaşılmadı")}</strong></article>`).join(""):"<p>Henüz sunucu seçmedi.</p>"}</div>
+    <div class="profile-stats"><span><strong>${stats.reviews}</strong> Değerlendirme</span><span><strong>${stats.likes}</strong> Beğeni</span></div>`;
   $("#profilePreviewDialog").showModal();
-}
-
-if(location.search.includes("server="))history.replaceState(null,"",location.pathname);
-
-function renderAccount(){
-  const box=$("#accountActions");if(!state.user)return;
-  const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":"✦ Üye";
-  box.innerHTML=`<div class="account-menu"><button class="account-menu-trigger" type="button" aria-expanded="false"><img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span><i>⌄</i></button><div class="account-menu-panel hidden"><a class="account-menu-item" href="/profil/"><span>👤</span><span>Profilim</span></a><button class="account-menu-item notification-menu-item" type="button" data-notification-toggle><span>🔔</span><span>Bildirimler</span><b></b></button><button id="logoutBtn" class="account-menu-item account-menu-logout" type="button"><span>↪</span><span>Çıkış Yap</span></button></div></div>`;
-  const trigger=box.querySelector(".account-menu-trigger"),panel=box.querySelector(".account-menu-panel");
-  trigger.onclick=()=>{const open=panel.classList.toggle("hidden")===false;trigger.setAttribute("aria-expanded",String(open))};
-  box.querySelector("[data-notification-toggle]").addEventListener("click",()=>{panel.classList.add("hidden");trigger.setAttribute("aria-expanded","false")});
-  document.addEventListener("click",event=>{if(!box.contains(event.target)){panel.classList.add("hidden");trigger.setAttribute("aria-expanded","false")}});
-  document.addEventListener("keydown",event=>{if(event.key==="Escape"){panel.classList.add("hidden");trigger.setAttribute("aria-expanded","false")}});
-  $("#logoutBtn").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.reload()};
-  if(!$("#favoriteFilter")){const favoriteFilter=document.createElement("button");favoriteFilter.id="favoriteFilter";favoriteFilter.className="tiny favorite-filter";favoriteFilter.type="button";favoriteFilter.textContent="♥ Favorilerim";favoriteFilter.onclick=()=>{state.favoriteOnly=!state.favoriteOnly;favoriteFilter.classList.toggle("active",!!state.favoriteOnly);renderServers()};$("#clearFilters").before(favoriteFilter)}
-}
-
-function card(s){
-  const rating=Number(s.average_rating||0),fresh=Date.now()-new Date((s.opened_at||s.created_at)+"Z").getTime()<45*86400000,[statusClass,statusText]=statusInfo(s),event=nextEvent(s);
-  return `<article class="server-card" data-server="${s.id}" tabindex="0"><button class="favorite-button ${s.is_favorite?"active":""}" data-favorite="${s.id}" type="button" aria-label="${s.is_favorite?"Favorilerden çıkar":"Favorilere ekle"}">♥</button><div class="server-status ${statusClass}" title="${esc(s.status_note||statusText)}"><i></i>${statusText}</div>${s.image_url?`<div class="server-cover" style="background-image:url('${s.image_url}')"></div>`:`<div class="server-cover server-cover-placeholder"><span>SRO RATING</span></div>`}<div class="server-card-body"><div class="server-badges"><span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div><h2>${esc(s.name)}</h2>${event?`<div class="countdown" data-date="${event[1]}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></div>`:""}<p class="desc card-summary">${esc(compactDescription(s.description,110))}</p><div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${s.vote_count} değerlendirme</small></div><div class="stars card-stars">${stars(rating)}</div></div><div class="card-actions"><button class="outline" data-detail="${s.id}">Detaylar</button><button class="primary" data-review="${s.id}">Oy Ver</button></div></div></article>`;
-}
-
-function renderServers(){
-  const q=state.query.toLocaleLowerCase("tr-TR"),cap=$("#capFilter").value,type=$("#typeFilter").value,newOnly=$("#newOnly").checked,cutoff=Date.now()-45*86400000;
-  let list=state.servers.filter(s=>`${s.name} ${s.description} ${s.cap}`.toLocaleLowerCase("tr-TR").includes(q)&&(!cap||String(s.cap)===cap)&&(!type||s.server_type===type)&&(!newOnly||new Date((s.opened_at||s.created_at)+"Z").getTime()>=cutoff)&&(!state.favoriteOnly||s.is_favorite));
-  const sort=$("#sortSelect").value;list.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):sort==="newest"?new Date(b.opened_at||b.created_at)-new Date(a.opened_at||a.created_at):Number(b.average_rating)-Number(a.average_rating)||Number(b.vote_count)-Number(a.vote_count));
-  $("#serverGrid").innerHTML=list.length?list.map(card).join(""):'<div class="panel empty-results"><h3>Bu filtrelere uygun sunucu bulunamadı.</h3></div>';
-  document.querySelectorAll("[data-server]").forEach(x=>x.onclick=e=>{if(!e.target.closest("button"))openServer(Number(x.dataset.server))});
-  document.querySelectorAll("[data-detail]").forEach(x=>x.onclick=()=>openServer(Number(x.dataset.detail)));
-  document.querySelectorAll("[data-review]").forEach(x=>x.onclick=()=>openServer(Number(x.dataset.review)));
-  document.querySelectorAll("[data-favorite]").forEach(x=>x.onclick=async()=>{if(!state.user)return location.href="/giris/";const result=await api(`/api/servers/${x.dataset.favorite}/favorite`,{method:"POST"}),server=state.servers.find(s=>Number(s.id)===Number(x.dataset.favorite));server.is_favorite=result.favorite?1:0;renderServers()});
-}
-
-function detailReviewForm(serverId,mine){
-  return `<form id="inlineDetailReview" class="inline-detail-review"><div class="inline-rating" data-inline-rating>${[1,2,3,4,5].map(n=>`<button type="button" data-value="${n}" class="${Number(mine?.rating||0)>=n?"active":""}">★</button>`).join("")}</div><textarea minlength="3" maxlength="500" required placeholder="Bu sunucu hakkındaki deneyiminiz…">${esc(mine?.comment||"")}</textarea><div><small>En fazla 500 karakter</small><button class="primary">${mine?"Puan ve Yorumu Güncelle":"Oy Ver ve Yorumla"}</button></div><p class="inline-review-message"></p></form>`;
-}
-
-async function openServer(id){
-  state.openServerId=id;
-  const s=state.servers.find(x=>Number(x.id)===id),d=await api(`/api/servers/${id}`),rating=Number(s.average_rating||0),[statusClass,statusText]=statusInfo(s),mine=d.reviews.find(r=>Number(r.user_id)===Number(state.user?.id));
-  $("#serverDetailName").textContent=s.name;$("#serverDetailDescription").textContent=compactDescription(s.description,300);
-  $("#serverDetailHero").className=`server-detail-hero${s.image_url?"":" placeholder"}`;$("#serverDetailHero").style.backgroundImage=s.image_url?`url("${s.image_url}")`:"";$("#serverDetailHero").innerHTML="";
-  $("#serverDetailBadges").innerHTML=`<span>${esc(s.server_type)}</span><span>CAP ${esc(s.cap)}</span><span class="server-status inline ${statusClass}" title="${esc(s.status_note||statusText)}"><i></i>${statusText}</span>`;
-  const links=[["Web Sitesi",d.server.website_url],["Discord",d.server.discord_url],["Tanıtım",d.server.promo_url]].filter(x=>x[1]);$("#serverDetailLinks").innerHTML=links.map(x=>`<a class="outline" href="${escapeAttr(x[1])}" target="_blank" rel="noopener nofollow">${x[0]} ↗</a>`).join("");
-  $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars detail-stars">${stars(rating)}</span><small>${d.reviews.length} yorum</small>`;
-  $("#serverDetailCount").innerHTML=`<label class="comment-sort-label">Sırala <select id="commentSort"><option value="ratingDesc">Puan: yüksekten düşüğe</option><option value="ratingAsc">Puan: düşükten yükseğe</option><option value="likes">En çok beğenilen</option><option value="dislikes">En çok beğenilmeyen</option></select></label>`;
-  renderReviewList(d.reviews,"ratingDesc");$("#commentSort").onchange=e=>renderReviewList(d.reviews,e.target.value);
-  $(".detail-actions").innerHTML=state.user?detailReviewForm(id,mine):'<a class="primary" href="/giris/">Oy vermek için giriş yap</a>';
-  const form=$("#inlineDetailReview");if(form){let chosen=Number(mine?.rating||0);form.querySelectorAll("[data-value]").forEach(button=>button.onclick=()=>{chosen=Number(button.dataset.value);form.querySelectorAll("[data-value]").forEach(x=>x.classList.toggle("active",Number(x.dataset.value)<=chosen))});form.onsubmit=async event=>{event.preventDefault();const message=form.querySelector(".inline-review-message");if(!chosen){message.textContent="Bir puan seçin.";return}try{await api(mine?`/api/reviews/${mine.id}`:`/api/servers/${id}/reviews`,{method:mine?"PUT":"POST",headers:{"content-type":"application/json"},body:JSON.stringify({rating:chosen,comment:form.querySelector("textarea").value})});await loadServers();await openServer(id)}catch(error){message.textContent=error.message}}}
-  if(!$("#serverDialog").open)$("#serverDialog").showModal();
-}
-
-function compactDescription(value,limit){
-  const text=String(value||"").replace(/\s+/g," ").trim();
-  return text.length>limit?`${text.slice(0,limit).trimEnd()}…`:text;
-}
-
-function setupAdvancedDiscovery(){
-  const filters=$(".filters");if(!filters||$("#statusFilter"))return;
-  const status=document.createElement("select");status.id="statusFilter";status.setAttribute("aria-label","Sunucu durumu");status.innerHTML='<option value="">Tüm durumlar</option><option value="online">Çevrimiçi</option><option value="maintenance">Bakımda</option><option value="offline">Kapalı</option>';
-  const rating=document.createElement("select");rating.id="ratingFilter";rating.setAttribute("aria-label","Minimum puan");rating.innerHTML='<option value="">Tüm puanlar</option><option value="4">4+ puan</option><option value="3">3+ puan</option><option value="1">Puanlanmış</option>';
-  const tag=document.createElement("select");tag.id="tagFilter";tag.setAttribute("aria-label","Etiket");tag.innerHTML='<option value="">Tüm etiketler</option><option value="new">Yeni</option><option value="popular">Popüler</option><option value="high">Yüksek puan</option><option value="favorite">Favorilerim</option>';
-  $("#typeFilter").after(status,rating,tag);
-  [status,rating,tag].forEach(control=>control.onchange=()=>{state.page=1;renderServers()});
-  $("#searchInput").addEventListener("input",()=>{state.page=1});
-  ["#capFilter","#typeFilter","#newOnly","#sortSelect"].forEach(selector=>$(selector)?.addEventListener("change",()=>{state.page=1}));
-  let pagination=$("#serverPagination");if(!pagination){pagination=document.createElement("nav");pagination.id="serverPagination";pagination.className="server-pagination";pagination.setAttribute("aria-label","Sunucu sayfaları");$("#serverGrid").after(pagination)}
-  $("#clearFilters").onclick=()=>{state.page=1;state.query="";state.favoriteOnly=false;$("#searchInput").value="";$("#sortSelect").value="rating";["#capFilter","#typeFilter","#statusFilter","#ratingFilter","#tagFilter"].forEach(selector=>{const control=$(selector);if(control)control.value=""});$("#newOnly").checked=false;$(".favorite-filter")?.classList.remove("active");renderServers()};
-  renderServers();
 }
 
 function serverTags(server){
   const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<45*86400000;
-  return [server.server_type,`cap-${server.cap}`,server.operational_status,fresh&&"new",Number(server.vote_count)>=5&&"popular",Number(server.average_rating)>=4&&"high",server.is_favorite&&"favorite"].filter(Boolean).map(x=>String(x).toLocaleLowerCase("tr-TR"));
+  return [server.server_type,`cap-${server.cap}`,server.operational_status,fresh&&"new",Number(server.vote_count)>=5&&"popular",Number(server.average_rating)>=4&&"high",server.is_favorite&&"favorite"].filter(Boolean).map(value=>String(value).toLocaleLowerCase("tr-TR"));
 }
+function statusInfo(server){return({online:["online","Çevrimiçi"],maintenance:["maintenance","Bakımda"],offline:["offline","Kapalı"]})[server.operational_status]||["offline","Kapalı"]}
+function nextEvent(server){return [["Beta",server.beta_at],["Açılış",server.launch_at]].filter(([,date])=>date&&new Date(date).getTime()>Date.now()).sort((a,b)=>new Date(a[1])-new Date(b[1]))[0]||null}
+function formatCountdown(value){const ms=new Date(value).getTime()-Date.now();if(ms<=0)return"Başladı";const days=Math.floor(ms/86400000),hours=Math.floor(ms%86400000/3600000),minutes=Math.floor(ms%3600000/60000);return`${days}g ${hours}s ${minutes}dk`}
+function updateCountdowns(){$$(".countdown").forEach(element=>{const output=element.querySelector("span");if(output)output.textContent=formatCountdown(element.dataset.date)})}
+function compactDescription(value,limit){const text=String(value||"").replace(/\s+/g," ").trim();return text.length>limit?`${text.slice(0,limit).trimEnd()}…`:text}
+function stars(value){const rounded=Math.max(0,Math.min(5,Math.round(Number(value)||0)));return"★".repeat(rounded)+"☆".repeat(5-rounded)}
+function commenterTone(value){const palette=["#79c8bd","#9da9e8","#d9a1cd","#e4ad73","#87c99a","#dd8f91"];const key=String(value||"0").split("").reduce((sum,char)=>sum+char.charCodeAt(0),0);return palette[key%palette.length]}
+function esc(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]))}
 
-function renderServers(){
-  const q=state.query.toLocaleLowerCase("tr-TR").trim(),cap=$("#capFilter").value,type=$("#typeFilter").value,newOnly=$("#newOnly").checked,status=$("#statusFilter")?.value||"",minRating=Number($("#ratingFilter")?.value||0),tag=$("#tagFilter")?.value||"",cutoff=Date.now()-45*86400000;
-  let list=state.servers.filter(server=>{
-    const tags=serverTags(server),haystack=`${server.name} ${server.description} ${server.cap} ${server.server_type} ${tags.join(" ")}`.toLocaleLowerCase("tr-TR");
-    return (!q||q.split(/\s+/).every(token=>haystack.includes(token)))&&(!cap||String(server.cap)===cap)&&(!type||server.server_type===type)&&(!status||server.operational_status===status)&&(!minRating||Number(server.average_rating)>=minRating)&&(!tag||tags.includes(tag))&&(!newOnly||new Date((server.opened_at||server.created_at)+"Z").getTime()>=cutoff)&&(!state.favoriteOnly||server.is_favorite);
-  });
-  const sort=$("#sortSelect").value;list.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):sort==="newest"?new Date(b.opened_at||b.created_at)-new Date(a.opened_at||a.created_at):Number(b.average_rating)-Number(a.average_rating)||Number(b.vote_count)-Number(a.vote_count));
-  const pageCount=Math.max(1,Math.ceil(list.length/8));state.page=Math.min(Math.max(1,Number(state.page||1)),pageCount);const visible=list.slice((state.page-1)*8,state.page*8);
-  $("#serverGrid").innerHTML=visible.length?visible.map(card).join(""):'<div class="panel empty-results"><h3>Bu filtrelere uygun sunucu bulunamadı.</h3><p>Arama veya etiketleri değiştirin.</p></div>';
-  const pagination=$("#serverPagination");if(pagination){pagination.innerHTML=pageCount>1?Array.from({length:pageCount},(_,index)=>`<button type="button" data-page="${index+1}" class="${state.page===index+1?"active":""}">${index+1}</button>`).join(""):"";pagination.querySelectorAll("[data-page]").forEach(button=>button.onclick=()=>{state.page=Number(button.dataset.page);renderServers();$(".toolbar").scrollIntoView({behavior:"smooth",block:"start"})})}
-  document.querySelectorAll("[data-server]").forEach(item=>item.onclick=event=>{if(!event.target.closest("button"))openServer(Number(item.dataset.server))});
-  document.querySelectorAll("[data-detail]").forEach(item=>item.onclick=()=>openServer(Number(item.dataset.detail)));
-  document.querySelectorAll("[data-review]").forEach(item=>item.onclick=()=>openServer(Number(item.dataset.review),true));
-  document.querySelectorAll("[data-favorite]").forEach(item=>item.onclick=async()=>{if(!state.user)return location.href="/giris/";const result=await api(`/api/servers/${item.dataset.favorite}/favorite`,{method:"POST"}),server=state.servers.find(x=>Number(x.id)===Number(item.dataset.favorite));server.is_favorite=result.favorite?1:0;renderServers()});
-}
+["serverDialog","reviewDialog","profilePreviewDialog"].forEach(id=>{
+  const dialog=document.getElementById(id);
+  dialog?.addEventListener("click",event=>{if(event.target===dialog)dialog.close()});
+});
+$("#closeServerDialog").onclick=()=>$("#serverDialog").close();
+$("#closeDialog").onclick=()=>$("#reviewDialog").close();
+$("#closeProfilePreview").onclick=()=>$("#profilePreviewDialog").close();
+
+init().catch(error=>{
+  document.body.classList.remove("app-loading");
+  $("#serverGrid").innerHTML=`<div class="panel bad"><h3>İçerik yüklenemedi</h3><p>${esc(error.message)}</p><button type="button" class="primary" onclick="location.reload()">Tekrar Dene</button></div>`;
+});
