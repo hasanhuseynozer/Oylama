@@ -1,47 +1,247 @@
-const $=s=>document.querySelector(s),msg=$("#profileMessage");let reviewData=[],communityData={},editingReview=null;
-async function api(u,o={}){const r=await fetch(u,o),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"İşlem başarısız.");return d}
-async function init(){const me=await api("/api/auth/me");if(!me.user)return location.href="/giris/";$("#displayName").value=me.user.displayName;$("#gameAlias").value=me.user.gameAlias||"";$("#bio").value=me.user.bio||"";$("#email").value=me.user.email;$("#profileGreeting").textContent=`Merhaba, ${me.user.displayName}`;const [reviews,community,profile]=await Promise.all([api("/api/profile/reviews"),api("/api/profile/community"),api(`/api/users/${me.user.id}/profile`)]);reviewData=reviews.reviews||[];communityData=community;renderReviews();renderServers("");$("#ownerPanelLink").classList.toggle("hidden",me.user.role!=="owner"&&!community.ownedServers.length);const badges=badgesFor(profile.stats,community.ownedServers.length);$("#profileBadges").innerHTML=badges.slice(0,3).map(b=>`<span class="profile-badge">${b.icon} ${b.name}</span>`).join("");$("#badgeDetails").innerHTML=badges.map(b=>`<article><span>${b.icon}</span><div><strong>${b.name}</strong><p>${b.text}</p></div></article>`).join("");const items=community.suggestions.map(x=>({title:x.subject,text:x.message,status:x.status,date:x.created_at}));$("#communityHistory").innerHTML=items.length?items.map(x=>`<article class="request-card"><span class="status ${x.status}">${status(x.status)}</span><small>Öneri · ${date(x.date)}</small><h3>${esc(x.title)}</h3><p>${esc(x.text)}</p></article>`).join(""):'<div class="empty-state">Henüz öneriniz yok.</div>'}
-function renderServers(query){const box=$("#playingServers"),q=query.toLocaleLowerCase("tr-TR"),selected=new Set([...box.querySelectorAll("input:checked")].map(x=>Number(x.value)));if(!selected.size)(communityData.playingServerIds||[]).forEach(x=>selected.add(Number(x)));box.innerHTML=(communityData.servers||[]).filter(s=>s.name.toLocaleLowerCase("tr-TR").includes(q)).map(s=>`<label class="server-choice"><input type="checkbox" value="${s.id}" ${selected.has(Number(s.id))?"checked":""}><span>${esc(s.name)}</span></label>`).join("")||'<div class="empty-state">Sunucu bulunamadı.</div>'}
-function renderReviews(){$("#myReviews").innerHTML=reviewData.length?`<div class="review-card-list">${reviewData.map(r=>`<article><div><small>${date(r.created_at)}</small><h3>${esc(r.server_name)}</h3><span class="stars">${"★".repeat(r.rating)}${"☆".repeat(5-r.rating)}</span><p>${esc(r.comment)}</p></div><button class="outline" data-edit-review="${r.id}">Düzenle</button></article>`).join("")}</div>`:'<div class="empty-state">Henüz oy veya yorum yok.</div>';document.querySelectorAll("[data-edit-review]").forEach(b=>b.onclick=()=>openEditor(Number(b.dataset.editReview)))}
-function openEditor(id){editingReview=reviewData.find(x=>Number(x.id)===id);$("#editRating").value=editingReview.rating;$("#editComment").value=editingReview.comment;$("#editReviewDialog").showModal()}
-$("#editReviewForm").onsubmit=async e=>{e.preventDefault();try{await api(`/api/reviews/${editingReview.id}`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({rating:Number($("#editRating").value),comment:$("#editComment").value})});$("#editReviewDialog").close();show("Puan ve yorum güncellendi.","good");await init()}catch(err){$("#editReviewMessage").textContent=err.message}};
-$("#profileForm").onsubmit=async e=>{e.preventDefault();try{const serverIds=[...document.querySelectorAll("#playingServers input:checked")].map(x=>Number(x.value));await api("/api/profile",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({displayName:$("#displayName").value,gameAlias:$("#gameAlias").value,bio:$("#bio").value,serverIds})});show("Profil güncellendi.","good");await init()}catch(err){show(err.message,"bad")}};
-$("#passwordForm").onsubmit=async e=>{e.preventDefault();try{await api("/api/profile/password",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({oldPassword:$("#oldPassword").value,newPassword:$("#newPassword").value})});location.href="/giris/"}catch(err){show(err.message,"bad")}};
-$("#suggestionForm").onsubmit=async e=>{e.preventDefault();try{await api("/api/profile/suggestions",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({subject:$("#suggestionSubject").value,message:$("#suggestionMessage").value})});show("Öneriniz alındı.","good");e.target.reset();await init()}catch(err){show(err.message,"bad")}};
-$("#serverSearch").oninput=e=>renderServers(e.target.value);$("#closeEditReview").onclick=()=>$("#editReviewDialog").close();$("#editReviewDialog").onclick=e=>{if(e.target===$("#editReviewDialog"))e.target.close()};$("#logout").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.href="/"};
-function badgesFor(s,owner){const b=[{icon:"✦",name:"Topluluk Üyesi",text:"SRO RATING topluluğunun bir üyesi."}];if(Number(s.reviews)>=1)b.push({icon:"★",name:"İlk Değerlendirme",text:"İlk değerlendirmesini yayımladı."});if(Number(s.reviews)>=5)b.push({icon:"🏆",name:"Deneyimli Yorumcu",text:"En az 5 sunucuyu değerlendirdi."});if(Number(s.likes)>=10)b.push({icon:"♥",name:"Destekçi",text:"Yararlı yorumları destekliyor."});if(owner)b.push({icon:"♛",name:"Sunucu Sahibi",text:"Yönetici tarafından atanmış sunucu sahibi."});return b}
-function show(t,c){msg.className=`message ${c}`;msg.textContent=t;scrollTo({top:0,behavior:"smooth"})}function status(v){return({new:"Yeni",reviewed:"İncelendi",closed:"Kapandı"})[v]||v}function date(v){return new Date(v+"Z").toLocaleString("tr-TR")}function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-init().catch(()=>location.href="/giris/");
-
-function renderServers(query){
-  const box=$("#playingServers"),q=query.toLocaleLowerCase("tr-TR");
-  const existing=new Map([...box.querySelectorAll(".server-choice")].map(row=>[
-    Number(row.querySelector("input[type=checkbox]")?.value),
-    {selected:!!row.querySelector("input[type=checkbox]")?.checked,characterName:row.querySelector(".character-name")?.value||""}
-  ]));
-  const saved=new Map((communityData.playingServers||[]).map(x=>[Number(x.server_id),{selected:true,characterName:x.character_name||""}]));
-  box.innerHTML=(communityData.servers||[]).filter(s=>s.name.toLocaleLowerCase("tr-TR").includes(q)).map(s=>{
-    const value=existing.get(Number(s.id))||saved.get(Number(s.id))||{selected:false,characterName:""};
-    return `<div class="server-choice character-server"><label><input type="checkbox" value="${s.id}" ${value.selected?"checked":""}><span>${esc(s.name)}</span></label><input class="character-name" maxlength="40" value="${esc(value.characterName)}" placeholder="Bu sunucudaki karakter adı" ${value.selected?"":"disabled"}></div>`;
-  }).join("")||'<div class="empty-state">Sunucu bulunamadı.</div>';
-  box.querySelectorAll(".character-server input[type=checkbox]").forEach(check=>check.onchange=()=>{check.closest(".character-server").querySelector(".character-name").disabled=!check.checked});
-}
-
-$("#profileForm").onsubmit=async e=>{
-  e.preventDefault();
-  try{
-    const playedServers=[...document.querySelectorAll(".character-server")].filter(x=>x.querySelector("input[type=checkbox]").checked).map(x=>({
-      serverId:Number(x.querySelector("input[type=checkbox]").value),
-      characterName:x.querySelector(".character-name").value
-    }));
-    await api("/api/profile",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({displayName:$("#displayName").value,gameAlias:$("#gameAlias").value,bio:$("#bio").value,playedServers})});
-    show("Profil güncellendi.","good");await init();
-  }catch(err){show(err.message,"bad")}
+const $=selector=>document.querySelector(selector);
+const messageBox=$("#profileMessage");
+const state={
+  user:null,
+  reviews:[],
+  community:{servers:[],suggestions:[],ownedServers:[],playingServers:[]},
+  profile:null,
+  played:new Map(),
+  editingReview:null
 };
 
-const notificationLink=document.createElement("button");
-notificationLink.type="button";
-notificationLink.className="outline notification-link";
-notificationLink.dataset.notificationToggle="";
-notificationLink.innerHTML="🔔 Bildirimler <b></b>";
-document.querySelector(".topbar nav").prepend(notificationLink);
+async function api(url,options={}){
+  const response=await fetch(url,options);
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||"İşlem başarısız.");
+  return data;
+}
+
+async function init({preservePlayed=false}={}){
+  const me=await api("/api/auth/me");
+  if(!me.user){location.href="/giris/";return}
+  state.user=me.user;
+  const [reviews,community,profile]=await Promise.all([
+    api("/api/profile/reviews"),
+    api("/api/profile/community"),
+    api(`/api/users/${me.user.id}/profile`)
+  ]);
+  state.reviews=reviews.reviews||[];
+  state.community={
+    servers:community.servers||[],
+    suggestions:community.suggestions||[],
+    ownedServers:community.ownedServers||[],
+    playingServers:community.playingServers||[]
+  };
+  state.profile=profile;
+  if(!preservePlayed){
+    state.played=new Map(state.community.playingServers.map(item=>[
+      Number(item.server_id),
+      {selected:true,characterName:item.character_name||""}
+    ]));
+  }
+  fillIdentity();
+  renderServers($("#serverSearch").value||"");
+  renderReviews();
+  renderBadges();
+  renderSuggestions();
+  renderOwnerAccess();
+}
+
+function fillIdentity(){
+  $("#displayName").value=state.user.displayName;
+  $("#gameAlias").value=state.user.gameAlias||"";
+  $("#bio").value=state.user.bio||"";
+  $("#email").value=state.user.email;
+  $("#profileGreeting").textContent=`Merhaba, ${state.user.displayName}`;
+}
+
+function renderOwnerAccess(){
+  const isOwner=state.user.role==="owner"||state.community.ownedServers.length>0;
+  $("#ownerPanelLink").classList.toggle("hidden",!isOwner);
+}
+
+function renderServers(query=""){
+  const term=query.toLocaleLowerCase("tr-TR").trim();
+  const matching=state.community.servers.filter(server=>server.name.toLocaleLowerCase("tr-TR").includes(term));
+  $("#playingServers").innerHTML=matching.length?matching.map(server=>{
+    const current=state.played.get(Number(server.id))||{selected:false,characterName:""};
+    return `<article class="server-choice character-server" data-played-server="${server.id}">
+      <label><input type="checkbox" value="${server.id}" ${current.selected?"checked":""}><span>${esc(server.name)}</span></label>
+      <input class="character-name" maxlength="40" value="${esc(current.characterName)}" placeholder="Bu sunucudaki karakter adı" ${current.selected?"":"disabled"}>
+    </article>`;
+  }).join(""):'<div class="empty-state">Sunucu bulunamadı.</div>';
+
+  document.querySelectorAll("[data-played-server]").forEach(row=>{
+    const id=Number(row.dataset.playedServer);
+    const checkbox=row.querySelector('input[type="checkbox"]');
+    const character=row.querySelector(".character-name");
+    checkbox.onchange=()=>{
+      if(checkbox.checked&&selectedCount()>=20){
+        checkbox.checked=false;
+        show("En fazla 20 sunucu seçebilirsiniz.","bad");
+        return;
+      }
+      character.disabled=!checkbox.checked;
+      state.played.set(id,{selected:checkbox.checked,characterName:character.value});
+      if(checkbox.checked)character.focus();
+    };
+    character.oninput=()=>state.played.set(id,{selected:checkbox.checked,characterName:character.value});
+  });
+}
+
+function selectedCount(){
+  return [...state.played.values()].filter(item=>item.selected).length;
+}
+
+function renderReviews(){
+  $("#myReviews").innerHTML=state.reviews.length?`<div class="review-card-list">${state.reviews.map(review=>`
+    <article>
+      <div><small>${formatDate(review.created_at)}</small><h3>${esc(review.server_name)}</h3>
+        <span class="stars" aria-label="${review.rating} puan">${"★".repeat(review.rating)}${"☆".repeat(5-review.rating)}</span>
+        <p>${esc(review.comment)}</p>
+      </div>
+      <button class="outline" type="button" data-edit-review="${review.id}">Düzenle</button>
+    </article>`).join("")}</div>`:'<div class="empty-state">Henüz oy veya yorum yok.</div>';
+  document.querySelectorAll("[data-edit-review]").forEach(button=>button.onclick=()=>openEditor(Number(button.dataset.editReview)));
+}
+
+function openEditor(id){
+  state.editingReview=state.reviews.find(review=>Number(review.id)===id);
+  if(!state.editingReview)return;
+  $("#editRating").value=state.editingReview.rating;
+  $("#editComment").value=state.editingReview.comment;
+  $("#editReviewMessage").textContent="";
+  $("#editReviewDialog").showModal();
+}
+
+function renderBadges(){
+  const badges=badgesFor(state.profile.stats,state.community.ownedServers.length);
+  $("#profileBadges").innerHTML=badges.slice(0,4).map(badge=>`<span class="profile-badge">${badge.icon} ${badge.name}</span>`).join("");
+  $("#badgeDetails").innerHTML=badges.map(badge=>`
+    <article><span aria-hidden="true">${badge.icon}</span><div><strong>${badge.name}</strong><p>${badge.text}</p></div></article>`).join("");
+}
+
+function renderSuggestions(){
+  $("#communityHistory").innerHTML=state.community.suggestions.length?state.community.suggestions.map(item=>`
+    <article class="request-card">
+      <span class="status ${esc(item.status)}">${statusText(item.status)}</span>
+      <small>Öneri · ${formatDate(item.created_at)}</small>
+      <h3>${esc(item.subject)}</h3><p>${esc(item.message)}</p>
+    </article>`).join(""):'<div class="empty-state">Henüz öneriniz yok.</div>';
+}
+
+$("#profileForm").onsubmit=async event=>{
+  event.preventDefault();
+  try{
+    syncVisiblePlayedRows();
+    const playedServers=[...state.played.entries()].filter(([,item])=>item.selected).map(([serverId,item])=>({
+      serverId,
+      characterName:item.characterName.trim()
+    }));
+    await api("/api/profile",jsonPut({
+      displayName:$("#displayName").value,
+      gameAlias:$("#gameAlias").value,
+      bio:$("#bio").value,
+      playedServers
+    }));
+    show("Profil güncellendi.","good");
+    await init();
+  }catch(error){
+    show(error.message,"bad");
+  }
+};
+
+function syncVisiblePlayedRows(){
+  document.querySelectorAll("[data-played-server]").forEach(row=>{
+    const checkbox=row.querySelector('input[type="checkbox"]');
+    state.played.set(Number(row.dataset.playedServer),{
+      selected:checkbox.checked,
+      characterName:row.querySelector(".character-name").value
+    });
+  });
+}
+
+$("#editReviewForm").onsubmit=async event=>{
+  event.preventDefault();
+  if(!state.editingReview)return;
+  try{
+    await api(`/api/reviews/${state.editingReview.id}`,jsonPut({
+      rating:Number($("#editRating").value),
+      comment:$("#editComment").value
+    }));
+    $("#editReviewDialog").close();
+    show("Puan ve yorum güncellendi.","good");
+    await init({preservePlayed:true});
+  }catch(error){
+    $("#editReviewMessage").textContent=error.message;
+  }
+};
+
+$("#passwordForm").onsubmit=async event=>{
+  event.preventDefault();
+  try{
+    await api("/api/profile/password",jsonPut({
+      oldPassword:$("#oldPassword").value,
+      newPassword:$("#newPassword").value
+    }));
+    location.href="/giris/";
+  }catch(error){
+    show(error.message,"bad");
+  }
+};
+
+$("#suggestionForm").onsubmit=async event=>{
+  event.preventDefault();
+  try{
+    await api("/api/profile/suggestions",jsonPost({
+      subject:$("#suggestionSubject").value,
+      message:$("#suggestionMessage").value
+    }));
+    event.target.reset();
+    show("Öneriniz alındı.","good");
+    await init({preservePlayed:true});
+  }catch(error){
+    show(error.message,"bad");
+  }
+};
+
+$("#serverSearch").oninput=event=>{
+  syncVisiblePlayedRows();
+  renderServers(event.target.value);
+};
+$("#closeEditReview").onclick=()=>$("#editReviewDialog").close();
+$("#editReviewDialog").onclick=event=>{if(event.target===$("#editReviewDialog"))event.target.close()};
+$("#logout").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.href="/"};
+
+function badgesFor(stats,ownedCount){
+  const badges=[{icon:"✦",name:"Topluluk Üyesi",text:"SRO RATING topluluğunun bir üyesi."}];
+  if(Number(stats.reviews)>=1)badges.push({icon:"★",name:"İlk Değerlendirme",text:"İlk sunucu değerlendirmesini yayımladı."});
+  if(Number(stats.reviews)>=5)badges.push({icon:"🏆",name:"Deneyimli Yorumcu",text:"En az 5 sunucuyu değerlendirdi."});
+  if(Number(stats.likes)>=10)badges.push({icon:"♥",name:"Topluluk Desteği",text:"Yorumları topluluktan en az 10 beğeni aldı."});
+  if(ownedCount)badges.push({icon:"♛",name:"Sunucu Sahibi",text:"Yönetici tarafından atanmış sunucu sahibi."});
+  return badges;
+}
+
+function installNotificationButton(){
+  if(document.querySelector("[data-notification-toggle]"))return;
+  const button=document.createElement("button");
+  button.type="button";
+  button.className="outline notification-link";
+  button.dataset.notificationToggle="";
+  button.innerHTML="🔔 Bildirimler <b></b>";
+  document.querySelector(".topbar nav").prepend(button);
+}
+
+function jsonPut(value){return{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(value)}}
+function jsonPost(value){return{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(value)}}
+function statusText(value){return({new:"Yeni",reviewed:"İncelendi",closed:"Kapandı"})[value]||value}
+function formatDate(value){return new Date(`${value}Z`).toLocaleString("tr-TR")}
+function show(text,className){
+  messageBox.className=`message ${className}`;
+  messageBox.textContent=text;
+  scrollTo({top:0,behavior:"smooth"});
+}
+function esc(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]))}
+
+installNotificationButton();
+init().catch(()=>{location.href="/giris/"});

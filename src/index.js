@@ -209,8 +209,8 @@ async function handleApi(request, env, url) {
     await env.DB.prepare("UPDATE users SET display_name=?,game_alias=?,bio=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
       .bind(displayName,gameAlias,bio,user.id).run();
     const playedServers=Array.isArray(body.playedServers)
-      ? body.playedServers.slice(0,50).map(x=>({serverId:Number(x.serverId),characterName:cleanText(x.characterName).slice(0,40)})).filter(x=>Number.isInteger(x.serverId))
-      : (Array.isArray(body.serverIds)?body.serverIds:[]).slice(0,50).map(serverId=>({serverId:Number(serverId),characterName:""})).filter(x=>Number.isInteger(x.serverId));
+      ? body.playedServers.slice(0,20).map(x=>({serverId:Number(x.serverId),characterName:cleanText(x.characterName).slice(0,40)})).filter(x=>Number.isInteger(x.serverId))
+      : (Array.isArray(body.serverIds)?body.serverIds:[]).slice(0,20).map(serverId=>({serverId:Number(serverId),characterName:""})).filter(x=>Number.isInteger(x.serverId));
     if(playedServers.some(x=>hasProfanity(x.characterName)))return json({error:"Karakter adında yasaklı ifade kullanılamaz."},400);
     await env.DB.prepare("DELETE FROM user_playing_servers WHERE user_id=?").bind(user.id).run();
     if(playedServers.length)await env.DB.batch(playedServers.map(x=>env.DB.prepare("INSERT OR IGNORE INTO user_playing_servers(user_id,server_id,character_name) SELECT ?,id,? FROM servers WHERE id=? AND is_active=1").bind(user.id,x.characterName,x.serverId)));
@@ -224,7 +224,7 @@ async function handleApi(request, env, url) {
     const servers=await env.DB.prepare("SELECT s.id,s.name,p.character_name FROM user_playing_servers p JOIN servers s ON s.id=p.server_id WHERE p.user_id=? AND s.is_active=1 ORDER BY s.name").bind(userId).all();
     const stats=await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM reviews WHERE user_id=?) reviews,
       0 replies,
-      (SELECT COUNT(*) FROM review_reactions WHERE user_id=? AND reaction='like') likes`).bind(userId,userId).first();
+      (SELECT COUNT(*) FROM review_reactions rr JOIN reviews r ON r.id=rr.review_id WHERE r.user_id=? AND rr.reaction='like') likes`).bind(userId,userId).first();
     return json({profile,servers:servers.results||[],stats});
   }
 
