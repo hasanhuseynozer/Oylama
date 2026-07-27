@@ -368,3 +368,72 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
   border-color:#35545b!important;
   box-shadow:inset 0 1px 0 rgba(132,192,185,.04),0 8px 24px rgba(0,0,0,.12)
 }
+
+/* Compact, aligned account control group */
+.header-inner>.account-actions{
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  padding:5px!important;
+  border:1px solid #29454b;
+  border-radius:13px;
+  background:rgba(9,20,24,.72);
+  box-shadow:inset 0 1px 0 rgba(149,205,199,.04),0 8px 22px rgba(0,0,0,.14)
+}
+.account-actions>.calendar-button,
+.account-actions>.notification-button,
+.account-actions>.profile-chip,
+.account-actions>.logout-button,
+.account-actions>a.outline,
+.account-actions>a.primary{
+  height:44px!important;
+  min-height:44px!important;
+  margin:0!important;
+  border-radius:9px!important
+}
+.account-actions>.calendar-button{
+  display:inline-flex!important;
+  align-items:center!important;
+  padding:0 14px!important;
+  min-width:104px;
+  justify-content:center
+}
+.account-actions>.notification-button{
+  display:grid!important;
+  place-items:center!important;
+  width:44px!important;
+  min-width:44px!important;
+  padding:0!important
+}
+.account-actions>.profile-chip.enhanced{
+  min-width:168px!important;
+  max-width:190px!important;
+  padding:4px 10px 4px 6px!important
+}
+.account-actions>.profile-chip.enhanced img{
+  width:34px!important;
+  height:34px!important;
+  flex:0 0 34px
+}
+.account-actions>.profile-chip.enhanced strong{
+  max-width:118px!important;
+  line-height:1.15
+}
+.account-actions>.profile-chip.enhanced small{
+  margin-top:2px;
+  line-height:1
+}
+.account-actions>.logout-button{
+  min-width:66px;
+  padding:0 13px!important
+}
+.account-actions>.logout-button:hover{
+  color:#f1a2a5!important;
+  border-color:#74484d!important;
+  background:#24171a!important
+}
+@media(max-width:1250px){
+  .account-actions>.calendar-button{min-width:44px;width:44px;padding:0!important;font-size:0}
+  .account-actions>.calendar-button::first-letter{font-size:16px}
+  .account-actions>.profile-chip.enhanced{min-width:145px!important;max-width:160px!important}
+}
