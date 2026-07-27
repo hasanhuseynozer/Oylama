@@ -1,0 +1,12 @@
+ALTER TABLE servers ADD COLUMN cap INTEGER NOT NULL DEFAULT 110;
+ALTER TABLE servers ADD COLUMN rates TEXT NOT NULL DEFAULT '1x';
+ALTER TABLE servers ADD COLUMN server_type TEXT NOT NULL DEFAULT 'EU';
+ALTER TABLE servers ADD COLUMN opened_at TEXT NOT NULL DEFAULT '';
+ALTER TABLE servers ADD COLUMN is_verified INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE server_requests ADD COLUMN cap INTEGER NOT NULL DEFAULT 110;
+ALTER TABLE server_requests ADD COLUMN rates TEXT NOT NULL DEFAULT '1x';
+ALTER TABLE server_requests ADD COLUMN server_type TEXT NOT NULL DEFAULT 'EU';
+ALTER TABLE server_requests ADD COLUMN opened_at TEXT NOT NULL DEFAULT '';
+
+CREATE INDEX IF NOT EXISTS idx_servers_discovery ON servers(is_active, server_type, cap, opened_at);

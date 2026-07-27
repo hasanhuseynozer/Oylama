@@ -42,23 +42,16 @@ async function handleApi(request, env, url) {
   }
 
   if (method === "GET" && path === "/api/servers") {
-    const sort = ["rating", "votes", "newest"].includes(url.searchParams.get("sort"))
-      ? url.searchParams.get("sort") : "rating";
-    const orderBy = {
-      rating: "average_rating DESC, vote_count DESC, s.created_at DESC",
-      votes: "vote_count DESC, average_rating DESC, s.created_at DESC",
-      newest: "s.created_at DESC"
-    }[sort];
-
     const result = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
+      SELECT s.id, s.name, s.description, s.cap, s.rates, s.server_type, s.opened_at, s.is_verified, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
-        COUNT(r.id) AS vote_count
+        COUNT(r.id) AS vote_count,
+        ROUND(((COALESCE(AVG(r.rating),3.5)*COUNT(r.id)+17.5)/(COUNT(r.id)+5))+(s.is_verified*0.35),2) AS trust_score
       FROM servers s
       LEFT JOIN reviews r ON r.server_id = s.id
       WHERE s.is_active = 1
       GROUP BY s.id
-      ORDER BY ${orderBy}
+      ORDER BY trust_score DESC, vote_count DESC, s.created_at DESC
     `).all();
     return json({ servers: result.results || [] });
   }
@@ -67,7 +60,7 @@ async function handleApi(request, env, url) {
   if (method === "GET" && serverMatch) {
     const id = Number(serverMatch[1]);
     const server = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
+      SELECT s.id, s.name, s.description, s.cap, s.rates, s.server_type, s.opened_at, s.is_verified, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count
       FROM servers s LEFT JOIN reviews r ON r.server_id = s.id
@@ -213,7 +206,7 @@ async function handleApi(request, env, url) {
 
   if (method === "GET" && path === "/api/profile/community") {
     const user = await requireUser(request, env.DB);
-    const requests = await env.DB.prepare("SELECT id,server_name,description,website_url,status,admin_note,created_at FROM server_requests WHERE user_id=? ORDER BY datetime(created_at) DESC").bind(user.id).all();
+    const requests = await env.DB.prepare("SELECT id,server_name,description,website_url,cap,rates,server_type,opened_at,status,admin_note,created_at FROM server_requests WHERE user_id=? ORDER BY datetime(created_at) DESC").bind(user.id).all();
     const suggestions = await env.DB.prepare("SELECT id,subject,message,status,created_at FROM suggestions WHERE user_id=? ORDER BY datetime(created_at) DESC").bind(user.id).all();
     const owned = await env.DB.prepare("SELECT s.id,s.name FROM server_owners o JOIN servers s ON s.id=o.server_id WHERE o.user_id=? ORDER BY s.name").bind(user.id).all();
     return json({ requests: requests.results || [], suggestions: suggestions.results || [], ownedServers: owned.results || [] });
@@ -222,9 +215,9 @@ async function handleApi(request, env, url) {
   if (method === "POST" && path === "/api/profile/server-requests") {
     verifyOrigin(request); requireJson(request);
     const user = await requireUser(request, env.DB), body = await readJson(request);
-    const name=cleanText(body.serverName), description=cleanText(body.description), website=cleanUrl(body.websiteUrl);
+    const name=cleanText(body.serverName), description=cleanText(body.description), website=cleanUrl(body.websiteUrl), cap=validCap(body.cap), rates=validRates(body.rates), serverType=validServerType(body.serverType), openedAt=validDate(body.openedAt);
     if(name.length<2||name.length>80||description.length<20||description.length>800) return json({error:"Sunucu adı 2–80, açıklama 20–800 karakter olmalıdır."},400);
-    await env.DB.prepare("INSERT INTO server_requests(user_id,server_name,description,website_url) VALUES(?,?,?,?)").bind(user.id,name,description,website).run();
+    await env.DB.prepare("INSERT INTO server_requests(user_id,server_name,description,website_url,cap,rates,server_type,opened_at) VALUES(?,?,?,?,?,?,?,?)").bind(user.id,name,description,website,cap,rates,serverType,openedAt).run();
     return json({message:"Sunucu ekleme isteğiniz yöneticiye gönderildi."},201);
   }
 
@@ -322,7 +315,7 @@ async function handleApi(request, env, url) {
 
     if (method === "GET" && path === "/api/admin/dashboard") {
       const servers = await env.DB.prepare(`
-        SELECT s.id,s.name,s.description,COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,s.is_active,s.created_at,
+        SELECT s.id,s.name,s.description,s.cap,s.rates,s.server_type,s.opened_at,s.is_verified,COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,s.is_active,s.created_at,
           COALESCE(ROUND(AVG(r.rating),1),0) average_rating,COUNT(r.id) vote_count
         FROM servers s LEFT JOIN reviews r ON r.server_id=s.id GROUP BY s.id ORDER BY s.created_at DESC
       `).all();
@@ -346,7 +339,7 @@ async function handleApi(request, env, url) {
       const item=await env.DB.prepare("SELECT * FROM server_requests WHERE id=?").bind(id).first();
       if(!item)return json({error:"İstek bulunamadı."},404);
       if(status==="approved"&&item.status!=="approved"){
-        const created=await env.DB.prepare("INSERT INTO servers(name,description,is_active) VALUES(?,?,1)").bind(item.server_name,item.description).run();
+        const created=await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,is_active) VALUES(?,?,?,?,?,?,1)").bind(item.server_name,item.description,item.cap,item.rates,item.server_type,item.opened_at).run();
         await env.DB.prepare("INSERT OR IGNORE INTO server_owners(server_id,user_id) VALUES(?,?)").bind(Number(created.meta.last_row_id),item.user_id).run();
       }
       await env.DB.prepare("UPDATE server_requests SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,cleanText(body.note),id).run();
@@ -362,9 +355,9 @@ async function handleApi(request, env, url) {
 
     if (method === "POST" && path === "/api/admin/servers") {
       requireJson(request); const body = await readJson(request);
-      const name = cleanText(body.name), description = cleanText(body.description);
+      const name = cleanText(body.name), description = cleanText(body.description), cap=validCap(body.cap), rates=validRates(body.rates), serverType=validServerType(body.server_type), openedAt=validDate(body.opened_at);
       if (name.length < 2 || name.length > 80 || description.length < 3 || description.length > 600) return json({ error: "Sunucu bilgileri geçersiz." }, 400);
-      const result = await env.DB.prepare("INSERT INTO servers(name,description,is_active) VALUES(?,?,?)").bind(name,description,body.is_active ? 1 : 0).run();
+      const result = await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,is_verified,is_active) VALUES(?,?,?,?,?,?,?,?)").bind(name,description,cap,rates,serverType,openedAt,body.is_verified?1:0,body.is_active ? 1 : 0).run();
       await saveSetting(env.DB, `server_image_${Number(result.meta.last_row_id)}`, safeImage(body.image_url));
       return json({ message: "Sunucu eklendi." }, 201);
     }
@@ -373,8 +366,8 @@ async function handleApi(request, env, url) {
     if (adminServer && method === "PUT") {
       requireJson(request); const body = await readJson(request);
       const serverId=Number(adminServer[1]);
-      await env.DB.prepare("UPDATE servers SET name=?,description=?,is_active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
-        .bind(cleanText(body.name),cleanText(body.description),body.is_active ? 1 : 0,serverId).run();
+      await env.DB.prepare("UPDATE servers SET name=?,description=?,cap=?,rates=?,server_type=?,opened_at=?,is_verified=?,is_active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+        .bind(cleanText(body.name),cleanText(body.description),validCap(body.cap),validRates(body.rates),validServerType(body.server_type),validDate(body.opened_at),body.is_verified?1:0,body.is_active ? 1 : 0,serverId).run();
       await saveSetting(env.DB, `server_image_${serverId}`, safeImage(body.image_url));
       return json({ message: "Sunucu güncellendi." });
     }
@@ -561,6 +554,10 @@ function requireJson(request) {
 }
 async function readJson(request) { try { return await request.json(); } catch { throw new HttpError("Geçersiz veri.",400); } }
 function cleanText(value) { return String(value || "").replace(/<[^>]*>/g,"").replace(/[\u0000-\u001F\u007F]/g," ").replace(/\s+/g," ").trim(); }
+function validCap(value) { const cap=Number(value); return Number.isInteger(cap)&&cap>=1&&cap<=200 ? cap : 110; }
+function validRates(value) { const rates=cleanText(value).slice(0,30); return rates || "1x"; }
+function validServerType(value) { return String(value).toUpperCase()==="CH" ? "CH" : "EU"; }
+function validDate(value) { const date=String(value||""); return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : ""; }
 function cleanUrl(value) {
   const raw=String(value||"").trim(); if(!raw)return "";
   try { const url=new URL(raw); return ["http:","https:"].includes(url.protocol)?url.toString():""; } catch { throw new HttpError("Geçerli bir web adresi yazın.",400); }
