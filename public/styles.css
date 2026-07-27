@@ -135,3 +135,21 @@ body{background:radial-gradient(circle at 50% -10%,#2b1d08 0,#0b0a08 34%,#070707
 @media(max-width:1200px){.header-inner{grid-template-columns:190px minmax(300px,1fr) auto!important}.site-logo{width:184px!important}.banner{height:92px!important;min-height:92px!important}.sponsor-rail{top:108px!important}}
 @media(max-width:900px){.header-inner{grid-template-columns:170px 1fr!important}.site-logo{width:165px!important}.filters{display:flex!important}.filters #searchInput{width:210px!important}.sponsor-rail{display:none!important}}
 @media(max-width:600px){.filters{display:grid!important;grid-template-columns:1fr 1fr!important;overflow:visible!important}.filters>*{width:100%!important;max-width:none!important}.filters #searchInput{grid-column:1/-1;width:100%!important}}
+
+/* Header breathing room and detail controls */
+.header-inner{min-height:138px!important;grid-template-columns:260px minmax(460px,1fr) auto!important}
+.site-logo{width:250px!important;height:78px!important}
+.banner{height:108px!important;min-height:108px!important;margin:14px 0!important}
+.sponsor-rail.has-image{font-size:0!important;text-shadow:none!important}
+.content{padding-top:28px!important}
+.toolbar{margin-bottom:20px!important;padding:12px 14px!important}
+.filters{gap:8px!important}
+.filters input,.filters select,.filters .new-filter,.filters .tiny{height:38px!important;min-height:38px!important;margin:0!important;padding:7px 10px!important;border-radius:8px!important;line-height:22px!important}
+.filters .new-filter{display:inline-flex!important;align-items:center!important;gap:7px!important}
+.filters .new-filter input{width:15px!important;height:15px!important;min-height:15px!important;padding:0!important}
+.server-grid{gap:18px!important}
+.server-detail>.close{position:absolute!important;top:16px!important;right:16px!important;z-index:20!important;margin:0!important}
+.detail-comments{padding-top:68px!important}
+.detail-comments .section-heading{min-height:48px}
+@media(max-width:1400px){.header-inner{grid-template-columns:220px minmax(360px,1fr) auto!important}.site-logo{width:210px!important}.banner{height:96px!important;min-height:96px!important;margin:12px 0!important}}
+@media(max-width:900px){.header-inner{min-height:86px!important;grid-template-columns:180px 1fr!important}.site-logo{width:175px!important}.detail-comments{padding-top:58px!important}}
