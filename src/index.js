@@ -51,7 +51,7 @@ async function handleApi(request, env, url) {
     }[sort];
 
     const result = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, s.created_at,
+      SELECT s.id, s.name, s.description, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count
       FROM servers s
@@ -67,7 +67,7 @@ async function handleApi(request, env, url) {
   if (method === "GET" && serverMatch) {
     const id = Number(serverMatch[1]);
     const server = await env.DB.prepare(`
-      SELECT s.id, s.name, s.description, s.created_at,
+      SELECT s.id, s.name, s.description, COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url, s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count
       FROM servers s LEFT JOIN reviews r ON r.server_id = s.id
@@ -266,7 +266,7 @@ async function handleApi(request, env, url) {
 
     if (method === "GET" && path === "/api/admin/dashboard") {
       const servers = await env.DB.prepare(`
-        SELECT s.id,s.name,s.description,s.is_active,s.created_at,
+        SELECT s.id,s.name,s.description,COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,s.is_active,s.created_at,
           COALESCE(ROUND(AVG(r.rating),1),0) average_rating,COUNT(r.id) vote_count
         FROM servers s LEFT JOIN reviews r ON r.server_id=s.id GROUP BY s.id ORDER BY s.created_at DESC
       `).all();
@@ -286,15 +286,18 @@ async function handleApi(request, env, url) {
       requireJson(request); const body = await readJson(request);
       const name = cleanText(body.name), description = cleanText(body.description);
       if (name.length < 2 || name.length > 80 || description.length < 3 || description.length > 600) return json({ error: "Sunucu bilgileri geçersiz." }, 400);
-      await env.DB.prepare("INSERT INTO servers(name,description,is_active) VALUES(?,?,?)").bind(name,description,body.is_active ? 1 : 0).run();
+      const result = await env.DB.prepare("INSERT INTO servers(name,description,is_active) VALUES(?,?,?)").bind(name,description,body.is_active ? 1 : 0).run();
+      await saveSetting(env.DB, `server_image_${Number(result.meta.last_row_id)}`, safeImage(body.image_url));
       return json({ message: "Sunucu eklendi." }, 201);
     }
 
     const adminServer = path.match(/^\/api\/admin\/servers\/(\d+)$/);
     if (adminServer && method === "PUT") {
       requireJson(request); const body = await readJson(request);
+      const serverId=Number(adminServer[1]);
       await env.DB.prepare("UPDATE servers SET name=?,description=?,is_active=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
-        .bind(cleanText(body.name),cleanText(body.description),body.is_active ? 1 : 0,Number(adminServer[1])).run();
+        .bind(cleanText(body.name),cleanText(body.description),body.is_active ? 1 : 0,serverId).run();
+      await saveSetting(env.DB, `server_image_${serverId}`, safeImage(body.image_url));
       return json({ message: "Sunucu güncellendi." });
     }
     if (adminServer && method === "DELETE") {
@@ -333,17 +336,27 @@ async function handleApi(request, env, url) {
 
     if (method === "PUT" && path === "/api/admin/settings") {
       requireJson(request); const body = await readJson(request);
-      const allowed = ["banner_text","banner_url","left_ad_text","left_ad_url","right_ad_text","right_ad_url","contact_text","disclaimer_text","twitch_url","kick_url","youtube_url"];
+      const allowed = ["logo_image","banner_text","banner_url","banner_image","left_ad_text","left_ad_url","left_ad_image","right_ad_text","right_ad_url","right_ad_image","contact_text","disclaimer_text","footer_tagline","twitch_url","kick_url","youtube_url"];
       const statements = allowed.map(key => env.DB.prepare(`
         INSERT INTO site_settings(setting_key,setting_value,updated_at) VALUES(?,?,CURRENT_TIMESTAMP)
         ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_at=CURRENT_TIMESTAMP
-      `).bind(key, cleanText(body[key] || "")));
+      `).bind(key, key.endsWith("_image") ? safeImage(body[key]) : cleanText(body[key] || "")));
       await env.DB.batch(statements);
       return json({ message: "Site ayarları kaydedildi." });
     }
   }
 
   return json({ error: "İstenen adres bulunamadı." }, 404);
+}
+
+async function saveSetting(db,key,value){
+  await db.prepare("INSERT INTO site_settings(setting_key,setting_value,updated_at) VALUES(?,?,CURRENT_TIMESTAMP) ON CONFLICT(setting_key) DO UPDATE SET setting_value=excluded.setting_value,updated_at=CURRENT_TIMESTAMP").bind(key,value).run();
+}
+function safeImage(value){
+  const image=String(value||"");
+  if(!image)return "";
+  if(!/^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(image)||image.length>420000)throw new HttpError("Görsel PNG, JPG, WebP veya GIF olmalı ve 300 KB sınırını aşmamalıdır.",400);
+  return image;
 }
 
 async function getSettings(db) {
