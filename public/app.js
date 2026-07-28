@@ -91,6 +91,8 @@ function renderAccount(){
       <img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span><i>⌄</i>
     </button>
     <div class="account-menu-panel hidden" role="menu">
+      <a class="account-menu-item" href="/yayinclar/" role="menuitem"><span>◉</span><span>Yayıncılar</span></a>
+      <a class="account-menu-item" href="/cekilisler/" role="menuitem"><span>✦</span><span>Çekilişler</span></a>
       <a class="account-menu-item" href="/profil/" role="menuitem"><span>👤</span><span>Profilim</span></a>
       <button class="account-menu-item notification-menu-item" type="button" data-notification-toggle role="menuitem"><span>🔔</span><span>Bildirimler</span><b></b></button>
       <button id="logoutBtn" class="account-menu-item account-menu-logout" type="button" role="menuitem"><span>↪</span><span>Çıkış Yap</span></button>
