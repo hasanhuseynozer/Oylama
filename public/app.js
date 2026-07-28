@@ -239,15 +239,14 @@ function renderServers(){
   syncFilterUrl();
 }
 
-function serverPath(server){return `/sunucular/${String(server.name||"sunucu").toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ı/g,"i").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}-${server.id}`}
-
 function serverCard(server){
   const rating=Number(server.average_rating||0);
+  const ratingTier=rating>=4.5?"legendary":rating>=3.5?"elite":rating>=2?"standard":"newcomer";
   const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<45*86400000;
   const [statusClass,statusText]=statusInfo(server);
   const event=nextEvent(server);
   const cover=server.image_url?`<div class="server-cover" style="background-image:url('${esc(server.image_url)}')"></div>`:'<div class="server-cover server-cover-placeholder"><span>SRO RATING</span></div>';
-  return `<article class="server-card" data-server="${server.id}">
+  return `<article class="server-card rating-${ratingTier}" data-server="${server.id}" tabindex="0" aria-label="${esc(server.name)} için oy ver">
     <button class="favorite-button ${server.is_favorite?"active":""}" data-favorite="${server.id}" type="button" aria-pressed="${Boolean(server.is_favorite)}" aria-label="${server.is_favorite?"Favorilerden çıkar":"Favorilere ekle"}">♥</button>
     <div class="server-status ${statusClass}" title="${esc(server.status_note||statusText)}"><i></i>${statusText}</div>
     ${cover}<div class="server-card-body"><div class="server-badges"><span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div>
@@ -260,6 +259,25 @@ function serverCard(server){
 
 function bindServerCards(){
   $$("[data-review]").forEach(button=>button.onclick=()=>openServer(Number(button.dataset.review),true));
+  $$(".server-card").forEach(card=>{
+    card.onclick=event=>{if(!event.target.closest("button,a"))openServer(Number(card.dataset.server),true)};
+    card.onkeydown=event=>{if((event.key==="Enter"||event.key===" ")&&!event.target.closest("button,a")){event.preventDefault();openServer(Number(card.dataset.server),true)}};
+    card.onpointermove=event=>{
+      const box=card.getBoundingClientRect();
+      const x=(event.clientX-box.left)/box.width;
+      const y=(event.clientY-box.top)/box.height;
+      card.style.setProperty("--rx",`${(0.5-y)*10}deg`);
+      card.style.setProperty("--ry",`${(x-0.5)*12}deg`);
+      card.style.setProperty("--mx",`${x*100}%`);
+      card.style.setProperty("--my",`${y*100}%`);
+    };
+    card.onpointerleave=()=>{
+      card.style.removeProperty("--rx");
+      card.style.removeProperty("--ry");
+      card.style.removeProperty("--mx");
+      card.style.removeProperty("--my");
+    };
+  });
   $$("[data-favorite]").forEach(button=>button.onclick=async()=>{
     if(!state.user){location.href="/giris/";return}
     const result=await api(`/api/servers/${button.dataset.favorite}/favorite`,{method:"POST"});
@@ -381,9 +399,29 @@ function renderReviewList(reviews,mode){
   $$("[data-profile]").forEach(button=>button.onclick=()=>openProfile(button.dataset.profile));
   $$("[data-report-review]").forEach(button=>button.onclick=async()=>{
     if(!state.user){location.href="/giris/";return}
-    button.disabled=true;
-    try{const result=await api(`/api/reviews/${button.dataset.reportReview}/report`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reason:"Topluluk kurallarına aykırı içerik"})});showActionToast(result.message)}catch(error){showActionToast(error.message,"bad");button.disabled=false}
+    openReportDialog(Number(button.dataset.reportReview),button);
   });
+}
+
+function openReportDialog(reviewId,trigger){
+  let dialog=$("#reportDialog");
+  if(!dialog){
+    dialog=document.createElement("dialog");dialog.id="reportDialog";dialog.className="report-dialog";
+    dialog.innerHTML='<form class="modal"><button class="close" type="button" aria-label="Kapat">×</button><p class="eyebrow">TOPLULUK GÜVENLİĞİ</p><h2>Yorumu bildir</h2><p class="modal-lead">İnceleme sebebini seçin.</p><label>Sebep<select name="reason" required><option value="">Seçin</option><option>Küfür veya hakaret</option><option>Spam</option><option>Sahte bilgi</option><option>Kişisel bilgi</option><option>Diğer</option></select></label><button class="primary" type="submit">Bildirimi Gönder</button><p class="inline-review-message" role="status"></p></form>';
+    document.body.append(dialog);
+    dialog.querySelector(".close").onclick=()=>dialog.close();
+    dialog.onclick=event=>{if(event.target===dialog)dialog.close()};
+  }
+  const form=dialog.querySelector("form"),message=form.querySelector(".inline-review-message"),submit=form.querySelector(".primary");
+  form.reset();message.textContent="";submit.disabled=false;
+  form.onsubmit=async event=>{
+    event.preventDefault();submit.disabled=true;message.textContent="Gönderiliyor…";
+    try{
+      const result=await api(`/api/reviews/${reviewId}/report`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({reason:new FormData(form).get("reason")})});
+      dialog.close();showActionToast(result.message||"Bildirim incelemeye gönderildi.");trigger.disabled=true;
+    }catch(error){message.textContent=error.message;submit.disabled=false}
+  };
+  dialog.showModal();
 }
 
 function reviewBlock(review){
