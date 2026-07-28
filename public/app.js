@@ -49,6 +49,8 @@ function applySettings(){
   const settings=state.settings;
   const logo=settings.logo_image||"/sro-rating-header.png";
   $("#siteLogo").src=logo;
+  setVisual($("#banner"),settings.banner_image);
+  configureSponsor($("#banner"),settings.banner_image,settings.banner_text,settings.banner_url);
   setVisual($("#leftSponsor"),settings.left_ad_image);
   setVisual($("#rightSponsor"),settings.right_ad_image);
   configureSponsor($("#leftSponsor"),settings.left_ad_image,settings.left_ad_text,settings.left_ad_url);
@@ -196,9 +198,6 @@ function setupDiscovery(){
     ["#capFilter","#typeFilter","#statusFilter","#ratingFilter","#tagFilter"].forEach(selector=>$(selector).value="");
     $("#newOnly").checked=false;$("#favoriteFilter")?.classList.remove("active");renderServers();
   };
-  const pagination=document.createElement("nav");
-  pagination.id="serverPagination";pagination.className="server-pagination";pagination.setAttribute("aria-label","Sunucu sayfaları");
-  $("#serverGrid").after(pagination);
 }
 
 function syncFilterUrl(){
@@ -227,12 +226,8 @@ function renderServers(){
   servers.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):
     sort==="newest"?new Date(b.opened_at||b.created_at)-new Date(a.opened_at||a.created_at):
     Number(b.average_rating)-Number(a.average_rating)||Number(b.vote_count)-Number(a.vote_count));
-  const pages=Math.max(1,Math.ceil(servers.length/8));
-  state.page=Math.min(Math.max(1,state.page||1),pages);
-  const visible=servers.slice((state.page-1)*8,state.page*8);
   const filtered=Boolean(query||cap||type||status||minRating||tag||newOnly||state.favoriteOnly);
-  $("#serverGrid").innerHTML=visible.length?visible.map(serverCard).join(""):state.servers.length===0?'<div class="panel empty-results"><h3>Henüz yayımlanmış sunucu yok</h3><p>Yeni sunucular eklendiğinde burada görünecek.</p></div>':`<div class="panel empty-results"><h3>Sonuç bulunamadı</h3><p>Seçili filtrelerle eşleşen sunucu yok.</p>${filtered?'<button class="outline" type="button" data-clear-empty>Filtreleri Temizle</button>':""}</div>`;
-  $("#serverPagination").innerHTML=pages>1?Array.from({length:pages},(_,index)=>`<button type="button" data-page="${index+1}" class="${state.page===index+1?"active":""}">${index+1}</button>`).join(""):"";
+  $("#serverGrid").innerHTML=servers.length?servers.map(serverCard).join(""):state.servers.length===0?'<div class="panel empty-results"><h3>Henüz yayımlanmış sunucu yok</h3><p>Yeni sunucular eklendiğinde burada görünecek.</p></div>':`<div class="panel empty-results"><h3>Sonuç bulunamadı</h3><p>Seçili filtrelerle eşleşen sunucu yok.</p>${filtered?'<button class="outline" type="button" data-clear-empty>Filtreleri Temizle</button>':""}</div>`;
   bindServerCards();
   $("[data-clear-empty]")?.addEventListener("click",()=>$("#clearFilters").click());
   syncFilterUrl();
@@ -283,7 +278,6 @@ function bindServerCards(){
     const server=state.servers.find(item=>Number(item.id)===Number(button.dataset.favorite));
     server.is_favorite=result.favorite?1:0;renderServers();
   });
-  $$("[data-page]").forEach(button=>button.onclick=()=>{state.page=Number(button.dataset.page);renderServers();$(".toolbar").scrollIntoView({behavior:"smooth",block:"start"})});
 }
 
 async function openServer(id,focusForm=false,focusReviewId=0){
