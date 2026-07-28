@@ -503,6 +503,13 @@ async function handleApi(request, env, url) {
     const userAllowed = await rateLimit(env.DB, `review-user:${serverId}`, String(user.id), 2, 60 * 60);
     if (!userAllowed) return json({ error:"Bu sunucu için çok sık işlem yaptınız. Daha sonra tekrar deneyin." }, 429);
 
+    const existing=await env.DB.prepare("SELECT id,rating,comment FROM reviews WHERE server_id=? AND user_id=?").bind(serverId,user.id).first();
+    if(existing){
+      await env.DB.prepare("UPDATE reviews SET rating=?,comment=? WHERE id=?").bind(rating,comment,existing.id).run();
+      await addAuditEvent(env.DB,request,"user",user.id,"review.update","review",existing.id,{oldRating:existing.rating,newRating:rating,commentChanged:existing.comment!==comment});
+      return json({message:"Puanınız ve yorumunuz güncellendi."});
+    }
+
     if (env.TURNSTILE_SECRET_KEY) {
       const valid = await verifyTurnstile(body.turnstileToken, ip, env.TURNSTILE_SECRET_KEY);
       if (!valid) return json({ error: "Güvenlik doğrulaması başarısız oldu." }, 400);

@@ -6,7 +6,9 @@ const $=selector=>document.querySelector(selector);
 const $$=selector=>[...document.querySelectorAll(selector)];
 
 async function api(url,options={}){
-  const response=await fetch(url,options);
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  let response;
+  try{response=await fetch(url,{...options,signal:controller.signal})}catch(error){if(error.name==="AbortError")throw new Error("İstek zaman aşımına uğradı. Lütfen tekrar deneyin.");throw error}finally{clearTimeout(timer)}
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||"İşlem başarısız.");
   return data;
@@ -344,15 +346,17 @@ function bindInlineReview(serverId,mine){
     event.preventDefault();
     const message=form.querySelector(".inline-review-message");
     const comment=form.querySelector("textarea").value.trim();
+    if(!serverId){message.textContent="Önce bir sunucu seçin.";return}
     if(!chosen){message.textContent="Bir puan seçin.";return}
     if(comment.length<10){message.textContent="Yorum en az 10 karakter olmalıdır.";form.querySelector("textarea").focus();return}
     const submit=form.querySelector("button[type=submit],button.primary");
     submit.disabled=true;message.textContent="Kaydediliyor…";
     try{
-      await api(mine?`/api/reviews/${mine.id}`:`/api/servers/${serverId}/reviews`,{
+      const result=await api(mine?`/api/reviews/${mine.id}`:`/api/servers/${serverId}/reviews`,{
         method:mine?"PUT":"POST",headers:{"content-type":"application/json"},
         body:JSON.stringify({rating:chosen,comment})
       });
+      message.textContent=result.message||"Değerlendirmeniz kaydedildi.";
       await loadServers();await openServer(serverId,false,mine?.id||0);
     }catch(error){message.textContent=error.message;submit.disabled=false}
   };
