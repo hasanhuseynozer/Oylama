@@ -245,22 +245,18 @@ function serverCard(server){
   const [statusClass,statusText]=statusInfo(server);
   const event=nextEvent(server);
   const cover=server.image_url?`<div class="server-cover" style="background-image:url('${esc(server.image_url)}')"></div>`:'<div class="server-cover server-cover-placeholder"><span>SRO RATING</span></div>';
-  return `<article class="server-card" data-server="${server.id}" tabindex="0" aria-label="${esc(server.name)} ayrıntılarını aç">
+  return `<article class="server-card" data-server="${server.id}">
     <button class="favorite-button ${server.is_favorite?"active":""}" data-favorite="${server.id}" type="button" aria-pressed="${Boolean(server.is_favorite)}" aria-label="${server.is_favorite?"Favorilerden çıkar":"Favorilere ekle"}">♥</button>
     <div class="server-status ${statusClass}" title="${esc(server.status_note||statusText)}"><i></i>${statusText}</div>
     ${cover}<div class="server-card-body"><div class="server-badges"><span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div>
-    <h2><a href="${serverPath(server)}">${esc(server.name)}</a></h2>${event?`<div class="countdown" data-date="${esc(event[1])}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></div>`:""}
+    <h2>${esc(server.name)}</h2>${event?`<div class="countdown" data-date="${esc(event[1])}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></div>`:""}
     <p class="desc card-summary">${esc(compactDescription(server.description,110))}</p>
     <div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${server.vote_count} değerlendirme</small></div><div class="stars card-stars">${stars(rating)}</div></div>
-    <div class="card-actions"><a class="outline" href="${serverPath(server)}">Detay Sayfası</a><button class="primary" data-review="${server.id}">Oy Ver</button></div></div>
+    <div class="card-actions"><button class="primary" data-review="${server.id}">Oy Ver</button></div></div>
   </article>`;
 }
 
 function bindServerCards(){
-  $$("[data-server]").forEach(card=>{
-    card.onclick=event=>{if(!event.target.closest("button,a"))location.href=serverPath(state.servers.find(item=>Number(item.id)===Number(card.dataset.server)))};
-    card.onkeydown=event=>{if((event.key==="Enter"||event.key===" ")&&!event.target.closest("button,a")){event.preventDefault();location.href=serverPath(state.servers.find(item=>Number(item.id)===Number(card.dataset.server)))}};
-  });
   $$("[data-review]").forEach(button=>button.onclick=()=>openServer(Number(button.dataset.review),true));
   $$("[data-favorite]").forEach(button=>button.onclick=async()=>{
     if(!state.user){location.href="/giris/";return}
