@@ -1,7 +1,85 @@
-const $=s=>document.querySelector(s);let creators=[];
-async function api(url,opt={}){const r=await fetch(url,opt),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"İşlem başarısız.");return d}
-function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-function render(){const q=$("#creatorSearch").value.toLocaleLowerCase("tr-TR"),sort=$("#creatorSort").value;let list=creators.filter(x=>`${x.display_name} ${x.headline} ${x.biography}`.toLocaleLowerCase("tr-TR").includes(q));list.sort((a,b)=>sort==="name"?a.display_name.localeCompare(b.display_name,"tr"):b.average_rating-a.average_rating);$("#creatorGrid").innerHTML=list.length?list.map(x=>`<article class="creator-card" data-id="${x.user_id}"><div class="creator-cover" ${x.cover_url?`style="background-image:url('${esc(x.cover_url)}')"`:""}><span>${x.collaboration_status==="open"?"İş birliğine açık":"Şu an kapalı"}</span></div><div class="creator-card-body"><div class="creator-avatar">${x.avatar_url?`<img src="${esc(x.avatar_url)}" alt="">`:"✦"}</div><p class="eyebrow">${esc(x.language)} YAYINCI</p><h2>${esc(x.display_name)}</h2><p>${esc(x.headline)}</p><div class="creator-score"><strong>${Number(x.average_rating).toFixed(1)}</strong><span>★</span><small>${x.rating_count} değerlendirme</small></div></div></article>`).join(""):'<div class="empty-state">Eşleşen yayıncı bulunamadı.</div>';document.querySelectorAll("[data-id]").forEach(card=>card.onclick=()=>openCreator(card.dataset.id))}
-async function openCreator(id){const {creator,ratings}=await api(`/api/creators/${id}`);$("#creatorDetail").innerHTML=`<div class="creator-detail-hero"><p class="eyebrow">DOĞRULANMIŞ YAYINCI</p><h2>${esc(creator.display_name)}</h2><p>${esc(creator.headline)}</p><strong>${Number(creator.average_rating).toFixed(1)} ★</strong></div><p class="creator-biography">${esc(creator.biography)}</p><div class="creator-links">${[["Twitch",creator.twitch_url],["Kick",creator.kick_url],["YouTube",creator.youtube_url]].filter(x=>x[1]).map(x=>`<a href="${esc(x[1])}" target="_blank" rel="noopener">${x[0]} ↗</a>`).join("")}</div><h3>Sunucu Sahibi Değerlendirmeleri</h3>${ratings.length?ratings.map(r=>`<article class="creator-review"><b>${esc(r.owner_name)}</b><span>${((r.communication+r.professionalism+r.engagement+r.promotion_quality)/4).toFixed(1)} ★</span><p>${esc(r.comment)}</p></article>`).join(""):'<div class="empty-state">Henüz değerlendirme yok.</div>'}`;$("#creatorDialog").showModal()}
-$("#creatorSearch").oninput=render;$("#creatorSort").onchange=render;$("#closeCreator").onclick=()=>$("#creatorDialog").close();$("#creatorDialog").onclick=e=>{if(e.target===$("#creatorDialog"))e.target.close()};
-api("/api/creators").then(x=>{creators=x.creators;render()}).catch(e=>$("#creatorGrid").innerHTML=`<div class="empty-state">${esc(e.message)}</div>`);
+const $=selector=>document.querySelector(selector);
+const esc=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]));
+let creators=[];
+
+async function api(url,options={}){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);
+  try{
+    const response=await fetch(url,{...options,signal:controller.signal});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||"İşlem tamamlanamadı.");
+    return data;
+  }catch(error){
+    if(error.name==="AbortError")throw new Error("Bağlantı zaman aşımına uğradı.");
+    throw error;
+  }finally{clearTimeout(timer)}
+}
+
+function emptyState(title,text,action="Tekrar dene"){
+  return `<div class="network-empty"><span>✦</span><h2>${esc(title)}</h2><p>${esc(text)}</p><button class="outline" id="networkRetry">${esc(action)}</button></div>`;
+}
+
+function render(){
+  const query=$("#creatorSearch").value.toLocaleLowerCase("tr-TR"),sort=$("#creatorSort").value;
+  const list=creators.filter(item=>`${item.display_name} ${item.headline} ${item.biography}`.toLocaleLowerCase("tr-TR").includes(query));
+  list.sort((a,b)=>sort==="name"?a.display_name.localeCompare(b.display_name,"tr"):Number(b.average_rating)-Number(a.average_rating));
+  $("#creatorCount").textContent=`${list.length} yayıncı`;
+  $("#creatorGrid").innerHTML=list.length?list.map((item,index)=>`
+    <article class="creator-card network-card" data-creator-id="${item.user_id}" tabindex="0">
+      <div class="creator-cover" ${item.cover_url?`style="background-image:url('${esc(item.cover_url)}')"`:""}>
+        <span class="creator-availability ${item.collaboration_status}"><i></i>${item.collaboration_status==="open"?"İş birliğine açık":"Şu an kapalı"}</span>
+        <b>${String(index+1).padStart(2,"0")}</b>
+      </div>
+      <div class="creator-card-body">
+        <div class="creator-avatar">${item.avatar_url?`<img src="${esc(item.avatar_url)}" alt="">`:"✦"}</div>
+        <p class="eyebrow">${esc(item.language||"TR")} · ONAYLI YAYINCI</p>
+        <h2>${esc(item.display_name)}</h2>
+        <p>${esc(item.headline||"Silkroad topluluğu için içerik üretiyor.")}</p>
+        <div class="creator-score"><strong>${Number(item.average_rating).toFixed(1)}</strong><span>★★★★★</span><small>${item.rating_count} iş birliği puanı</small></div>
+        <button class="card-open">Profili incele <b>→</b></button>
+      </div>
+    </article>`).join(""):emptyState(query?"Sonuç bulunamadı":"Yayıncı ağı hazırlanıyor",query?"Arama ölçütünü değiştirerek tekrar deneyin.":"Onaylanan yayıncı profilleri burada yayınlanacak.",query?"Aramayı temizle":"Yenile");
+  document.querySelectorAll("[data-creator-id]").forEach(card=>{
+    card.onclick=()=>openCreator(card.dataset.creatorId);
+    card.onkeydown=event=>{if(event.key==="Enter")openCreator(card.dataset.creatorId)};
+  });
+  $("#networkRetry")?.addEventListener("click",()=>{if(query){$("#creatorSearch").value="";render()}else loadCreators()});
+}
+
+async function openCreator(id){
+  const dialog=$("#creatorDialog");
+  $("#creatorDetail").innerHTML='<div class="network-loading"><i></i><span>Profil hazırlanıyor</span></div>';
+  dialog.showModal();
+  try{
+    const {creator,ratings}=await api(`/api/creators/${id}`);
+    const links=[["Twitch",creator.twitch_url],["Kick",creator.kick_url],["YouTube",creator.youtube_url]].filter(item=>item[1]);
+    $("#creatorDetail").innerHTML=`
+      <section class="creator-detail-head">
+        <div class="creator-detail-avatar">${creator.avatar_url?`<img src="${esc(creator.avatar_url)}" alt="">`:"✦"}</div>
+        <div><p class="eyebrow">DOĞRULANMIŞ YAYINCI</p><h2>${esc(creator.display_name)}</h2><p>${esc(creator.headline)}</p></div>
+        <div class="creator-detail-score"><strong>${Number(creator.average_rating).toFixed(1)}</strong><span>★★★★★</span><small>${creator.rating_count} değerlendirme</small></div>
+      </section>
+      <div class="creator-detail-grid">
+        <section><h3>Yayıncı hakkında</h3><p class="creator-biography">${esc(creator.biography||"Yayıncı henüz profil açıklaması eklemedi.")}</p>
+          <div class="creator-links">${links.length?links.map(item=>`<a href="${esc(item[1])}" target="_blank" rel="noopener">${item[0]} <span>↗</span></a>`).join(""):"<small>Yayın bağlantısı eklenmemiş.</small>"}</div>
+          ${creator.discord||creator.contact_email?`<div class="creator-contact"><span>İş birliği iletişimi</span><b>${esc(creator.discord||creator.contact_email)}</b></div>`:""}
+        </section>
+        <section><div class="detail-section-title"><h3>Sunucu sahibi değerlendirmeleri</h3><span>${ratings.length}</span></div>
+          <div class="creator-review-list">${ratings.length?ratings.map(r=>`<article class="creator-review"><header><b>${esc(r.owner_name)}</b><span>${((r.communication+r.professionalism+r.engagement+r.promotion_quality)/4).toFixed(1)} ★</span></header><p>${esc(r.comment||"Yorum eklenmedi.")}</p><small>Doğrulanmış sunucu sahibi</small></article>`).join(""):'<div class="network-mini-empty">Henüz doğrulanmış değerlendirme yok.</div>'}</div>
+        </section>
+      </div>`;
+  }catch(error){$("#creatorDetail").innerHTML=emptyState("Profil açılamadı",error.message)}
+}
+
+async function loadCreators(){
+  $("#creatorGrid").innerHTML='<div class="network-loading"><i></i><span>Yayıncı ağı hazırlanıyor</span></div>';
+  try{creators=(await api("/api/creators")).creators||[];render()}
+  catch(error){$("#creatorCount").textContent="Bağlantı hatası";$("#creatorGrid").innerHTML=emptyState("Yayıncılar yüklenemedi",error.message);$("#networkRetry")?.addEventListener("click",loadCreators)}
+}
+
+$("#creatorSearch").oninput=render;
+$("#creatorSort").onchange=render;
+$("#closeCreator").onclick=()=>$("#creatorDialog").close();
+$("#creatorDialog").onclick=event=>{if(event.target===$("#creatorDialog"))event.target.close()};
+loadCreators();
+
