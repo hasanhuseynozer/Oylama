@@ -172,7 +172,7 @@ async function handleApi(request, env, url) {
     const email = normalizeEmail(body.email);
     const displayName = cleanText(body.displayName);
     const password = String(body.password || "");
-    const accountType = ["owner","creator"].includes(body.accountType) ? body.accountType : "user";
+    const accountType = body.accountType === "owner" ? "owner" : "user";
     const discord = cleanText(body.discord).slice(0,80);
     const introduction = cleanText(body.introduction).slice(0,500);
 
@@ -259,7 +259,8 @@ async function handleApi(request, env, url) {
   }
 
   if (method === "GET" && path === "/api/auth/me") {
-    const user = await getCurrentUse…13708 tokens truncated…r bölümünden yapın.":"Kullanıcı normal role geçirildi."});
+    const user = await getCurrentUser(request, env.DB);
+    retu…14193 tokens truncated…r bölümünden yapın.":"Kullanıcı normal role geçirildi."});
     }
 
     const assignOwner=path.match(/^\/api\/admin\/users\/(\d+)\/assign-server$/);
