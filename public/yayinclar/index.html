@@ -1,1 +1,54 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yayıncılar — SRO RATING</title><link rel="icon" href="/sro-rating-logo.png"><link rel="stylesheet" href="/styles.css?v=20260728-11"></head><body class="creator-page"><header class="creator-header"><a href="/"><img src="/sro-rating-header.png" alt="SRO RATING"></a><nav><a href="/">Sunucular</a><a class="active" href="/yayinclar/">Yayıncılar</a><a href="/cekilisler/">Çekilişler</a><a href="/yayinclar/panel.html">Stüdyom</a><a href="/profil/">Profilim</a></nav></header><main class="creator-shell"><section class="creator-hero"><div><p class="eyebrow">SRO CREATOR NETWORK</p><h1>Topluluğun sesini keşfet</h1><p>Yayıncıları incele, iş birliği fırsatlarını değerlendir ve sunucu sahiplerinin doğrulanmış puanlarını karşılaştır.</p></div><div class="creator-orbit"><span>LIVE</span><strong>Yayıncı<br>Ağı</strong></div></section><section class="creator-tools"><input id="creatorSearch" type="search" placeholder="Yayıncı ara…"><select id="creatorSort"><option value="rating">En yüksek puan</option><option value="name">İsme göre</option></select></section><section id="creatorGrid" class="creator-grid"><div class="empty-state">Yayıncılar yükleniyor…</div></section></main><dialog id="creatorDialog" class="creator-dialog"><button id="closeCreator" class="close">×</button><div id="creatorDetail"></div></dialog><script src="/yayinclar/creators.js?v=20260728-1" defer></script></body></html>
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Silkroad yayıncılarını keşfet, yayın kanallarını ve sunucu sahiplerinin değerlendirmelerini incele.">
+  <title>Yayıncılar — SRO RATING</title>
+  <link rel="icon" href="/sro-rating-logo.png">
+  <link rel="stylesheet" href="/styles.css?v=20260728-12">
+</head>
+<body class="network-page">
+  <header class="network-header">
+    <a class="network-brand" href="/"><img src="/sro-rating-header.png" alt="SRO RATING"></a>
+    <nav aria-label="Topluluk menüsü">
+      <a href="/">Sunucular</a>
+      <a class="active" href="/yayinclar/">Yayıncılar</a>
+      <a href="/cekilisler/">Çekilişler</a>
+      <a href="/yayinclar/panel.html">Yayıncı Paneli</a>
+      <a href="/profil/">Profilim</a>
+    </nav>
+  </header>
+  <main class="network-shell">
+    <section class="network-hero creator-network-hero">
+      <div class="network-hero-copy">
+        <p class="eyebrow">SRO CREATOR NETWORK</p>
+        <h1>Yayıncıları keşfet.<br><em>Doğru iş birliğini kur.</em></h1>
+        <p>Aktif yayıncıları, içerik kanallarını ve yalnızca doğrulanmış sunucu sahiplerinin verdiği iş birliği puanlarını tek yerde karşılaştır.</p>
+        <div class="network-hero-actions">
+          <a class="primary" href="/kayit/">Yayıncı olarak başvur</a>
+          <a class="outline" href="/cekilisler/">Aktif çekilişler</a>
+        </div>
+      </div>
+      <div class="network-radar" aria-hidden="true"><i></i><i></i><i></i><span>LIVE</span><strong>CREATOR<br>NETWORK</strong></div>
+    </section>
+    <section class="network-toolbar" aria-label="Yayıncı filtreleri">
+      <label class="network-search"><span>⌕</span><input id="creatorSearch" type="search" placeholder="Yayıncı, kanal veya içerik ara…"></label>
+      <select id="creatorSort" aria-label="Yayıncı sıralaması"><option value="rating">Puana göre</option><option value="name">İsme göre</option></select>
+      <span id="creatorCount" class="network-count">Yükleniyor…</span>
+    </section>
+    <section id="creatorGrid" class="creator-grid network-grid" aria-live="polite"><div class="network-loading"><i></i><span>Yayıncı ağı hazırlanıyor</span></div></section>
+    <section class="network-trust">
+      <div><b>01</b><strong>Kontrollü katılım</strong><span>Yayıncı profilleri yönetici onayından sonra görünür.</span></div>
+      <div><b>02</b><strong>Doğrulanmış puan</strong><span>Değerlendirmeyi yalnızca atanmış sunucu sahipleri yapar.</span></div>
+      <div><b>03</b><strong>Doğrudan iletişim</strong><span>Yayın ve iletişim kanalları tek profilde toplanır.</span></div>
+    </section>
+  </main>
+  <dialog id="creatorDialog" class="network-dialog">
+    <button id="closeCreator" class="network-close" aria-label="Kapat">×</button>
+    <div id="creatorDetail"></div>
+  </dialog>
+  <script src="/yayinclar/creators.js?v=20260728-2" defer></script>
+</body>
+</html>
+
