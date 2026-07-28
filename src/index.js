@@ -260,7 +260,671 @@ async function handleApi(request, env, url) {
 
   if (method === "GET" && path === "/api/auth/me") {
     const user = await getCurrentUser(request, env.DB);
-    retu…14193 tokens truncated…r bölümünden yapın.":"Kullanıcı normal role geçirildi."});
+    return json({ user: user ? publicUser(user) : null });
+  }
+
+  if (method === "GET" && path === "/api/creator-application") {
+    const user = await requireUser(request, env.DB);
+    const application = await env.DB.prepare("SELECT status,admin_note,created_at,updated_at FROM role_applications WHERE user_id=? AND application_type='creator' ORDER BY id DESC LIMIT 1").bind(user.id).first();
+    return json({ application: application || null, isCreator: user.account_role === "creator" });
+  }
+
+  if (method === "POST" && path === "/api/creator-application") {
+    verifyOrigin(request);
+    requireJson(request);
+    const user = await requireUser(request, env.DB);
+    const body = await readJson(request);
+    const discord = cleanText(body.discord).slice(0,80);
+    const introduction = cleanText(body.introduction).slice(0,500);
+    if (user.account_role === "creator") return json({ error: "Hesabınız zaten yayıncı olarak onaylı." }, 409);
+    if (!discord || introduction.length < 20) return json({ error: "Discord adresi ve en az 20 karakterlik tanıtım gereklidir." }, 400);
+    if (hasProfanity(discord) || hasProfanity(introduction)) return json({ error: "Başvuru yasaklı ifade içeriyor." }, 400);
+    const pending = await env.DB.prepare("SELECT id FROM role_applications WHERE user_id=? AND application_type='creator' AND status='pending'").bind(user.id).first();
+    if (pending) return json({ error: "İncelenmekte olan bir yayıncı başvurunuz zaten var." }, 409);
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO role_applications(user_id,application_type,discord,contact_email,introduction) VALUES(?,'creator',?,?,?)").bind(user.id,discord,user.email,introduction),
+      env.DB.prepare("INSERT OR IGNORE INTO creator_profiles(user_id,slug,headline,biography,discord,contact_email) VALUES(?,?,?,?,?,?)").bind(user.id,`yayin-${user.id}`,"Yeni yayıncı",introduction,discord,user.email)
+    ]);
+    return json({ message: "Yayıncı başvurunuz yönetici incelemesine gönderildi." }, 201);
+  }
+
+  if (method === "PUT" && path === "/api/profile") {
+    verifyOrigin(request);
+    requireJson(request);
+    const user = await requireUser(request, env.DB);
+    const body = await readJson(request);
+    const displayName = cleanText(body.displayName);
+    if (displayName.length < 2 || displayName.length > 40) return json({ error: "Kullanıcı adı 2–40 karakter olmalıdır." }, 400);
+    if (hasProfanity(displayName)) return json({ error: "Kullanıcı adında yasaklı ifade kullanılamaz." }, 400);
+    const nameExists = await env.DB.prepare("SELECT id FROM users WHERE lower(display_name)=lower(?) AND id<>?").bind(displayName,user.id).first();
+    if (nameExists) return json({ error: "Bu kullanıcı adı zaten kullanılıyor." }, 409);
+    const gameAlias=cleanText(body.gameAlias).slice(0,40),bio=cleanText(body.bio).slice(0,240);
+    if(hasProfanity(gameAlias)||hasProfanity(bio))return json({error:"Profil bilgileri yasaklı ifade içeriyor."},400);
+    await env.DB.prepare("UPDATE users SET display_name=?,game_alias=?,bio=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+      .bind(displayName,gameAlias,bio,user.id).run();
+    const playedServers=Array.isArray(body.playedServers)
+      ? body.playedServers.slice(0,20).map(x=>({serverId:Number(x.serverId),characterName:cleanText(x.characterName).slice(0,40)})).filter(x=>Number.isInteger(x.serverId))
+      : (Array.isArray(body.serverIds)?body.serverIds:[]).slice(0,20).map(serverId=>({serverId:Number(serverId),characterName:""})).filter(x=>Number.isInteger(x.serverId));
+    if(playedServers.some(x=>hasProfanity(x.characterName)))return json({error:"Karakter adında yasaklı ifade kullanılamaz."},400);
+    const playingStatements=[
+      env.DB.prepare("DELETE FROM user_playing_servers WHERE user_id=?").bind(user.id),
+      ...playedServers.map(x=>env.DB.prepare("INSERT OR IGNORE INTO user_playing_servers(user_id,server_id,character_name) SELECT ?,id,? FROM servers WHERE id=? AND is_active=1").bind(user.id,x.characterName,x.serverId))
+    ];
+    await env.DB.batch(playingStatements);
+    return json({ message: "Profil güncellendi." });
+  }
+
+  const publicProfile=path.match(/^\/api\/users\/(\d+)\/profile$/);
+  if(method==="GET"&&publicProfile){
+    const userId=Number(publicProfile[1]),profile=await env.DB.prepare("SELECT id,display_name,account_role,game_alias,bio,created_at FROM users WHERE id=? AND status='active'").bind(userId).first();
+    if(!profile)return json({error:"Kullanıcı bulunamadı."},404);
+    const servers=await env.DB.prepare("SELECT s.id,s.name,p.character_name FROM user_playing_servers p JOIN servers s ON s.id=p.server_id WHERE p.user_id=? AND s.is_active=1 ORDER BY s.name").bind(userId).all();
+    const stats=await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM reviews WHERE user_id=?) reviews,
+      0 replies,
+      (SELECT COUNT(*) FROM review_reactions rr JOIN reviews r ON r.id=rr.review_id WHERE r.user_id=? AND rr.reaction='like') likes`).bind(userId,userId).first();
+    return json({profile,servers:servers.results||[],stats});
+  }
+
+  if(method==="GET"&&path==="/api/creators"){
+    const creators=await env.DB.prepare(`SELECT p.*,u.display_name,
+      COALESCE(ROUND(AVG((r.communication+r.professionalism+r.engagement+r.promotion_quality)/4.0),1),0) average_rating,
+      COUNT(r.id) rating_count
+      FROM creator_profiles p JOIN users u ON u.id=p.user_id AND u.status='active'
+      LEFT JOIN creator_ratings r ON r.creator_user_id=p.user_id
+      WHERE p.is_approved=1 GROUP BY p.user_id ORDER BY average_rating DESC,u.display_name`).all();
+    return json({creators:creators.results||[]});
+  }
+
+  const creatorDetail=path.match(/^\/api\/creators\/(\d+)$/);
+  if(method==="GET"&&creatorDetail){
+    const creator=await env.DB.prepare(`SELECT p.*,u.display_name,
+      COALESCE(ROUND(AVG((r.communication+r.professionalism+r.engagement+r.promotion_quality)/4.0),1),0) average_rating,
+      COUNT(r.id) rating_count FROM creator_profiles p JOIN users u ON u.id=p.user_id
+      LEFT JOIN creator_ratings r ON r.creator_user_id=p.user_id
+      WHERE p.user_id=? AND p.is_approved=1 GROUP BY p.user_id`).bind(Number(creatorDetail[1])).first();
+    if(!creator)return json({error:"Yayıncı bulunamadı."},404);
+    const ratings=await env.DB.prepare("SELECT r.*,u.display_name owner_name FROM creator_ratings r JOIN users u ON u.id=r.owner_user_id WHERE r.creator_user_id=? ORDER BY r.updated_at DESC").bind(creator.user_id).all();
+    return json({creator,ratings:ratings.results||[]});
+  }
+
+  if(method==="GET"&&path==="/api/creator/profile"){
+    const user=await requireUser(request,env.DB);
+    const profile=await env.DB.prepare("SELECT * FROM creator_profiles WHERE user_id=?").bind(user.id).first();
+    if(!profile)return json({error:"Yayıncı profiliniz bulunmuyor."},403);
+    const servers=await env.DB.prepare("SELECT id,name FROM servers WHERE is_active=1 ORDER BY name").all();
+    return json({profile,servers:servers.results||[]});
+  }
+  if(method==="PUT"&&path==="/api/creator/profile"){
+    verifyOrigin(request);requireJson(request);const user=await requireUser(request,env.DB),body=await readJson(request);
+    const profile=await env.DB.prepare("SELECT user_id FROM creator_profiles WHERE user_id=?").bind(user.id).first();
+    if(!profile)return json({error:"Yayıncı profiliniz bulunmuyor veya başvurunuz tamamlanmadı."},403);
+    const headline=cleanText(body.headline).slice(0,100),biography=cleanText(body.biography).slice(0,750);
+    if(headline.length<3||biography.length<10||hasProfanity(headline)||hasProfanity(biography))return json({error:"Yayıncı bilgileri geçersiz."},400);
+    await env.DB.prepare(`UPDATE creator_profiles SET headline=?,biography=?,twitch_url=?,kick_url=?,youtube_url=?,discord=?,contact_email=?,language=?,collaboration_status=?,updated_at=CURRENT_TIMESTAMP WHERE user_id=?`)
+      .bind(headline,biography,cleanUrl(body.twitch_url),cleanUrl(body.kick_url),cleanUrl(body.youtube_url),cleanText(body.discord).slice(0,80),normalizeEmail(body.contact_email),cleanText(body.language).slice(0,10),body.collaboration_status==="closed"?"closed":"open",user.id).run();
+    return json({message:"Yayıncı profiliniz güncellendi."});
+  }
+
+  const creatorRating=path.match(/^\/api\/creators\/(\d+)\/rating$/);
+  if(method==="POST"&&creatorRating){
+    verifyOrigin(request);requireJson(request);const user=await requireUser(request,env.DB),body=await readJson(request),creatorId=Number(creatorRating[1]);
+    if(creatorId===Number(user.id))return json({error:"Kendi profilinizi değerlendiremezsiniz."},403);
+    if(!(await env.DB.prepare("SELECT 1 FROM creator_profiles WHERE user_id=? AND is_approved=1").bind(creatorId).first()))return json({error:"Yayıncı profili bulunamadı."},404);
+    const owner=await env.DB.prepare("SELECT 1 FROM server_owners WHERE user_id=?").bind(user.id).first();
+    if(!owner)return json({error:"Yalnızca doğrulanmış sunucu sahipleri yayıncıları değerlendirebilir."},403);
+    const values=["communication","professionalism","engagement","promotion_quality"].map(key=>Math.round(Number(body[key])));
+    if(values.some(value=>value<1||value>5))return json({error:"Tüm puanlar 1–5 arasında olmalıdır."},400);
+    const comment=cleanText(body.comment).slice(0,500);if(hasProfanity(comment))return json({error:"Yorum yasaklı ifade içeriyor."},400);
+    await env.DB.prepare(`INSERT INTO creator_ratings(creator_user_id,owner_user_id,communication,professionalism,engagement,promotion_quality,comment)
+      VALUES(?,?,?,?,?,?,?) ON CONFLICT(creator_user_id,owner_user_id) DO UPDATE SET communication=excluded.communication,professionalism=excluded.professionalism,engagement=excluded.engagement,promotion_quality=excluded.promotion_quality,comment=excluded.comment,updated_at=CURRENT_TIMESTAMP`)
+      .bind(creatorId,user.id,...values,comment).run();
+    return json({message:"Yayıncı değerlendirmeniz kaydedildi."});
+  }
+
+  if(method==="GET"&&path==="/api/giveaways"){
+    const rows=await env.DB.prepare(`SELECT g.*,u.display_name organizer_name,s.name server_name,
+      (SELECT COUNT(*) FROM giveaway_entries e WHERE e.giveaway_id=g.id) participant_count
+      FROM giveaways g JOIN users u ON u.id=g.organizer_user_id LEFT JOIN servers s ON s.id=g.server_id
+      WHERE g.status IN ('active','completed') ORDER BY CASE WHEN g.status='active' THEN 0 ELSE 1 END,datetime(g.ends_at),g.id DESC LIMIT 100`).all();
+    return json({giveaways:rows.results||[]});
+  }
+
+  const giveawayDetail=path.match(/^\/api\/giveaways\/(\d+)$/);
+  if(method==="GET"&&giveawayDetail){
+    const id=Number(giveawayDetail[1]);
+    const giveaway=await env.DB.prepare(`SELECT g.*,u.display_name organizer_name,s.name server_name,
+      (SELECT COUNT(*) FROM giveaway_entries e WHERE e.giveaway_id=g.id) participant_count
+      FROM giveaways g JOIN users u ON u.id=g.organizer_user_id LEFT JOIN servers s ON s.id=g.server_id WHERE g.id=?`).bind(id).first();
+    if(!giveaway)return json({error:"Çekiliş bulunamadı."},404);
+    const winners=await env.DB.prepare(`SELECT w.position,w.winner_type,u.display_name,e.character_name
+      FROM giveaway_winners w JOIN giveaway_entries e ON e.id=w.entry_id JOIN users u ON u.id=e.user_id
+      WHERE w.giveaway_id=? ORDER BY CASE w.winner_type WHEN 'winner' THEN 0 ELSE 1 END,w.position`).bind(id).all();
+    return json({giveaway,winners:winners.results||[]});
+  }
+
+  if(method==="POST"&&path==="/api/giveaways"){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),body=await readJson(request);
+    const organizerType=body.organizer_type==="creator"?"creator":"owner",serverId=Number(body.server_id)||null;
+    if(organizerType==="owner"){
+      if(!serverId||!(await env.DB.prepare("SELECT 1 FROM server_owners WHERE user_id=? AND server_id=?").bind(user.id,serverId).first()))return json({error:"Yalnızca size atanmış sunucu için çekiliş açabilirsiniz."},403);
+    }else{
+      if(!(await env.DB.prepare("SELECT 1 FROM creator_profiles WHERE user_id=? AND is_approved=1").bind(user.id).first()))return json({error:"Onaylı yayıncı profili gereklidir."},403);
+      if(!serverId||!(await env.DB.prepare("SELECT 1 FROM servers WHERE id=? AND is_active=1").bind(serverId).first()))return json({error:"Katılımcıların karakter doğrulaması için bir sunucu seçin."},400);
+    }
+    const title=cleanText(body.title).slice(0,100),description=cleanText(body.description).slice(0,750),prize=cleanText(body.prize_text).slice(0,300);
+    const starts=validDateTime(body.starts_at),ends=validDateTime(body.ends_at);
+    if(title.length<3||prize.length<2||!starts||!ends||starts>=ends||hasProfanity(`${title} ${description} ${prize}`))return json({error:"Çekiliş bilgileri veya tarihleri geçersiz."},400);
+    const minParticipants=clampInt(body.min_participants,1,100000,1),winnerCount=clampInt(body.winner_count,1,100,1),reserveCount=clampInt(body.reserve_count,0,100,0);
+    if(winnerCount+reserveCount>minParticipants)return json({error:"Kazanan ve yedek sayısı minimum katılımcı sayısını aşamaz."},400);
+    const result=await env.DB.prepare(`INSERT INTO giveaways(organizer_user_id,organizer_type,server_id,title,description,prize_text,cover_url,starts_at,ends_at,min_participants,winner_count,reserve_count,min_rating,require_review,require_character,min_account_days,status)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).bind(user.id,organizerType,serverId,title,description,prize,safeImage(body.cover_url),starts,ends,minParticipants,winnerCount,reserveCount,organizerType==="creator"?0:clampInt(body.min_rating,0,5,0),organizerType==="creator"?0:(body.require_review?1:0),1,clampInt(body.min_account_days,0,3650,0),body.status==="draft"?"draft":"active").run();
+    return json({message:"Çekiliş oluşturuldu.",id:result.meta.last_row_id},201);
+  }
+
+  const giveawayEnter=path.match(/^\/api\/giveaways\/(\d+)\/enter$/);
+  if(method==="POST"&&giveawayEnter){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),id=Number(giveawayEnter[1]),body=await readJson(request);
+    const g=await env.DB.prepare("SELECT * FROM giveaways WHERE id=? AND status='active'").bind(id).first();
+    if(!g)return json({error:"Aktif çekiliş bulunamadı."},404);
+    const now=Date.now(),start=Date.parse(`${g.starts_at}Z`),end=Date.parse(`${g.ends_at}Z`);
+    if(now<start)return json({error:"Çekiliş henüz başlamadı."},409);
+    if(now>end)return json({error:"Çekiliş sona erdi."},410);
+    const serverId=Number(g.server_id||body.server_id),played=await env.DB.prepare("SELECT character_name FROM user_playing_servers WHERE user_id=? AND server_id=?").bind(user.id,serverId).first();
+    if(!played||!cleanText(played.character_name))return json({error:"Önce profilinizde bu sunucuyu ve karakter adınızı ekleyin."},422);
+    if(Number(g.min_account_days)>0){
+      const account=await env.DB.prepare("SELECT created_at FROM users WHERE id=?").bind(user.id).first();
+      if(Date.now()-Date.parse(`${account.created_at}Z`)<Number(g.min_account_days)*86400000)return json({error:`Hesabınız en az ${g.min_account_days} günlük olmalıdır.`},422);
+    }
+    if(g.organizer_type==="owner"){
+      const review=await env.DB.prepare("SELECT rating,comment FROM reviews WHERE user_id=? AND server_id=?").bind(user.id,serverId).first();
+      if(Number(g.require_review)&&(!review||!cleanText(review.comment)))return json({error:"Katılım için sunucuya yorum yapmanız gerekiyor."},422);
+      if(Number(g.min_rating)>0&&Number(review?.rating||0)<Number(g.min_rating))return json({error:`Katılım için en az ${g.min_rating} yıldız vermelisiniz.`},422);
+    }
+    try{await env.DB.prepare("INSERT INTO giveaway_entries(giveaway_id,user_id,character_name,eligibility_snapshot) VALUES(?,?,?,?)").bind(id,user.id,cleanText(played.character_name).slice(0,40),JSON.stringify({serverId,rating:Number(g.min_rating),checkedAt:new Date().toISOString()})).run()}
+    catch{return json({error:"Bu çekilişe zaten katıldınız."},409)}
+    return json({message:"Çekilişe katılımınız tamamlandı."},201);
+  }
+
+  if(method==="GET"&&path==="/api/giveaways/mine"){
+    const user=await requireUser(request,env.DB);
+    const rows=await env.DB.prepare(`SELECT g.*,s.name server_name,(SELECT COUNT(*) FROM giveaway_entries e WHERE e.giveaway_id=g.id) participant_count
+      FROM giveaways g LEFT JOIN servers s ON s.id=g.server_id WHERE g.organizer_user_id=? ORDER BY g.id DESC`).bind(user.id).all();
+    return json({giveaways:rows.results||[]});
+  }
+
+  const giveawayDraw=path.match(/^\/api\/giveaways\/(\d+)\/draw$/);
+  if(method==="POST"&&giveawayDraw){
+    verifyOrigin(request);const user=await requireUser(request,env.DB),id=Number(giveawayDraw[1]);
+    const g=await env.DB.prepare("SELECT * FROM giveaways WHERE id=? AND organizer_user_id=?").bind(id,user.id).first();
+    if(!g)return json({error:"Çekiliş bulunamadı veya yetkiniz yok."},404);
+    if(g.status==="completed")return json({error:"Bu çekiliş daha önce sonuçlandırıldı."},409);
+    if(Date.now()<Date.parse(`${g.ends_at}Z`))return json({error:"Kazananlar ancak çekiliş bittikten sonra belirlenebilir."},409);
+    const entries=(await env.DB.prepare("SELECT * FROM giveaway_entries WHERE giveaway_id=?").bind(id).all()).results||[];
+    if(entries.length<Number(g.min_participants))return json({error:`En az ${g.min_participants} katılımcı gereklidir.`},409);
+    secureShuffle(entries);
+    const winnerCount=Math.min(Number(g.winner_count),entries.length),reserveCount=Math.min(Number(g.reserve_count),entries.length-winnerCount);
+    const statements=[...entries.slice(0,winnerCount).map((e,i)=>env.DB.prepare("INSERT INTO giveaway_winners(giveaway_id,entry_id,position,winner_type) VALUES(?,?,?,'winner')").bind(id,e.id,i+1)),
+      ...entries.slice(winnerCount,winnerCount+reserveCount).map((e,i)=>env.DB.prepare("INSERT INTO giveaway_winners(giveaway_id,entry_id,position,winner_type) VALUES(?,?,?,'reserve')").bind(id,e.id,i+1)),
+      env.DB.prepare("UPDATE giveaways SET status='completed',updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(id)];
+    await env.DB.batch(statements);
+    return json({message:"Kazananlar güvenli rastgele seçimle belirlendi."});
+  }
+
+  const giveawayExport=path.match(/^\/api\/giveaways\/(\d+)\/export$/);
+  if(method==="GET"&&giveawayExport){
+    const user=await requireUser(request,env.DB),id=Number(giveawayExport[1]);
+    if(!(await env.DB.prepare("SELECT 1 FROM giveaways WHERE id=? AND organizer_user_id=?").bind(id,user.id).first()))return json({error:"Yetkiniz yok."},403);
+    const rows=(await env.DB.prepare(`SELECT u.display_name,u.email,e.character_name,e.created_at,
+      COALESCE(w.winner_type,'') result,COALESCE(w.position,'') position FROM giveaway_entries e JOIN users u ON u.id=e.user_id
+      LEFT JOIN giveaway_winners w ON w.entry_id=e.id WHERE e.giveaway_id=? ORDER BY e.created_at`).bind(id).all()).results||[];
+    const csv=["Kullanıcı,E-posta,Karakter,Katılım Tarihi,Sonuç,Sıra",...rows.map(x=>[x.display_name,x.email,x.character_name,x.created_at,x.result,x.position].map(csvCell).join(","))].join("\r\n");
+    return new Response("\ufeff"+csv,{headers:{"content-type":"text/csv; charset=utf-8","content-disposition":`attachment; filename="cekilis-${id}.csv"`}});
+  }
+
+  if (method === "PUT" && path === "/api/profile/password") {
+    verifyOrigin(request);
+    requireJson(request);
+    const user = await requireUser(request, env.DB);
+    const body = await readJson(request);
+    const oldPassword = String(body.oldPassword || "");
+    const newPassword = String(body.newPassword || "");
+    const dbUser = await env.DB.prepare("SELECT password_hash, password_salt, password_iterations FROM users WHERE id = ?").bind(user.id).first();
+    if (!(await verifyPassword(oldPassword, dbUser.password_salt, dbUser.password_hash, Number(dbUser.password_iterations || 50000)))) return json({ error: "Mevcut şifre yanlış." }, 401);
+    if (!isValidPassword(newPassword)) return json({ error: "Yeni şifre en az 8 karakter olmalı ve harf ile rakam içermelidir." }, 400);
+    const salt = randomHex(16);
+    const hash = await hashPassword(newPassword, salt);
+    await env.DB.batch([
+      env.DB.prepare("UPDATE users SET password_hash = ?, password_salt = ?, password_iterations=?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(hash, salt, PBKDF2_ITERATIONS, user.id),
+      env.DB.prepare("DELETE FROM user_sessions WHERE user_id = ?").bind(user.id)
+    ]);
+    return json({ message: "Şifre değiştirildi. Yeniden giriş yapın." }, 200, {
+      "Set-Cookie": clearCookie(USER_COOKIE)
+    });
+  }
+
+  if (method === "GET" && path === "/api/profile/reviews") {
+    const user = await requireUser(request, env.DB);
+    const result = await env.DB.prepare(`
+      SELECT r.id, r.rating, r.comment, r.created_at, s.name AS server_name
+      FROM reviews r JOIN servers s ON s.id = r.server_id
+      WHERE r.user_id = ? ORDER BY datetime(r.created_at) DESC
+    `).bind(user.id).all();
+    return json({ reviews: result.results || [] });
+  }
+
+  if (method === "GET" && path === "/api/profile/community") {
+    const user = await requireUser(request, env.DB);
+    const requests = await env.DB.prepare("SELECT id,server_name,description,website_url,cap,rates,server_type,opened_at,status,admin_note,created_at FROM server_requests WHERE user_id=? ORDER BY datetime(created_at) DESC").bind(user.id).all();
+    const suggestions = await env.DB.prepare("SELECT id,subject,message,status,created_at FROM suggestions WHERE user_id=? ORDER BY datetime(created_at) DESC").bind(user.id).all();
+    const owned = await env.DB.prepare("SELECT s.id,s.name FROM server_owners o JOIN servers s ON s.id=o.server_id WHERE o.user_id=? ORDER BY s.name").bind(user.id).all();
+    const servers=await env.DB.prepare("SELECT id,name FROM servers WHERE is_active=1 ORDER BY name").all();
+    const playing=await env.DB.prepare("SELECT server_id,character_name FROM user_playing_servers WHERE user_id=?").bind(user.id).all();
+    return json({ requests: [], suggestions: suggestions.results || [], ownedServers: owned.results || [], servers:servers.results||[], playingServers:playing.results||[], playingServerIds:(playing.results||[]).map(x=>x.server_id) });
+  }
+
+  if(method==="GET"&&path==="/api/notifications"){
+    const user=await requireUser(request,env.DB);
+    const result=await env.DB.prepare("SELECT id,type,title,message,target_url,is_read,created_at FROM notifications WHERE user_id=? ORDER BY datetime(created_at) DESC LIMIT 100").bind(user.id).all();
+    const unread=await env.DB.prepare("SELECT COUNT(*) count FROM notifications WHERE user_id=? AND is_read=0").bind(user.id).first();
+    return json({notifications:result.results||[],unread:Number(unread.count||0)});
+  }
+
+  if(method==="DELETE"&&path==="/api/notifications"){
+    verifyOrigin(request);const user=await requireUser(request,env.DB);
+    await env.DB.prepare("DELETE FROM notifications WHERE user_id=?").bind(user.id).run();
+    return json({message:"Bildirimler temizlendi."});
+  }
+
+  const notificationRead=path.match(/^\/api\/notifications\/(\d+)\/read$/);
+  if(method==="PUT"&&notificationRead){
+    verifyOrigin(request);const user=await requireUser(request,env.DB);
+    await env.DB.prepare("UPDATE notifications SET is_read=1 WHERE id=? AND user_id=?").bind(Number(notificationRead[1]),user.id).run();
+    return json({message:"Bildirim okundu."});
+  }
+
+  if (method === "POST" && path === "/api/profile/server-requests") {
+    return json({error:"Sunucu başvuruları kapalıdır. Sunucu sahipliği için yöneticiyle iletişime geçin."},403);
+  }
+
+  if (method === "POST" && path === "/api/profile/suggestions") {
+    verifyOrigin(request); requireJson(request);
+    const user = await requireUser(request, env.DB), body = await readJson(request);
+    const subject=cleanText(body.subject), message=cleanText(body.message);
+    if(subject.length<3||subject.length>100||message.length<10||message.length>1000) return json({error:"Öneri bilgileri geçersiz."},400);
+    if(hasProfanity(subject)||hasProfanity(message))return json({error:"Öneri yasaklı ifade içeriyor."},400);
+    if(!(await rateLimit(env.DB,"suggestion-user",String(user.id),3,24*60*60)))return json({error:"Günde en fazla 3 öneri gönderebilirsiniz."},429);
+    await env.DB.prepare("INSERT INTO suggestions(user_id,subject,message) VALUES(?,?,?)").bind(user.id,subject,message).run();
+    return json({message:"Öneriniz alındı. Teşekkürler!"},201);
+  }
+
+  if (method === "GET" && path === "/api/owner/dashboard") {
+    const user = await requireUser(request, env.DB);
+    const servers = await env.DB.prepare(`SELECT s.id,s.name,s.description,s.website_url,s.discord_url,s.promo_url,s.beta_at,s.launch_at,s.operational_status,s.status_note,
+      COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,
+      (SELECT status FROM server_change_requests c WHERE c.server_id=s.id ORDER BY c.id DESC LIMIT 1) change_status
+      FROM server_owners o JOIN servers s ON s.id=o.server_id WHERE o.user_id=?`).bind(user.id).all();
+    const reviews = await env.DB.prepare(`SELECT r.id,r.server_id,r.rating,r.comment,r.created_at,s.name server_name,
+      COALESCE(u.display_name,'Eski kullanıcı') display_name,rr.reply,rr.updated_at reply_updated_at
+      FROM reviews r JOIN server_owners o ON o.server_id=r.server_id AND o.user_id=?
+      JOIN servers s ON s.id=r.server_id LEFT JOIN users u ON u.id=r.user_id
+      LEFT JOIN review_replies rr ON rr.review_id=r.id ORDER BY datetime(r.created_at) DESC LIMIT 300`).bind(user.id).all();
+    return json({servers:servers.results||[],reviews:reviews.results||[]});
+  }
+
+  const ownerReply = path.match(/^\/api\/owner\/reviews\/(\d+)\/reply$/);
+  if (method === "PUT" && ownerReply) {
+    verifyOrigin(request); requireJson(request);
+    const user=await requireUser(request,env.DB), reviewId=Number(ownerReply[1]), body=await readJson(request), reply=cleanText(body.reply);
+    if(reply.length<2||reply.length>500)return json({error:"Cevap 2–500 karakter arasında olmalıdır."},400);
+    if(hasProfanity(reply))return json({error:"Küfür, hakaret ve aşağılayıcı ifadeler yasaktır."},400);
+    const review=await env.DB.prepare("SELECT r.server_id FROM reviews r JOIN server_owners o ON o.server_id=r.server_id WHERE r.id=? AND o.user_id=?").bind(reviewId,user.id).first();
+    if(!review)return json({error:"Bu yoruma cevap verme yetkiniz yok."},403);
+    if(!(await rateLimit(env.DB,`owner-reply:${reviewId}`,String(user.id),1,3*60)))return json({error:"Bu yoruma 3 dakika içinde yalnızca bir kez cevap güncelleyebilirsiniz."},429);
+    await env.DB.prepare(`INSERT INTO review_replies(review_id,server_id,user_id,reply,updated_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP)
+      ON CONFLICT(review_id) DO UPDATE SET reply=excluded.reply,user_id=excluded.user_id,updated_at=CURRENT_TIMESTAMP`).bind(reviewId,review.server_id,user.id,reply).run();
+    const recipient=await env.DB.prepare("SELECT user_id FROM reviews WHERE id=?").bind(reviewId).first();
+    if(recipient?.user_id&&Number(recipient.user_id)!==Number(user.id))await addNotification(env.DB,recipient.user_id,user.id,"owner_reply","Sunucu sahibi yanıtladı","Yorumunuza sunucu sahibinden cevap geldi.",`/?server=${review.server_id}&review=${reviewId}`);
+    return json({message:"Sunucu sahibi cevabı yayınlandı."});
+  }
+
+  const ownerChange=path.match(/^\/api\/owner\/servers\/(\d+)\/change-request$/);
+  if(method==="POST"&&ownerChange){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),serverId=Number(ownerChange[1]),body=await readJson(request);
+    const owned=await env.DB.prepare("SELECT 1 FROM server_owners WHERE server_id=? AND user_id=?").bind(serverId,user.id).first();
+    if(!owned)return json({error:"Bu sunucuyu düzenleme yetkiniz yok."},403);
+    const description=cleanText(body.description),image=safeImage(body.image_url),website=cleanUrl(body.website_url),discord=cleanUrl(body.discord_url),promo=cleanUrl(body.promo_url);
+    const statusNote=cleanText(body.status_note).slice(0,120),betaAt=validDateTime(body.beta_at),launchAt=validDateTime(body.launch_at);
+    if(description.length<3||description.length>300||hasProfanity(description))return json({error:"Açıklama 3–300 karakter olmalı ve yasaklı ifade içermemelidir."},400);
+    if(hasProfanity(statusNote))return json({error:"Durum açıklaması yasaklı ifade içeriyor."},400);
+    if(betaAt&&launchAt&&betaAt>launchAt)return json({error:"Beta tarihi açılış tarihinden sonra olamaz."},400);
+    await env.DB.prepare("UPDATE servers SET description=?,website_url=?,discord_url=?,promo_url=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+      .bind(description,website,discord,promo,betaAt,launchAt,validOperationalStatus(body.operational_status),statusNote,serverId).run();
+    if(image)await saveSetting(env.DB,`server_image_${serverId}`,image);
+    await addAuditEvent(env.DB, request, "owner", user.id, "server.update", "server", serverId, { fields:["description","links","schedule","status",image?"image":null].filter(Boolean) });
+    return json({message:"Sunucu bilgileriniz yayımlandı."});
+  }
+
+  const ownerReport=path.match(/^\/api\/owner\/reviews\/(\d+)\/report$/);
+  if(method==="POST"&&ownerReport){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),reviewId=Number(ownerReport[1]),body=await readJson(request),reason=(cleanText(body.reason)||"Küfür / hakaret").slice(0,500);
+    const review=await env.DB.prepare("SELECT r.server_id FROM reviews r JOIN server_owners o ON o.server_id=r.server_id WHERE r.id=? AND o.user_id=?").bind(reviewId,user.id).first();
+    if(!review)return json({error:"Bildirim yetkiniz yok."},403);
+    await env.DB.prepare("INSERT OR IGNORE INTO content_reports(review_id,server_id,reporter_user_id,reason) VALUES(?,?,?,?)").bind(reviewId,review.server_id,user.id,reason).run();
+    return json({message:"Bildirim yönetici incelemesine gönderildi."},201);
+  }
+
+  const reactionMatch=path.match(/^\/api\/reviews\/(\d+)\/reaction$/);
+  if(method==="POST"&&reactionMatch){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),reviewId=Number(reactionMatch[1]),body=await readJson(request),reaction=["like","dislike"].includes(body.reaction)?body.reaction:"";
+    if(!reaction)return json({error:"Tepki geçersiz."},400);
+    const reviewOwner=await env.DB.prepare("SELECT user_id,server_id FROM reviews WHERE id=?").bind(reviewId).first();
+    if(!reviewOwner)return json({error:"Yorum bulunamadı."},404);
+    if(Number(reviewOwner.user_id)===Number(user.id))return json({error:"Kendi yorumunuza tepki veremezsiniz."},409);
+    if(!(await rateLimit(env.DB,`reaction:${reviewId}`,String(user.id),20,5*60)))return json({error:"Çok hızlı tepki veriyorsunuz."},429);
+    const old=await env.DB.prepare("SELECT reaction FROM review_reactions WHERE review_id=? AND user_id=?").bind(reviewId,user.id).first();
+    if(old?.reaction===reaction)await env.DB.prepare("DELETE FROM review_reactions WHERE review_id=? AND user_id=?").bind(reviewId,user.id).run();
+    else await env.DB.prepare(`INSERT INTO review_reactions(review_id,user_id,reaction,updated_at) VALUES(?,?,?,CURRENT_TIMESTAMP)
+      ON CONFLICT(review_id,user_id) DO UPDATE SET reaction=excluded.reaction,updated_at=CURRENT_TIMESTAMP`).bind(reviewId,user.id,reaction).run();
+    if(reviewOwner?.user_id&&old?.reaction!==reaction)await addNotification(env.DB,reviewOwner.user_id,user.id,reaction,reaction==="like"?"Yorumun beğenildi":"Yorumuna beğenmeme geldi",reaction==="like"?"Bir kullanıcı yorumunu beğendi.":"Bir kullanıcı yorumunu beğenmedi.",`/?server=${reviewOwner.server_id}&review=${reviewId}`);
+    return json({message:"Tepki güncellendi."});
+  }
+
+  const publicReport=path.match(/^\/api\/reviews\/(\d+)\/report$/);
+  if(method==="POST"&&publicReport){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),reviewId=Number(publicReport[1]),body=await readJson(request),reason=(cleanText(body.reason)||"Topluluk kurallarına aykırı içerik").slice(0,500);
+    const review=await env.DB.prepare("SELECT id,server_id,user_id FROM reviews WHERE id=? AND NOT EXISTS(SELECT 1 FROM hidden_reviews h WHERE h.review_id=reviews.id)").bind(reviewId).first();
+    if(!review)return json({error:"Yorum bulunamadı."},404);
+    if(Number(review.user_id)===Number(user.id))return json({error:"Kendi yorumunuzu bildiremezsiniz."},409);
+    if(!(await rateLimit(env.DB,"review-report",String(user.id),8,60*60)))return json({error:"Çok fazla bildirim gönderdiniz. Daha sonra tekrar deneyin."},429);
+    const result=await env.DB.prepare("INSERT OR IGNORE INTO content_reports(review_id,server_id,reporter_user_id,reason) VALUES(?,?,?,?)").bind(reviewId,review.server_id,user.id,reason).run();
+    if(!Number(result.meta.changes||0))return json({error:"Bu yorumu daha önce bildirdiniz."},409);
+    return json({message:"Bildirim inceleme sırasına alındı."},201);
+  }
+
+  const likeMatch=path.match(/^\/api\/reviews\/(\d+)\/like$/);
+  if(method==="POST"&&likeMatch){
+    return json({error:"Bu eski tepki adresi artık kullanılmıyor."},410);
+  }
+
+  const commentMatch=path.match(/^\/api\/reviews\/(\d+)\/comments$/);
+  if(method==="POST"&&commentMatch){
+    return json({error:"Kullanıcı yanıtları kapalıdır. Yalnızca atanmış sunucu sahibi resmi cevap verebilir."},403);
+  }
+
+  const reviewUpdate=path.match(/^\/api\/reviews\/(\d+)$/);
+  if(method==="PUT"&&reviewUpdate){
+    verifyOrigin(request);requireJson(request);
+    const user=await requireUser(request,env.DB),reviewId=Number(reviewUpdate[1]),body=await readJson(request),rating=Number(body.rating),comment=cleanText(body.comment);
+    if(!Number.isInteger(rating)||rating<1||rating>5)return json({error:"1–5 arasında puan seçin."},400);
+    if(comment.length<10||comment.length>500)return json({error:"Yorum 10–500 karakter arasında olmalıdır."},400);
+    if(hasProfanity(comment))return json({error:"Küfür, hakaret ve aşağılayıcı ifadeler yasaktır."},400);
+    const old=await env.DB.prepare("SELECT rating,comment FROM reviews WHERE id=? AND user_id=?").bind(reviewId,user.id).first();
+    if(!old)return json({error:"Bu yorumu düzenleme yetkiniz yok."},403);
+    if(!(await rateLimit(env.DB,`review-edit:${reviewId}`,String(user.id),5,10*60)))return json({error:"Yorumunuzu çok sık güncelliyorsunuz."},429);
+    await env.DB.prepare("UPDATE reviews SET rating=?,comment=? WHERE id=?").bind(rating,comment,reviewId).run();
+    await addAuditEvent(env.DB,request,"user",user.id,"review.update","review",reviewId,{oldRating:old.rating,newRating:rating,commentChanged:old.comment!==comment});
+    return json({message:"Puanınız ve yorumunuz güncellendi."});
+  }
+
+  const reviewMatch = path.match(/^\/api\/servers\/(\d+)\/reviews$/);
+  if (method === "POST" && reviewMatch) {
+    verifyOrigin(request);
+    requireJson(request);
+    const user = await requireUser(request, env.DB);
+    const serverId = Number(reviewMatch[1]);
+    const server = await env.DB.prepare("SELECT id FROM servers WHERE id = ? AND is_active = 1").bind(serverId).first();
+    if (!server) return json({ error: "Sunucu bulunamadı." }, 404);
+    const ownsServer = await env.DB.prepare("SELECT 1 FROM server_owners WHERE server_id=? AND user_id=?").bind(serverId,user.id).first();
+    if (ownsServer) return json({ error:"Sunucu sahipleri kendi sunucularına puan veremez." }, 409);
+
+    const body = await readJson(request);
+    const rating = Number(body.rating);
+    const comment = cleanText(body.comment);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) return json({ error: "1–5 arasında puan seçin." }, 400);
+    if (comment.length < 10 || comment.length > 500) return json({ error: "Yorum 10–500 karakter arasında olmalıdır." }, 400);
+    if (hasProfanity(comment)) return json({ error: "Küfür, hakaret ve aşağılayıcı ifadeler yasaktır." }, 400);
+
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const allowed = await rateLimit(env.DB, "review", await keyedHash(env, ip), 8, 10 * 60);
+    if (!allowed) return json({ error: "Çok hızlı gönderim yaptınız." }, 429);
+    const userAllowed = await rateLimit(env.DB, `review-user:${serverId}`, String(user.id), 2, 60 * 60);
+    if (!userAllowed) return json({ error:"Bu sunucu için çok sık işlem yaptınız. Daha sonra tekrar deneyin." }, 429);
+
+    const existing=await env.DB.prepare("SELECT id,rating,comment FROM reviews WHERE server_id=? AND user_id=?").bind(serverId,user.id).first();
+    if(existing){
+      await env.DB.prepare("UPDATE reviews SET rating=?,comment=? WHERE id=?").bind(rating,comment,existing.id).run();
+      await addAuditEvent(env.DB,request,"user",user.id,"review.update","review",existing.id,{oldRating:existing.rating,newRating:rating,commentChanged:existing.comment!==comment});
+      return json({message:"Puanınız ve yorumunuz güncellendi."});
+    }
+
+    if (env.TURNSTILE_SECRET_KEY) {
+      const valid = await verifyTurnstile(body.turnstileToken, ip, env.TURNSTILE_SECRET_KEY);
+      if (!valid) return json({ error: "Güvenlik doğrulaması başarısız oldu." }, 400);
+    }
+
+    const emailHash = await keyedHash(env, user.email_normalized);
+    try {
+      const createdReview=await env.DB.prepare(`
+        INSERT INTO reviews(server_id, email_hash, email_masked, rating, comment, ip_hash, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).bind(serverId, emailHash, maskEmail(user.email), rating, comment, await keyedHash(env, ip), user.id).run();
+      const recentFromIp=await env.DB.prepare("SELECT COUNT(*) count FROM reviews WHERE ip_hash=? AND datetime(created_at)>=datetime('now','-1 hour')").bind(await keyedHash(env,ip)).first();
+      const recentAccount=await env.DB.prepare("SELECT COUNT(*) count FROM reviews WHERE user_id=? AND datetime(created_at)>=datetime('now','-24 hours')").bind(user.id).first();
+      const reasons=[],ipCount=Number(recentFromIp?.count||0),accountCount=Number(recentAccount?.count||0);
+      if(ipCount>=4)reasons.push("Aynı ağdan yoğun oy");if(accountCount>=6)reasons.push("Hesaptan yoğun oy");if(comment.length<12)reasons.push("Çok kısa yorum");
+      const riskScore=Math.min(100,(ipCount>=4?45:0)+(accountCount>=6?35:0)+(comment.length<12?15:0));
+      await env.DB.prepare("INSERT INTO vote_security_events(review_id,user_id,server_id,ip_hash,user_agent_hash,risk_score,risk_reasons) VALUES(?,?,?,?,?,?,?)")
+        .bind(Number(createdReview.meta.last_row_id),user.id,serverId,await keyedHash(env,ip),await keyedHash(env,request.headers.get("user-agent")||"unknown"),riskScore,reasons.join(", ")).run();
+      await addAuditEvent(env.DB,request,"user",user.id,"review.create","review",Number(createdReview.meta.last_row_id),{serverId,rating,riskScore});
+      return json({ message: "Puanınız ve yorumunuz yayımlandı." }, 201);
+    } catch (error) {
+      if (String(error).toLowerCase().includes("unique")) return json({ error: "Bu sunucuya daha önce oy verdiniz." }, 409);
+      throw error;
+    }
+  }
+
+  // Admin login
+  if (method === "POST" && path === "/api/admin/login") {
+    verifyOrigin(request);
+    requireJson(request);
+    const body = await readJson(request);
+    if (!env.ADMIN_PASSWORD || !env.SESSION_SECRET) return json({ error: "Yönetici secret'ları eksik." }, 503);
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const allowed = await rateLimit(env.DB, "admin-login", await keyedHash(env, ip), 8, 15 * 60);
+    if (!allowed) return json({ error: "Çok fazla giriş denemesi yapıldı." }, 429);
+    if (!constantTimeEqual(String(body.password || ""), env.ADMIN_PASSWORD)) return json({ error: "Şifre yanlış." }, 401);
+    const token = await createSignedToken(env.SESSION_SECRET, ADMIN_SESSION_SECONDS);
+    return json({ message: "Giriş başarılı." }, 200, { "Set-Cookie": adminCookie(token, request) });
+  }
+
+  if (method === "POST" && path === "/api/admin/logout") {
+    verifyOrigin(request);
+    return json({ message: "Çıkış yapıldı." }, 200, { "Set-Cookie": clearCookie(ADMIN_COOKIE) });
+  }
+
+  if (path.startsWith("/api/admin/")) {
+    if (!env.SESSION_SECRET || !(await verifySignedToken(getCookie(request, ADMIN_COOKIE), env.SESSION_SECRET))) {
+      return json({ error: "Yönetici girişi gerekli." }, 401);
+    }
+    verifyOrigin(request);
+
+    if (method === "GET" && path === "/api/admin/dashboard") {
+      const servers = await env.DB.prepare(`
+        SELECT s.id,s.name,s.description,s.cap,s.rates,s.server_type,s.opened_at,s.beta_at,s.launch_at,s.operational_status,s.status_note,s.website_url,s.discord_url,s.promo_url,(SELECT user_id FROM server_owners WHERE server_id=s.id LIMIT 1) owner_user_id,COALESCE((SELECT setting_value FROM site_settings WHERE setting_key='server_image_'||s.id),'') image_url,s.is_active,s.created_at,
+          COALESCE(ROUND(AVG(r.rating),1),0) average_rating,COUNT(r.id) vote_count
+        FROM servers s LEFT JOIN reviews r ON r.server_id=s.id GROUP BY s.id ORDER BY s.created_at DESC
+      `).all();
+      const reviews = await env.DB.prepare(`
+        SELECT r.id,r.server_id,r.rating,r.comment,r.created_at,r.email_masked,s.name server_name,
+          COALESCE(u.display_name,'Eski kullanıcı') display_name
+        FROM reviews r JOIN servers s ON s.id=r.server_id LEFT JOIN users u ON u.id=r.user_id
+        ORDER BY datetime(r.created_at) DESC LIMIT 500
+      `).all();
+      const users = await env.DB.prepare(`
+        SELECT id,email,display_name,account_role,status,created_at FROM users ORDER BY datetime(created_at) DESC LIMIT 500
+      `).all();
+      const requests = await env.DB.prepare(`SELECT q.*,u.display_name,u.email FROM server_requests q JOIN users u ON u.id=q.user_id ORDER BY CASE q.status WHEN 'pending' THEN 0 ELSE 1 END,datetime(q.created_at) DESC`).all();
+      const roleApplications=await env.DB.prepare(`SELECT a.*,u.display_name,u.email FROM role_applications a JOIN users u ON u.id=a.user_id ORDER BY CASE a.status WHEN 'pending' THEN 0 ELSE 1 END,a.id DESC`).all();
+      const suggestions = await env.DB.prepare(`SELECT g.*,u.display_name,u.email FROM suggestions g JOIN users u ON u.id=g.user_id ORDER BY CASE g.status WHEN 'new' THEN 0 ELSE 1 END,datetime(g.created_at) DESC`).all();
+      const changes=await env.DB.prepare(`SELECT c.*,s.name server_name,u.display_name FROM server_change_requests c JOIN servers s ON s.id=c.server_id JOIN users u ON u.id=c.user_id ORDER BY CASE c.status WHEN 'pending' THEN 0 ELSE 1 END,c.id DESC`).all();
+      const reports=await env.DB.prepare(`SELECT p.*,s.name server_name,r.comment,u.display_name reporter_name FROM content_reports p JOIN servers s ON s.id=p.server_id JOIN reviews r ON r.id=p.review_id JOIN users u ON u.id=p.reporter_user_id ORDER BY CASE p.status WHEN 'pending' THEN 0 ELSE 1 END,p.id DESC`).all();
+      return json({ servers: servers.results || [], reviews: reviews.results || [], users: users.results || [], requests:requests.results||[], roleApplications:roleApplications.results||[], suggestions:suggestions.results||[], changes:changes.results||[], reports:reports.results||[], settings: await getSettings(env.DB) });
+    }
+
+    const roleApplicationAction=path.match(/^\/api\/admin\/role-applications\/(\d+)$/);
+    if(roleApplicationAction&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),id=Number(roleApplicationAction[1]),status=body.status==="approved"?"approved":"rejected";
+      const item=await env.DB.prepare("SELECT * FROM role_applications WHERE id=?").bind(id).first();
+      if(!item)return json({error:"Başvuru bulunamadı."},404);
+      await env.DB.prepare("UPDATE role_applications SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,cleanText(body.note).slice(0,300),id).run();
+      if(status==="approved"&&item.application_type==="creator"){
+        await env.DB.batch([
+          env.DB.prepare("UPDATE users SET account_role='creator',updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(item.user_id),
+          env.DB.prepare("UPDATE creator_profiles SET is_approved=1,updated_at=CURRENT_TIMESTAMP WHERE user_id=?").bind(item.user_id)
+        ]);
+      }
+      await addNotification(env.DB,item.user_id,null,"application",status==="approved"?"Başvurunuz onaylandı":"Başvurunuz sonuçlandı",status==="approved"?(item.application_type==="creator"?"Yayıncı profiliniz yayınlandı.":"Sunucu sahibi başvurunuz onaylandı; sunucu ataması yönetici tarafından tamamlanacak."):"Başvurunuz şu an için onaylanmadı.",status==="approved"&&item.application_type==="creator"?"/yayinclar/":"/profil/");
+      return json({message:status==="approved"?"Başvuru onaylandı.":"Başvuru reddedildi."});
+    }
+
+    const changeAction=path.match(/^\/api\/admin\/server-changes\/(\d+)$/);
+    if(changeAction&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),id=Number(changeAction[1]),status=body.status==="approved"?"approved":"rejected";
+      const item=await env.DB.prepare("SELECT * FROM server_change_requests WHERE id=?").bind(id).first();
+      if(!item)return json({error:"Değişiklik isteği bulunamadı."},404);
+      if(status==="approved"&&item.status==="pending"){
+        await env.DB.prepare("UPDATE servers SET description=?,website_url=?,discord_url=?,promo_url=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(item.description,item.website_url,item.discord_url,item.promo_url,item.beta_at,item.launch_at,item.operational_status,item.status_note,item.server_id).run();
+        if(item.image_url)await saveSetting(env.DB,`server_image_${item.server_id}`,safeImage(item.image_url));
+      }
+      await env.DB.prepare("UPDATE server_change_requests SET status=?,admin_note=?,resolved_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,cleanText(body.note),id).run();
+      return json({message:status==="approved"?"Değişiklikler yayına alındı.":"Değişiklik isteği reddedildi."});
+    }
+
+    const reportAction=path.match(/^\/api\/admin\/reports\/(\d+)$/);
+    if(reportAction&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),id=Number(reportAction[1]),status=body.status==="approved"?"approved":"rejected";
+      const item=await env.DB.prepare("SELECT review_id FROM content_reports WHERE id=?").bind(id).first();
+      if(!item)return json({error:"Bildirim bulunamadı."},404);
+      if(status==="approved")await env.DB.batch([
+        env.DB.prepare("INSERT OR REPLACE INTO hidden_reviews(review_id,report_id,hidden_by,reason) VALUES(?,?,NULL,?)").bind(item.review_id,id,"Yönetici moderasyonu"),
+        env.DB.prepare("UPDATE content_reports SET status='approved',resolved_at=CURRENT_TIMESTAMP WHERE id=?").bind(id)
+      ]);
+      else await env.DB.prepare("UPDATE content_reports SET status='rejected',resolved_at=CURRENT_TIMESTAMP WHERE id=?").bind(id).run();
+      return json({message:status==="approved"?"Yorum ve puan yayından kaldırıldı.":"Bildirim reddedildi."});
+    }
+
+    const requestAction=path.match(/^\/api\/admin\/server-requests\/(\d+)$/);
+    if(requestAction&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),id=Number(requestAction[1]),status=["approved","rejected"].includes(body.status)?body.status:"rejected";
+      const item=await env.DB.prepare("SELECT * FROM server_requests WHERE id=?").bind(id).first();
+      if(!item)return json({error:"İstek bulunamadı."},404);
+      if(status==="approved"&&item.status!=="approved"){
+        const created=await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,is_active) VALUES(?,?,?,?,?,?,1)").bind(item.server_name,item.description,item.cap,item.rates,item.server_type,item.opened_at).run();
+      }
+      await env.DB.prepare("UPDATE server_requests SET status=?,admin_note=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,cleanText(body.note),id).run();
+      return json({message:status==="approved"?"Sunucu yayınlandı. Sahiplik ayrıca yönetici tarafından atanmalıdır.":"İstek reddedildi."});
+    }
+
+    const suggestionAction=path.match(/^\/api\/admin\/suggestions\/(\d+)$/);
+    if(suggestionAction&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),status=["reviewed","closed"].includes(body.status)?body.status:"reviewed";
+      await env.DB.prepare("UPDATE suggestions SET status=? WHERE id=?").bind(status,Number(suggestionAction[1])).run();
+      return json({message:"Öneri durumu güncellendi."});
+    }
+
+    if (method === "POST" && path === "/api/admin/servers") {
+      requireJson(request); const body = await readJson(request);
+      const name=cleanText(body.name),description=cleanText(body.description),cap=validCap(body.cap),rates=validRates(body.rates),serverType=validServerType(body.server_type),openedAt=validDate(body.opened_at);
+      const betaAt=validDateTime(body.beta_at),launchAt=validDateTime(body.launch_at),statusNote=cleanText(body.status_note).slice(0,120),image=safeImage(body.image_url);
+      const website=cleanUrl(body.website_url),discord=cleanUrl(body.discord_url),promo=cleanUrl(body.promo_url);
+      if(name.length<2||name.length>80||description.length<3||description.length>300)return json({error:"Sunucu adı veya açıklaması geçersiz. Açıklama en fazla 300 karakter olabilir."},400);
+      if(hasProfanity(name)||hasProfanity(description)||hasProfanity(statusNote))return json({error:"Sunucu bilgileri yasaklı ifade içeriyor."},400);
+      if(betaAt&&launchAt&&betaAt>launchAt)return json({error:"Beta tarihi açılış tarihinden sonra olamaz."},400);
+      const result=await env.DB.prepare("INSERT INTO servers(name,description,cap,rates,server_type,opened_at,beta_at,launch_at,operational_status,status_note,is_verified,is_active,website_url,discord_url,promo_url) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        .bind(name,description,cap,rates,serverType,openedAt,betaAt,launchAt,validOperationalStatus(body.operational_status),statusNote,0,body.is_active?1:0,website,discord,promo).run();
+      const ownerId=Number(body.owner_user_id||0);
+      if(ownerId){await env.DB.prepare("INSERT OR IGNORE INTO server_owners(server_id,user_id) VALUES(?,?)").bind(Number(result.meta.last_row_id),ownerId).run();await reconcileOwnerRoles(env.DB,[ownerId])}
+      await saveSetting(env.DB,`server_image_${Number(result.meta.last_row_id)}`,image);
+      await addAuditEvent(env.DB,request,"admin",null,"server.create","server",Number(result.meta.last_row_id),{name,ownerId:ownerId||null});
+      return json({ message: "Sunucu eklendi." }, 201);
+    }
+
+    const adminServer = path.match(/^\/api\/admin\/servers\/(\d+)$/);
+    if (adminServer && method === "PUT") {
+      requireJson(request); const body = await readJson(request);
+      const serverId=Number(adminServer[1]);
+      const name=cleanText(body.name),description=cleanText(body.description),betaAt=validDateTime(body.beta_at),launchAt=validDateTime(body.launch_at),statusNote=cleanText(body.status_note).slice(0,120),image=safeImage(body.image_url);
+      if(name.length<2||name.length>80||description.length<3||description.length>300)return json({error:"Sunucu adı veya açıklaması geçersiz. Açıklama en fazla 300 karakter olabilir."},400);
+      if(hasProfanity(name)||hasProfanity(description)||hasProfanity(statusNote))return json({error:"Sunucu bilgileri yasaklı ifade içeriyor."},400);
+      if(betaAt&&launchAt&&betaAt>launchAt)return json({error:"Beta tarihi açılış tarihinden sonra olamaz."},400);
+      const updated=await env.DB.prepare("UPDATE servers SET name=?,description=?,cap=?,rates=?,server_type=?,opened_at=?,beta_at=?,launch_at=?,operational_status=?,status_note=?,is_verified=0,is_active=?,website_url=?,discord_url=?,promo_url=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+        .bind(name,description,validCap(body.cap),validRates(body.rates),validServerType(body.server_type),validDate(body.opened_at),betaAt,launchAt,validOperationalStatus(body.operational_status),statusNote,body.is_active?1:0,cleanUrl(body.website_url),cleanUrl(body.discord_url),cleanUrl(body.promo_url),serverId).run();
+      if(!updated.meta.changes)return json({error:"Sunucu bulunamadı."},404);
+      await saveSetting(env.DB,`server_image_${serverId}`,image);
+      const previousOwners=await env.DB.prepare("SELECT user_id FROM server_owners WHERE server_id=?").bind(serverId).all();
+      await env.DB.prepare("DELETE FROM server_owners WHERE server_id=?").bind(serverId).run();
+      const ownerId=Number(body.owner_user_id||0);
+      if(ownerId)await env.DB.prepare("INSERT INTO server_owners(server_id,user_id) VALUES(?,?)").bind(serverId,ownerId).run();
+      await reconcileOwnerRoles(env.DB,[...(previousOwners.results||[]).map(x=>Number(x.user_id)),ownerId].filter(Boolean));
+      await addAuditEvent(env.DB,request,"admin",null,"server.update","server",serverId,{ownerId:ownerId||null});
+      return json({ message: "Sunucu güncellendi." });
+    }
+    if (adminServer && method === "DELETE") {
+      const serverId=Number(adminServer[1]);
+      const existing=await env.DB.prepare("SELECT name FROM servers WHERE id=?").bind(serverId).first();
+      if(!existing)return json({error:"Sunucu bulunamadı."},404);
+      const previousOwners=await env.DB.prepare("SELECT user_id FROM server_owners WHERE server_id=?").bind(serverId).all();
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM servers WHERE id=?").bind(serverId),
+        env.DB.prepare("DELETE FROM site_settings WHERE setting_key=?").bind(`server_image_${serverId}`)
+      ]);
+      await reconcileOwnerRoles(env.DB,(previousOwners.results||[]).map(x=>Number(x.user_id)));
+      await addAuditEvent(env.DB,request,"admin",null,"server.delete","server",serverId,{name:existing.name});
+      return json({ message: "Sunucu silindi." });
+    }
+
+    const reset = path.match(/^\/api\/admin\/servers\/(\d+)\/reset$/);
+    if (reset && method === "POST") {
+      const serverId=Number(reset[1]);
+      await env.DB.prepare("DELETE FROM reviews WHERE server_id=?").bind(serverId).run();
+      await addAuditEvent(env.DB,request,"admin",null,"server.reviews.reset","server",serverId);
+      return json({ message: "Oylar ve yorumlar sıfırlandı." });
+    }
+
+    const deleteReview = path.match(/^\/api\/admin\/reviews\/(\d+)$/);
+    if (deleteReview && method === "DELETE") {
+      const reviewId=Number(deleteReview[1]);
+      await env.DB.prepare("DELETE FROM reviews WHERE id=?").bind(reviewId).run();
+      await addAuditEvent(env.DB,request,"admin",null,"review.delete","review",reviewId);
+      return json({ message: "Yorum silindi." });
+    }
+
+    const userStatus = path.match(/^\/api\/admin\/users\/(\d+)\/status$/);
+    if (userStatus && method === "PUT") {
+      requireJson(request); const body = await readJson(request);
+      const status = body.status === "blocked" ? "blocked" : "active";
+      await env.DB.batch([
+        env.DB.prepare("UPDATE users SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(status,Number(userStatus[1])),
+        env.DB.prepare("DELETE FROM user_sessions WHERE user_id=?").bind(Number(userStatus[1]))
+      ]);
+      await addAuditEvent(env.DB,request,"admin",null,"user.status","user",Number(userStatus[1]),{status});
+      return json({ message: status === "blocked" ? "Kullanıcı engellendi." : "Kullanıcı açıldı." });
+    }
+
+    const userRole=path.match(/^\/api\/admin\/users\/(\d+)\/role$/);
+    if(userRole&&method==="PUT"){
+      requireJson(request);const body=await readJson(request),userId=Number(userRole[1]),role=body.role==="owner"?"owner":"user";
+      await env.DB.prepare("UPDATE users SET account_role=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").bind(role,userId).run();
+      if(role==="user")await env.DB.prepare("DELETE FROM server_owners WHERE user_id=?").bind(userId).run();
+      await reconcileOwnerRoles(env.DB,[userId]);
+      await addAuditEvent(env.DB,request,"admin",null,"user.role","user",userId,{requestedRole:role});
+      return json({message:role==="owner"?"Kullanıcı sunucu sahibi rolüne geçirildi. Sunucu atamasını Sunucular bölümünden yapın.":"Kullanıcı normal role geçirildi."});
     }
 
     const assignOwner=path.match(/^\/api\/admin\/users\/(\d+)\/assign-server$/);
@@ -600,4 +1264,3 @@ function secureResponse(response) {
   return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
 }
 class HttpError extends Error { constructor(message,status){super(message);this.status=status;} }
-
