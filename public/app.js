@@ -480,4 +480,3 @@ init().catch(error=>{
   $("#serverGrid").innerHTML=`<div class="panel bad"><h3>İçerik yüklenemedi</h3><p>${esc(error.message)}</p><button type="button" class="primary" data-retry>Tekrar Dene</button></div>`;
   $("#serverGrid [data-retry]").onclick=()=>location.reload();
 });
-
