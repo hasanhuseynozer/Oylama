@@ -49,13 +49,10 @@ function applySettings(){
   const settings=state.settings;
   const logo=settings.logo_image||"/sro-rating-header.png";
   $("#siteLogo").src=logo;
-  setVisual($("#banner"),settings.banner_image||"/sro-rating-banner.gif");
   setVisual($("#leftSponsor"),settings.left_ad_image);
   setVisual($("#rightSponsor"),settings.right_ad_image);
   configureSponsor($("#leftSponsor"),settings.left_ad_image,settings.left_ad_text,settings.left_ad_url);
   configureSponsor($("#rightSponsor"),settings.right_ad_image,settings.right_ad_text,settings.right_ad_url);
-  setLink($("#banner"),settings.banner_url);
-  $("#banner").textContent="";
   $("#footerTagline").textContent=settings.footer_tagline||"Silkroad topluluğunun buluşma noktası.";
   $("#footerYear").textContent=new Date().getFullYear();
   $("#contactText").textContent=settings.contact_text||"";
@@ -483,3 +480,4 @@ init().catch(error=>{
   $("#serverGrid").innerHTML=`<div class="panel bad"><h3>İçerik yüklenemedi</h3><p>${esc(error.message)}</p><button type="button" class="primary" data-retry>Tekrar Dene</button></div>`;
   $("#serverGrid [data-retry]").onclick=()=>location.reload();
 });
+
