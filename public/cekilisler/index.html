@@ -1,1 +1,41 @@
-<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Çekilişler — SRO RATING</title><link rel="icon" href="/sro-rating-logo.png"><link rel="stylesheet" href="/styles.css?v=20260728-11"></head><body class="giveaway-page"><header class="creator-header"><a href="/"><img src="/sro-rating-header.png" alt="SRO RATING"></a><nav><a href="/">Sunucular</a><a href="/yayinclar/">Yayıncılar</a><a class="active" href="/cekilisler/">Çekilişler</a><a href="/profil/">Profilim</a></nav></header><main class="giveaway-shell"><section class="giveaway-hero"><div><p class="eyebrow">COMMUNITY REWARDS</p><h1>Şansını değil, topluluk gücünü konuştur.</h1><p>Oynadığın sunuculardaki etkinliklere katıl, karakterinle doğrulan ve ödülleri kazan.</p></div><div class="giveaway-prize-orb"><span>ÖDÜL</span><b>✦</b><small>HAVUZU</small></div></section><div class="giveaway-tabs"><button class="active" data-filter="active">Canlı Çekilişler</button><button data-filter="completed">Sonuçlananlar</button></div><section id="giveawayGrid" class="giveaway-grid"><div class="empty-state">Çekilişler hazırlanıyor…</div></section></main><dialog id="giveawayDialog" class="creator-dialog giveaway-dialog"><button class="close" id="closeGiveaway">×</button><div id="giveawayDetail"></div></dialog><script src="/cekilisler/giveaways.js?v=20260728-1" defer></script></body></html>
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Silkroad sunucuları ve yayıncıları tarafından düzenlenen doğrulanmış topluluk çekilişleri.">
+  <title>Çekilişler — SRO RATING</title>
+  <link rel="icon" href="/sro-rating-logo.png">
+  <link rel="stylesheet" href="/styles.css?v=20260728-12">
+</head>
+<body class="network-page">
+  <header class="network-header">
+    <a class="network-brand" href="/"><img src="/sro-rating-header.png" alt="SRO RATING"></a>
+    <nav aria-label="Topluluk menüsü">
+      <a href="/">Sunucular</a><a href="/yayinclar/">Yayıncılar</a><a class="active" href="/cekilisler/">Çekilişler</a><a href="/profil/">Profilim</a>
+    </nav>
+  </header>
+  <main class="network-shell">
+    <section class="network-hero giveaway-network-hero">
+      <div class="network-hero-copy">
+        <p class="eyebrow">VERIFIED COMMUNITY REWARDS</p>
+        <h1>Katılımın doğrulansın.<br><em>Şansın şeffaf olsun.</em></h1>
+        <p>Sunucu veya yayıncı tarafından düzenlenen çekilişlere karakterinle katıl. Şartları önceden gör, sonuçları sıralı ve açık biçimde takip et.</p>
+        <div class="network-hero-actions"><a class="primary" href="/profil/">Karakterlerimi düzenle</a><a class="outline" href="/yayinclar/">Yayıncıları keşfet</a></div>
+      </div>
+      <div class="reward-vault" aria-hidden="true"><span>✦</span><small>VERIFIED</small><strong>REWARD<br>VAULT</strong></div>
+    </section>
+    <section class="giveaway-command">
+      <div class="giveaway-tabs" role="tablist"><button class="active" data-filter="active">Canlı <b id="activeCount">0</b></button><button data-filter="completed">Sonuçlanan <b id="completedCount">0</b></button></div>
+      <p><span class="live-pulse"></span> Katılım koşulları sistem tarafından otomatik doğrulanır.</p>
+    </section>
+    <section id="giveawayGrid" class="giveaway-grid network-grid" aria-live="polite"><div class="network-loading"><i></i><span>Çekilişler hazırlanıyor</span></div></section>
+  </main>
+  <dialog id="giveawayDialog" class="network-dialog giveaway-detail-dialog">
+    <button class="network-close" id="closeGiveaway" aria-label="Kapat">×</button>
+    <div id="giveawayDetail"></div>
+  </dialog>
+  <script src="/cekilisler/giveaways.js?v=20260728-2" defer></script>
+</body>
+</html>
+
