@@ -1,5 +1,5 @@
 const $=selector=>document.querySelector(selector);
-let data={servers:[],reviews:[],users:[],settings:{},requests:[],changes:[],reports:[],suggestions:[]};
+let data={servers:[],reviews:[],users:[],settings:{},requests:[],roleApplications:[],changes:[],reports:[],suggestions:[]};
 let lastServerSnapshot=null;
 
 async function api(url,options={}){
@@ -56,6 +56,7 @@ async function load(){
       users:dashboard.users||[],
       settings:dashboard.settings||{},
       requests:dashboard.requests||[],
+      roleApplications:dashboard.roleApplications||[],
       changes:dashboard.changes||[],
       reports:dashboard.reports||[],
       suggestions:dashboard.suggestions||[]
@@ -139,12 +140,18 @@ function renderUsers(){
 }
 
 function renderRequests(){
-  $("#requestsTable").innerHTML=data.requests.length?data.requests.map(request=>`
+  const roleCards=data.roleApplications.map(request=>`
+    <article class="request-card role-application"><span class="status ${esc(request.status)}">${esc(request.status)}</span>
+      <small>${esc(request.display_name)} · ${esc(request.email)}</small><p class="eyebrow">${request.application_type==="creator"?"YAYINCI BAŞVURUSU":"SUNUCU SAHİBİ BAŞVURUSU"}</p><h3>${esc(request.discord||"Discord belirtilmedi")}</h3><p>${esc(request.introduction)}</p>
+      ${request.status==="pending"?`<div class="card-actions"><button class="primary" data-action="role-application" data-id="${request.id}" data-status="approved">Onayla</button><button class="outline danger" data-action="role-application" data-id="${request.id}" data-status="rejected">Reddet</button></div>`:""}
+    </article>`);
+  const serverCards=data.requests.map(request=>`
     <article class="request-card"><span class="status ${esc(request.status)}">${esc(request.status)}</span>
       <small>${esc(request.display_name)} · ${esc(request.email)}</small><h3>${esc(request.server_name)}</h3><p>${esc(request.description)}</p>
       ${request.website_url?`<a href="${esc(request.website_url)}" target="_blank" rel="noopener">Web sitesi ↗</a>`:""}
       ${request.status==="pending"?`<div class="card-actions"><button class="primary" data-action="request" data-id="${request.id}" data-status="approved">Onayla</button><button class="outline danger" data-action="request" data-id="${request.id}" data-status="rejected">Reddet</button></div>`:""}
-    </article>`).join(""):"<div class=\"empty-state\">Bekleyen başvuru yok.</div>";
+    </article>`);
+  $("#requestsTable").innerHTML=[...roleCards,...serverCards].join("")||"<div class=\"empty-state\">Bekleyen başvuru yok.</div>";
 }
 
 function renderChanges(){
@@ -201,6 +208,9 @@ document.addEventListener("click",async event=>{
     else if(action==="request"){
       if(!await confirmAction(button.dataset.status==="approved"?"Sunucu başvurusu onaylanacak.":"Sunucu başvurusu reddedilecek."))return;
       await api(`/api/admin/server-requests/${id}`,jsonPut({status:button.dataset.status}));
+    }else if(action==="role-application"){
+      if(!await confirmAction(button.dataset.status==="approved"?"Rol başvurusu onaylanacak.":"Rol başvurusu reddedilecek."))return;
+      await api(`/api/admin/role-applications/${id}`,jsonPut({status:button.dataset.status}));
     }else if(action==="change")await api(`/api/admin/server-changes/${id}`,jsonPut({status:button.dataset.status}));
     else if(action==="report"){
       if(button.dataset.status==="approved"&&!await confirmAction("Yorum ve verdiği puan kalıcı olarak silinecek."))return;
