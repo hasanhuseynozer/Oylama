@@ -349,14 +349,18 @@ async function handleApi(request, env, url) {
 
   if(method==="GET"&&path==="/api/creator/profile"){
     const user=await requireUser(request,env.DB);
-    const profile=await env.DB.prepare("SELECT * FROM creator_profiles WHERE user_id=?").bind(user.id).first();
+    const profile=await env.DB.prepare(`SELECT p.* FROM creator_profiles p
+      JOIN users u ON u.id=p.user_id
+      WHERE p.user_id=? AND p.is_approved=1 AND u.account_role='creator' AND u.status='active'`).bind(user.id).first();
     if(!profile)return json({error:"Yayıncı profiliniz bulunmuyor."},403);
     const servers=await env.DB.prepare("SELECT id,name FROM servers WHERE is_active=1 ORDER BY name").all();
     return json({profile,servers:servers.results||[]});
   }
   if(method==="PUT"&&path==="/api/creator/profile"){
     verifyOrigin(request);requireJson(request);const user=await requireUser(request,env.DB),body=await readJson(request);
-    const profile=await env.DB.prepare("SELECT user_id FROM creator_profiles WHERE user_id=?").bind(user.id).first();
+    const profile=await env.DB.prepare(`SELECT p.user_id FROM creator_profiles p
+      JOIN users u ON u.id=p.user_id
+      WHERE p.user_id=? AND p.is_approved=1 AND u.account_role='creator' AND u.status='active'`).bind(user.id).first();
     if(!profile)return json({error:"Yayıncı profiliniz bulunmuyor veya başvurunuz tamamlanmadı."},403);
     const headline=cleanText(body.headline).slice(0,100),biography=cleanText(body.biography).slice(0,750);
     if(headline.length<3||biography.length<10||hasProfanity(headline)||hasProfanity(biography))return json({error:"Yayıncı bilgileri geçersiz."},400);
