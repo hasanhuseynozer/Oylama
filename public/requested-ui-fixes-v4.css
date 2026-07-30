@@ -284,6 +284,13 @@ body.embedded-view .giveaway-command .giveaway-tabs button{
   overflow:hidden!important;
   border-radius:999px!important;
 }
+body.network-page .giveaway-command .giveaway-tabs button b,
+body.embedded-view .giveaway-command .giveaway-tabs button b,
+body.network-page .giveaway-command .giveaway-tabs button.active b,
+body.embedded-view .giveaway-command .giveaway-tabs button.active b{
+  color:#fff!important;
+  text-shadow:0 1px 2px rgba(0,0,0,.42)!important;
+}
 body.network-page .giveaway-command>.giveaway-trust-note,
 body.embedded-view .giveaway-command>.giveaway-trust-note{
   display:flex!important;

@@ -1,4 +1,4 @@
-@import url('/requested-ui-fixes-v4.css?v=20260731-2');
+@import url('/requested-ui-fixes-v4.css?v=20260731-3');
 
 /* Simple classic trophy icons for the global top three. */
 body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{
