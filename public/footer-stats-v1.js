@@ -2,22 +2,35 @@
   'use strict';
 
   const number=value=>new Intl.NumberFormat('tr-TR').format(Number(value||0));
-  const tagline=document.getElementById('footerTagline');
-  if(!tagline)return;
+  const root=document.getElementById('footerTagline');
+  if(!root)return;
+
+  let latestStats=null;
+  let rendering=false;
 
   const render=stats=>{
+    latestStats=stats;
     const items=[
       ['Günlük Ziyaret',stats.dailyVisits==null?'—':number(stats.dailyVisits)],
       ['Toplam Oy',number(stats.totalVotes)],
       ['Sunucu',number(stats.totalServers)],
       ['Çevrimiçi',number(stats.onlineServers)]
     ];
-    const root=document.createElement('div');
-    root.className='footer-stats';
+
+    rendering=true;
+    root.classList.add('footer-stats');
     root.setAttribute('aria-label','Site istatistikleri');
     root.innerHTML=items.map(([label,value])=>`<div class="footer-stat"><span>${label}</span><strong>${value}</strong></div>`).join('');
-    tagline.replaceWith(root);
+    rendering=false;
   };
+
+  /* app.js also updates footerTagline after its API calls finish. Keep the same DOM node
+     and restore the statistics if that later update temporarily replaces the contents. */
+  const observer=new MutationObserver(()=>{
+    if(rendering||!latestStats||root.querySelector('.footer-stat'))return;
+    queueMicrotask(()=>render(latestStats));
+  });
+  observer.observe(root,{childList:true,subtree:true,characterData:true});
 
   const fallback=async()=>{
     const response=await fetch('/api/servers',{headers:{accept:'application/json'}});
