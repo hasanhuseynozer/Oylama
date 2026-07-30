@@ -1,6 +1,20 @@
-/* Requested UI fixes only. Ranking/electric border files are untouched. */
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand+SC&display=swap');
 
-/* Footer: body copy white, headings and social-button styling stay unchanged. */
+/* Requested UI fixes only. The electric frame structure and animations stay intact. */
+
+/* Keep page headings on the selected project typeface. */
+body.home-clean :is(h1,h2,h3,h4),
+body.network-page :is(h1,h2,h3,h4),
+body.creator-page :is(h1,h2,h3,h4),
+body.application-page :is(h1,h2,h3,h4),
+body.dashboard-body :is(h1,h2,h3,h4),
+body.auth-page :is(h1,h2,h3,h4),
+body.embedded-view :is(h1,h2,h3,h4){
+  font-family:'Patrick Hand SC',cursive!important;
+  font-weight:700!important;
+}
+
+/* Footer: body copy white, headings unchanged, logo larger. */
 body.home-clean .site-footer .footer-brand p,
 body.home-clean .site-footer .footer-box p,
 body.home-clean .site-footer .footer-bottom{
@@ -19,28 +33,31 @@ body.home-clean .site-footer .footer-logo{
   height:auto!important;
   object-fit:contain!important;
 }
+body.home-clean .site-footer .socials a{
+  color:#fff!important;
+  text-shadow:0 1px 1px rgba(0,49,53,.55)!important;
+}
 
-/* Upper side ads: remain inside their sponsor-slot and cover it from top to bottom. */
+/* Both upper and lower side-ad canvases fill their sponsor-slot completely. */
 @media (min-width:1181px){
   body.home-clean .sponsor-stack{
-    grid-template-rows:minmax(420px,420px) minmax(0,1fr)!important;
+    grid-template-rows:repeat(2,minmax(0,1fr))!important;
   }
-  body.home-clean .sponsor-stack .sponsor-slot:first-child{
+  body.home-clean .sponsor-stack .sponsor-slot{
     position:relative!important;
     display:block!important;
     width:100%!important;
-    height:420px!important;
-    min-height:420px!important;
+    height:100%!important;
+    min-height:0!important;
     padding:0!important;
     overflow:hidden!important;
   }
+  body.home-clean .sponsor-stack .sponsor-rail,
   body.home-clean #leftSponsor,
-  body.home-clean #rightSponsor{
+  body.home-clean #rightSponsor,
+  body.home-clean .sponsor-stack .sponsor-placeholder{
     position:relative!important;
-    top:auto!important;
-    left:auto!important;
-    right:auto!important;
-    bottom:auto!important;
+    inset:auto!important;
     display:block!important;
     align-self:stretch!important;
     width:100%!important;
@@ -61,19 +78,42 @@ body.home-clean .site-footer .footer-logo{
   }
 }
 
-/* Gold 3D stars and a separate review-count colour. */
-body.home-clean .server-card .card-stars,
-body.home-clean .server-detail-dialog .detail-stars{
-  color:#ffd34f!important;
-  font-weight:900!important;
-  text-shadow:
-    0 1px 0 #c58a00,
-    0 2px 0 #9c6900,
-    0 3px 0 #704800,
-    0 5px 9px rgba(87,55,0,.42),
-    0 0 14px rgba(255,211,79,.55)!important;
-  filter:drop-shadow(0 2px 2px rgba(77,48,0,.30))!important;
-  transform:translateZ(0)!important;
+/* Rating stars: filled stars are gold, empty stars remain clearly visible. */
+body.home-clean .stars{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:3px!important;
+  color:inherit!important;
+  letter-spacing:0!important;
+  perspective:500px!important;
+}
+body.home-clean .stars .rating-star{
+  display:inline-block!important;
+  min-width:.86em!important;
+  font-style:normal!important;
+  line-height:1!important;
+  transform:translateY(0) rotateX(0deg)!important;
+  transform-origin:center bottom!important;
+  transition:transform .2s ease,filter .2s ease,color .2s ease,text-shadow .2s ease!important;
+}
+body.home-clean .stars .rating-star.is-filled{
+  color:#ffd23f!important;
+  text-shadow:0 1px 0 #d29a00,0 2px 0 #9a6900,0 4px 8px rgba(86,55,0,.38),0 0 10px rgba(255,210,63,.42)!important;
+  filter:drop-shadow(0 2px 1px rgba(87,54,0,.24))!important;
+}
+body.home-clean .stars .rating-star.is-empty{
+  color:#3c7477!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.75),0 2px 4px rgba(4,67,71,.18)!important;
+  filter:none!important;
+  transform:scale(.92)!important;
+}
+body.home-clean .stars:hover .rating-star.is-filled{
+  transform:translateY(-3px) rotateX(-14deg) scale(1.08)!important;
+  filter:brightness(1.1) drop-shadow(0 5px 4px rgba(87,54,0,.28))!important;
+}
+body.home-clean .stars:hover .rating-star.is-empty{
+  color:#265c60!important;
+  transform:translateY(-1px) scale(.96)!important;
 }
 body.home-clean .server-card .score-row small,
 body.home-clean .server-detail-dialog .detail-score small{
@@ -82,7 +122,179 @@ body.home-clean .server-detail-dialog .detail-score small{
   text-shadow:0 1px 0 rgba(255,255,255,.55)!important;
 }
 
-/* Give the vote button a stronger, visible colour while preserving its effect. */
+/* Ranking labels become trophy badges; silver gets a visible blue electric colour. */
+body.home-clean .server-card.rank-silver{
+  --electric-card-color:#3f8dff!important;
+  --electric-card-rgb:63,141,255!important;
+  --electric-card-secondary:#b8ddff!important;
+}
+body.home-clean .server-card[data-global-rank]>.stable-rank-ribbon{
+  display:grid!important;
+  place-items:center!important;
+  width:46px!important;
+  height:46px!important;
+  padding:0!important;
+  border-radius:13px!important;
+  font-size:0!important;
+  line-height:1!important;
+  overflow:visible!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.72)!important;
+  box-shadow:0 5px 0 rgba(3,48,52,.42),0 9px 18px rgba(3,48,52,.25),inset 0 1px rgba(255,255,255,.8)!important;
+}
+body.home-clean .server-card[data-global-rank]>.stable-rank-ribbon::before{
+  content:'🏆'!important;
+  display:block!important;
+  font-size:24px!important;
+  line-height:1!important;
+  filter:drop-shadow(0 2px 1px rgba(42,28,0,.32))!important;
+}
+body.home-clean .server-card[data-global-rank]>.stable-rank-ribbon::after{
+  position:absolute!important;
+  right:-5px!important;
+  bottom:-5px!important;
+  display:grid!important;
+  place-items:center!important;
+  width:20px!important;
+  height:20px!important;
+  border-radius:50%!important;
+  color:#fff!important;
+  background:#073b40!important;
+  border:1px solid rgba(255,255,255,.85)!important;
+  font:800 12px/1 'Patrick Hand SC',cursive!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.28)!important;
+}
+body.home-clean .server-card[data-global-rank='1']>.stable-rank-ribbon{
+  background:linear-gradient(145deg,#ffdc58,#d99800)!important;
+}
+body.home-clean .server-card[data-global-rank='1']>.stable-rank-ribbon::after{content:'1'!important}
+body.home-clean .server-card[data-global-rank='2']>.stable-rank-ribbon{
+  background:linear-gradient(145deg,#76b8ff,#236fd0)!important;
+}
+body.home-clean .server-card[data-global-rank='2']>.stable-rank-ribbon::after{content:'2'!important}
+body.home-clean .server-card[data-global-rank='3']>.stable-rank-ribbon{
+  background:linear-gradient(145deg,#f49a59,#a84d1d)!important;
+}
+body.home-clean .server-card[data-global-rank='3']>.stable-rank-ribbon::after{content:'3'!important}
+
+/* Favourite button: clear inactive/active states with a 3D press effect. */
+body.home-clean .server-card .favorite-button{
+  display:grid!important;
+  place-items:center!important;
+  width:38px!important;
+  height:38px!important;
+  padding:0!important;
+  color:#d7f2ef!important;
+  border:1px solid rgba(212,250,245,.72)!important;
+  border-radius:12px!important;
+  background:linear-gradient(145deg,#164f54,#0a3438)!important;
+  box-shadow:0 5px 0 #05292d,0 9px 16px rgba(2,43,47,.30),inset 0 1px rgba(255,255,255,.24)!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.45)!important;
+  transform:translateY(0)!important;
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease,color .16s ease!important;
+}
+body.home-clean .server-card .favorite-button:hover{
+  color:#fff!important;
+  filter:brightness(1.12)!important;
+  transform:translateY(-2px) scale(1.05)!important;
+  box-shadow:0 7px 0 #05292d,0 13px 21px rgba(2,43,47,.34),0 0 16px rgba(87,220,208,.28)!important;
+}
+body.home-clean .server-card .favorite-button:active{
+  transform:translateY(4px) scale(.98)!important;
+  box-shadow:0 1px 0 #05292d,0 4px 8px rgba(2,43,47,.25)!important;
+}
+body.home-clean .server-card .favorite-button.active{
+  color:#fff!important;
+  border-color:#ffd5e2!important;
+  background:linear-gradient(145deg,#ff5a91,#bf245b)!important;
+  box-shadow:0 5px 0 #7f153b,0 10px 20px rgba(148,23,70,.34),0 0 18px rgba(255,90,145,.38),inset 0 1px rgba(255,255,255,.5)!important;
+}
+
+/* Filters: +2px, consistent weight/size; search field can be narrower. */
+body.home-clean .toolbar{min-height:66px!important}
+body.home-clean .filter-field{
+  grid-template-rows:15px 38px!important;
+  gap:4px!important;
+  font-size:16px!important;
+  font-weight:700!important;
+}
+body.home-clean .filter-field>span,
+body.home-clean .filters input[type='search'],
+body.home-clean .filters select,
+body.home-clean .filters button,
+body.home-clean .new-filter,
+body.home-clean .favorite-filter{
+  font-family:'Patrick Hand SC',cursive!important;
+  font-size:16px!important;
+  font-weight:700!important;
+  letter-spacing:.015em!important;
+}
+body.home-clean .filter-field>span{
+  height:15px!important;
+  line-height:15px!important;
+}
+body.home-clean .filters input[type='search'],
+body.home-clean .filters select,
+body.home-clean .filters button,
+body.home-clean .new-filter,
+body.home-clean .favorite-filter{
+  height:38px!important;
+  min-height:38px!important;
+}
+body.home-clean .filter-field:first-child{
+  flex:.72 1 105px!important;
+  min-width:105px!important;
+}
+
+/* Badge colours: type red, CAP dark blue, New dark green; white copy. */
+body.home-clean .server-card .server-badges>span:first-child,
+body.home-clean .server-detail-dialog .server-badges>span:first-child{
+  color:#fff!important;
+  border-color:#7e1820!important;
+  background:linear-gradient(145deg,#c93b45,#7f1820)!important;
+  box-shadow:0 3px 0 #571016,0 6px 10px rgba(87,16,22,.24),inset 0 1px rgba(255,255,255,.2)!important;
+}
+body.home-clean .server-card .server-badges>span:nth-child(2),
+body.home-clean .server-detail-dialog .server-badges>span:nth-child(2){
+  color:#fff!important;
+  border-color:#113e7a!important;
+  background:linear-gradient(145deg,#245fa9,#102f65)!important;
+  box-shadow:0 3px 0 #0b2148,0 6px 10px rgba(11,33,72,.26),inset 0 1px rgba(255,255,255,.2)!important;
+}
+body.home-clean .server-card .server-badges>.fresh,
+body.home-clean .server-detail-dialog .server-badges>.fresh{
+  color:#fff!important;
+  border-color:#12643e!important;
+  background:linear-gradient(145deg,#23965f,#0c5a35)!important;
+  box-shadow:0 3px 0 #083f26,0 6px 10px rgba(8,63,38,.25),inset 0 1px rgba(255,255,255,.2)!important;
+}
+
+/* Status pills: clear colours and 3D depth. */
+body.home-clean .server-card .server-status{
+  border:1px solid rgba(255,255,255,.58)!important;
+  color:#fff!important;
+  font-weight:800!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.48)!important;
+  transform:translateY(0)!important;
+}
+body.home-clean .server-card .server-status.online{
+  background:linear-gradient(145deg,#27a769,#0b673b)!important;
+  box-shadow:0 4px 0 #064727,0 8px 14px rgba(6,71,39,.28),inset 0 1px rgba(255,255,255,.24)!important;
+}
+body.home-clean .server-card .server-status.maintenance{
+  background:linear-gradient(145deg,#e6a52b,#9d5f09)!important;
+  box-shadow:0 4px 0 #6f4105,0 8px 14px rgba(111,65,5,.28),inset 0 1px rgba(255,255,255,.24)!important;
+}
+body.home-clean .server-card .server-status.offline{
+  background:linear-gradient(145deg,#cf4852,#81212a)!important;
+  box-shadow:0 4px 0 #59171d,0 8px 14px rgba(89,23,29,.28),inset 0 1px rgba(255,255,255,.24)!important;
+}
+body.home-clean .server-card .server-status:is(.soon,.upcoming,.planned){
+  background:linear-gradient(145deg,#7c5be0,#49309c)!important;
+  box-shadow:0 4px 0 #30206b,0 8px 14px rgba(48,32,107,.28),inset 0 1px rgba(255,255,255,.24)!important;
+}
+
+/* Vote button: stronger visible aqua while preserving the existing shine animation. */
 body.home-clean .server-card .card-actions button[data-review]{
   color:#fff!important;
   border:1px solid rgba(224,255,251,.92)!important;
@@ -115,38 +327,62 @@ body.application-page .application-intro{
   min-height:0!important;
   max-height:none!important;
 }
-body.application-page .application-intro h1{
-  margin-top:0!important;
-}
+body.application-page .application-intro h1{margin-top:0!important}
 
-/* Embedded creators/giveaways/application pages can scroll normally. */
+/* Embedded pages use one uniform aqua canvas and scroll inside a fixed-height iframe. */
 html.embedded-view-root,
 body.embedded-view{
+  width:100%!important;
+  min-width:100%!important;
+  height:100%!important;
   min-height:100%!important;
-  height:auto!important;
   overflow-x:hidden!important;
   overflow-y:auto!important;
-  overscroll-behavior:auto!important;
+  overscroll-behavior:contain!important;
   scrollbar-gutter:stable!important;
+  background:#85d9d2!important;
 }
+body.embedded-view::before,
+body.embedded-view::after{display:none!important;content:none!important}
 body.embedded-view :is(.network-shell,.application-shell,.creator-shell,main){
+  width:100%!important;
+  max-width:none!important;
   min-height:0!important;
   height:auto!important;
   max-height:none!important;
+  margin-inline:0!important;
   overflow:visible!important;
+  background-color:transparent!important;
 }
 body.home-clean #portalView{
   min-height:0!important;
   height:auto!important;
-  overflow:visible!important;
+  overflow:hidden!important;
+  border:0!important;
+  background:#85d9d2!important;
+  box-shadow:none!important;
 }
 body.home-clean #portalView iframe{
-  min-height:720px!important;
-  max-height:none!important;
+  display:block!important;
+  width:100%!important;
+  height:clamp(680px,calc(100vh - 230px),900px)!important;
+  min-height:680px!important;
+  max-height:900px!important;
   overflow:auto!important;
-  overscroll-behavior:auto!important;
+  overscroll-behavior:contain!important;
+  border:0!important;
+  border-radius:16px!important;
+  background:#85d9d2!important;
+  box-shadow:0 12px 30px rgba(3,72,77,.18)!important;
 }
 
 @media(max-width:900px){
   body.home-clean .site-footer .footer-logo{width:205px!important}
+  body.home-clean .filter-field:first-child{min-width:0!important}
+  body.home-clean #portalView iframe{height:78vh!important;min-height:620px!important;max-height:820px!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.home-clean .stars .rating-star,
+  body.home-clean .favorite-button{transition:none!important}
 }
