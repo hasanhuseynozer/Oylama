@@ -1,0 +1,127 @@
+/* Animated electric-border treatment for homepage server cards. */
+body.home-clean .server-card{
+  --electric-card-color:#72d9cd;
+  --electric-card-rgb:114,217,205;
+}
+body.home-clean .server-card.rank-gold{
+  --electric-card-color:#ffc24f;
+  --electric-card-rgb:255,194,79;
+}
+body.home-clean .server-card.rank-silver{
+  --electric-card-color:#dcecf5;
+  --electric-card-rgb:220,236,245;
+}
+body.home-clean .server-card.rank-bronze{
+  --electric-card-color:#ef8d52;
+  --electric-card-rgb:239,141,82;
+}
+
+body.home-clean .electric-card-frame{
+  position:absolute;
+  inset:0;
+  z-index:18;
+  border-radius:inherit;
+  pointer-events:none;
+  overflow:hidden;
+  color:var(--electric-card-color);
+}
+body.home-clean .electric-card-frame > i{
+  position:absolute;
+  inset:2px;
+  display:block;
+  border-radius:calc(17px - 2px);
+  pointer-events:none;
+}
+
+/* Distorted, visibly alive electric line. */
+body.home-clean .electric-border-line{
+  border:2px solid currentColor;
+  opacity:.72;
+  filter:url(#sro-electric-card-displace) drop-shadow(0 0 2px currentColor);
+  animation:electric-border-flicker 2.8s steps(1,end) infinite;
+}
+
+/* Soft halo beneath the sharp line. */
+body.home-clean .electric-border-glow{
+  inset:1px!important;
+  border:2px solid currentColor;
+  opacity:.25;
+  filter:blur(5px);
+  box-shadow:
+    0 0 13px rgba(var(--electric-card-rgb),.34),
+    inset 0 0 12px rgba(var(--electric-card-rgb),.14);
+  animation:electric-border-breathe 2.4s ease-in-out infinite;
+}
+
+/* Energy pulse travelling around the card perimeter. */
+body.home-clean .electric-border-sparks{
+  inset:0!important;
+  padding:2px;
+  opacity:.72;
+  background:conic-gradient(
+    from var(--electric-angle,0deg),
+    transparent 0 7%,
+    rgba(255,255,255,.95) 8%,
+    currentColor 9.5%,
+    transparent 12% 43%,
+    rgba(var(--electric-card-rgb),.74) 45%,
+    transparent 48% 76%,
+    currentColor 78%,
+    rgba(255,255,255,.92) 79%,
+    transparent 82% 100%
+  );
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;
+  filter:drop-shadow(0 0 4px currentColor);
+  animation:electric-border-orbit 4.2s linear infinite;
+}
+
+body.home-clean .server-card:hover .electric-border-line{
+  opacity:1;
+  border-width:2px;
+  filter:url(#sro-electric-card-displace) drop-shadow(0 0 3px currentColor) drop-shadow(0 0 9px currentColor);
+}
+body.home-clean .server-card:hover .electric-border-glow{
+  opacity:.55;
+  filter:blur(7px);
+  box-shadow:
+    0 0 24px rgba(var(--electric-card-rgb),.55),
+    inset 0 0 18px rgba(var(--electric-card-rgb),.24);
+}
+body.home-clean .server-card:hover .electric-border-sparks{
+  opacity:1;
+  animation-duration:2.2s;
+}
+
+body.home-clean .electric-filter-defs{
+  position:absolute;
+  width:0;
+  height:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+@property --electric-angle{
+  syntax:'<angle>';
+  inherits:false;
+  initial-value:0deg;
+}
+@keyframes electric-border-orbit{to{--electric-angle:360deg}}
+@keyframes electric-border-breathe{
+  0%,100%{opacity:.18;transform:scale(.998)}
+  50%{opacity:.42;transform:scale(1.003)}
+}
+@keyframes electric-border-flicker{
+  0%,9%,13%,39%,43%,71%,75%,100%{opacity:.76}
+  10%,40%,72%{opacity:.36}
+  11%,41%,73%{opacity:1}
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.home-clean .electric-border-line,
+  body.home-clean .electric-border-glow,
+  body.home-clean .electric-border-sparks{animation:none!important}
+  body.home-clean .electric-border-sparks{--electric-angle:34deg}
+}
