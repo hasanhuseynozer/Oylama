@@ -1,10 +1,37 @@
-/* Scoped 3D treatment for the existing simple top-three trophy icons. */
+@property --trophy-energy-alpha{
+  syntax:'<number>';
+  inherits:false;
+  initial-value:.66;
+}
+@property --trophy-energy-lift{
+  syntax:'<length>';
+  inherits:false;
+  initial-value:0px;
+}
+
+/* Electric-flame 3D treatment, scoped only to the top-three trophy icons. */
 body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{
   --cup-edge:#5b3500;
   --cup-shadow:rgba(36,27,4,.42);
+  --energy-rgb:255,180,25;
+  --energy-core:#fff3a6;
+  --energy-hot:#ff6a00;
+  --trophy-energy-alpha:.66;
+  --trophy-energy-lift:0px;
   perspective:180px!important;
+  background-repeat:no-repeat!important;
+  background-position:50% 55%;
+  background-size:45px 45px;
+  filter:
+    drop-shadow(0 0 1px rgba(255,255,255,.9))
+    drop-shadow(0 calc(-1px - var(--trophy-energy-lift)) 3px rgba(var(--energy-rgb),var(--trophy-energy-alpha)))
+    drop-shadow(0 calc(-5px - var(--trophy-energy-lift)) 7px rgba(var(--energy-rgb),var(--trophy-energy-alpha)))
+    drop-shadow(0 5px 5px rgba(2,34,37,.34))!important;
   transform:perspective(180px) rotateX(4deg) rotateY(-7deg) translateZ(0)!important;
   transform-origin:50% 70%!important;
+  animation:
+    trophy-energy-flicker 1.05s steps(2,end) infinite,
+    trophy-energy-float 2.35s ease-in-out infinite;
   transition:transform .2s cubic-bezier(.2,.8,.2,1),filter .2s ease!important;
 }
 
@@ -12,19 +39,22 @@ body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::before{
   background:
     linear-gradient(105deg,
       var(--cup-bottom) 0%,
-      var(--cup-edge) 11%,
-      var(--cup-mid) 27%,
-      var(--cup-top) 41%,
-      #fffbdc 49%,
-      var(--cup-top) 57%,
+      var(--cup-edge) 10%,
+      var(--cup-mid) 25%,
+      var(--cup-top) 39%,
+      #fffde8 48%,
+      #fff 51%,
+      var(--cup-top) 58%,
       var(--cup-mid) 73%,
       var(--cup-bottom) 100%)!important;
   filter:
-    drop-shadow(0 1px 0 rgba(255,255,255,.82))
-    drop-shadow(1px 0 0 rgba(255,255,255,.24))
+    drop-shadow(0 1px 0 rgba(255,255,255,.9))
+    drop-shadow(1px 0 0 rgba(255,255,255,.26))
     drop-shadow(-1px 0 0 var(--cup-edge))
     drop-shadow(0 3px 0 var(--cup-edge))
-    drop-shadow(0 6px 4px var(--cup-shadow))!important;
+    drop-shadow(0 0 4px var(--energy-core))
+    drop-shadow(0 -3px 6px var(--energy-hot))
+    drop-shadow(0 7px 5px var(--cup-shadow))!important;
   transform:translateZ(8px)!important;
 }
 
@@ -34,27 +64,94 @@ body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::after{
     0 1px 0 var(--cup-edge),
     1px 1px 0 var(--cup-edge),
     -1px 1px 0 var(--cup-edge),
-    0 2px 2px rgba(0,0,0,.48),
-    0 -1px 0 rgba(255,255,255,.52)!important;
+    0 0 4px var(--energy-core),
+    0 0 8px var(--energy-hot),
+    0 2px 2px rgba(0,0,0,.5)!important;
   transform:translateX(-50%) translateZ(14px)!important;
 }
 
+/* Gold trophy: yellow lightning with orange flame tongues. */
 body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon{
   --cup-edge:#684000;
-  --cup-shadow:rgba(95,58,0,.4);
+  --cup-shadow:rgba(95,58,0,.42);
+  --energy-rgb:255,183,20;
+  --energy-core:#fff6a4;
+  --energy-hot:#ff6900;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 39c-5-5 0-9-2-15 6 4 3-6 8-10M35 39c5-5 0-9 2-15-6 4-3-6-8-10' stroke='%23ff7a00' stroke-width='2.1' opacity='.9'/%3E%3Cpath d='M8 20l6-4-2-7 7 4M40 20l-6-4 2-7-7 4M10 30l5-2-1 5M38 30l-5-2 1 5' stroke='%23fff2a2' stroke-width='1.55'/%3E%3C/g%3E%3Cg fill='%23fff8c7'%3E%3Ccircle cx='8' cy='27' r='1.2'/%3E%3Ccircle cx='40' cy='26' r='1.1'/%3E%3Ccircle cx='17' cy='9' r='.9'/%3E%3Ccircle cx='31' cy='8' r='1'/%3E%3C/g%3E%3C/svg%3E")!important;
 }
+
+/* Silver-blue trophy: cyan electricity and blue flame. */
 body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon{
   --cup-edge:#244e72;
-  --cup-shadow:rgba(29,71,104,.4);
+  --cup-shadow:rgba(29,71,104,.42);
+  --energy-rgb:67,198,255;
+  --energy-core:#dffbff;
+  --energy-hot:#168cff;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 39c-5-5 0-9-2-15 6 4 3-6 8-10M35 39c5-5 0-9 2-15-6 4-3-6-8-10' stroke='%23148dff' stroke-width='2.1' opacity='.92'/%3E%3Cpath d='M8 20l6-4-2-7 7 4M40 20l-6-4 2-7-7 4M10 30l5-2-1 5M38 30l-5-2 1 5' stroke='%23e7fdff' stroke-width='1.55'/%3E%3C/g%3E%3Cg fill='%23dffcff'%3E%3Ccircle cx='8' cy='27' r='1.2'/%3E%3Ccircle cx='40' cy='26' r='1.1'/%3E%3Ccircle cx='17' cy='9' r='.9'/%3E%3Ccircle cx='31' cy='8' r='1'/%3E%3C/g%3E%3C/svg%3E")!important;
 }
+
+/* Bronze trophy: ember-red electricity and orange flame. */
 body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon{
   --cup-edge:#633018;
-  --cup-shadow:rgba(83,39,18,.4);
+  --cup-shadow:rgba(83,39,18,.42);
+  --energy-rgb:255,102,42;
+  --energy-core:#ffe0c3;
+  --energy-hot:#ff3b16;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 39c-5-5 0-9-2-15 6 4 3-6 8-10M35 39c5-5 0-9 2-15-6 4-3-6-8-10' stroke='%23ff4a18' stroke-width='2.1' opacity='.9'/%3E%3Cpath d='M8 20l6-4-2-7 7 4M40 20l-6-4 2-7-7 4M10 30l5-2-1 5M38 30l-5-2 1 5' stroke='%23ffe1c5' stroke-width='1.55'/%3E%3C/g%3E%3Cg fill='%23ffe4ca'%3E%3Ccircle cx='8' cy='27' r='1.2'/%3E%3Ccircle cx='40' cy='26' r='1.1'/%3E%3Ccircle cx='17' cy='9' r='.9'/%3E%3Ccircle cx='31' cy='8' r='1'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+
+@keyframes trophy-energy-flicker{
+  0%,100%{
+    --trophy-energy-alpha:.56;
+    --trophy-energy-lift:0px;
+    background-size:43px 43px;
+    background-position:50% 57%;
+  }
+  14%{
+    --trophy-energy-alpha:.96;
+    --trophy-energy-lift:2px;
+    background-size:47px 47px;
+    background-position:48% 51%;
+  }
+  31%{
+    --trophy-energy-alpha:.68;
+    --trophy-energy-lift:1px;
+    background-size:44px 46px;
+    background-position:52% 54%;
+  }
+  47%{
+    --trophy-energy-alpha:1;
+    --trophy-energy-lift:3px;
+    background-size:48px 48px;
+    background-position:49% 49%;
+  }
+  72%{
+    --trophy-energy-alpha:.62;
+    --trophy-energy-lift:0px;
+    background-size:44px 44px;
+    background-position:51% 56%;
+  }
+  86%{
+    --trophy-energy-alpha:.88;
+    --trophy-energy-lift:2px;
+    background-size:46px 47px;
+    background-position:50% 52%;
+  }
+}
+
+@keyframes trophy-energy-float{
+  0%,100%{translate:0 0;rotate:0deg}
+  50%{translate:0 -1.5px;rotate:.8deg}
 }
 
 body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon:hover{
-  filter:brightness(1.12) saturate(1.08)!important;
-  transform:perspective(180px) translateY(-3px) rotateX(-5deg) rotateY(8deg) scale(1.08)!important;
+  animation-duration:.48s,1.05s;
+  filter:
+    drop-shadow(0 0 2px rgba(255,255,255,1))
+    drop-shadow(0 -3px 5px rgba(var(--energy-rgb),1))
+    drop-shadow(0 -9px 10px rgba(var(--energy-rgb),.9))
+    drop-shadow(0 7px 6px rgba(2,34,37,.4))!important;
+  transform:perspective(180px) translateY(-3px) rotateX(-6deg) rotateY(9deg) scale(1.1)!important;
 }
 
 body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon:active{
@@ -62,5 +159,8 @@ body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon:active{
 }
 
 @media(prefers-reduced-motion:reduce){
-  body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{transition:none!important}
+  body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{
+    animation:none!important;
+    transition:none!important;
+  }
 }
