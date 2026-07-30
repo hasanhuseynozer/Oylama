@@ -1,0 +1,168 @@
+@import url('/requested-ui-fixes-v3.css?v=20260730-2326');
+
+/* Filter action labels match the “Yalnızca Yeni” control exactly. */
+body.home-clean .filters > #clearFilters,
+body.home-clean .filters > #favoriteFilter,
+body.home-clean .filters > .favorite-filter,
+body.home-clean .filters > .new-filter{
+  font-family:'Patrick Hand SC',cursive!important;
+  font-size:16px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  letter-spacing:.015em!important;
+  height:38px!important;
+  min-height:38px!important;
+}
+
+/* Profile trigger: larger dark-red typography and dropdown above language controls. */
+body.home-clean .header-side{position:relative!important;z-index:900!important}
+body.home-clean .account-actions,
+body.home-clean .account-menu{position:relative!important;z-index:1250!important}
+body.home-clean .account-menu-trigger{position:relative!important;z-index:1251!important}
+body.home-clean .account-menu-trigger strong{
+  color:#7a0d18!important;
+  font-size:17px!important;
+  font-weight:900!important;
+  letter-spacing:.025em!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.52)!important;
+}
+body.home-clean .account-menu-trigger small{
+  color:#991724!important;
+  font-size:12.5px!important;
+  font-weight:800!important;
+  letter-spacing:.02em!important;
+}
+body.home-clean .account-menu-trigger i{
+  color:#7a0d18!important;
+  font-size:16px!important;
+  font-weight:900!important;
+}
+body.home-clean .account-menu-panel{
+  z-index:1600!important;
+  isolation:isolate!important;
+}
+body.home-clean .header-language{position:relative!important;z-index:600!important}
+body.home-clean .language-menu{z-index:700!important}
+
+/* Footer statistics replace the old tagline and stay in one compact horizontal row. */
+body.home-clean .footer-brand{min-width:360px!important}
+body.home-clean .footer-brand .footer-stats{
+  display:flex!important;
+  align-items:stretch!important;
+  gap:8px!important;
+  margin-top:8px!important;
+  flex-wrap:nowrap!important;
+}
+body.home-clean .footer-stat{
+  display:grid!important;
+  grid-template-rows:auto auto!important;
+  align-content:center!important;
+  min-width:78px!important;
+  min-height:52px!important;
+  padding:7px 10px!important;
+  border:1px solid rgba(255,255,255,.28)!important;
+  border-radius:11px!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(4,75,79,.18))!important;
+  box-shadow:0 5px 0 rgba(3,74,78,.5),0 9px 16px rgba(2,48,52,.18),inset 0 1px rgba(255,255,255,.28)!important;
+}
+body.home-clean .footer-stat span{
+  color:#fff!important;
+  font:700 11px/1.05 'Patrick Hand SC',cursive!important;
+  white-space:nowrap!important;
+  opacity:.9!important;
+}
+body.home-clean .footer-stat strong{
+  color:#fff!important;
+  margin-top:4px!important;
+  font:900 19px/1 'Patrick Hand SC',cursive!important;
+  text-shadow:0 1px 1px rgba(0,45,49,.55)!important;
+}
+
+/* Premium crown-gem rank emblems, matching the 38x38 favourite button footprint. */
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{
+  --rank-light:#fff1a6;
+  --rank-mid:#e0a51d;
+  --rank-dark:#7d4a00;
+  --rank-glow:255,210,67;
+  position:absolute!important;
+  display:grid!important;
+  place-items:center!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  padding:0!important;
+  overflow:visible!important;
+  border:0!important;
+  border-radius:11px!important;
+  color:transparent!important;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.55),transparent 31% 67%,rgba(0,0,0,.2)),
+    linear-gradient(150deg,var(--rank-light),var(--rank-mid) 54%,var(--rank-dark))!important;
+  box-shadow:
+    0 5px 0 color-mix(in srgb,var(--rank-dark) 85%,#000),
+    0 10px 18px rgba(2,44,48,.28),
+    0 0 14px rgba(var(--rank-glow),.22),
+    inset 0 1px rgba(255,255,255,.92),
+    inset 0 -2px rgba(0,0,0,.2)!important;
+  isolation:isolate!important;
+  transform:translateY(0)!important;
+  transition:transform .17s ease,box-shadow .17s ease,filter .17s ease!important;
+}
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::before{
+  content:''!important;
+  position:absolute!important;
+  left:8px!important;
+  top:6px!important;
+  width:22px!important;
+  height:18px!important;
+  z-index:1!important;
+  background:linear-gradient(180deg,#fffce8,var(--rank-light) 42%,var(--rank-dark))!important;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 18'%3E%3Cpath d='M2 4.5 7 8l5-6 5 6 5-3.5-2 10.5H4L2 4.5Zm3.1 8.2h13.8l.35-1.8H4.75l.35 1.8Z'/%3E%3C/svg%3E") center/contain no-repeat!important;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 18'%3E%3Cpath d='M2 4.5 7 8l5-6 5 6 5-3.5-2 10.5H4L2 4.5Zm3.1 8.2h13.8l.35-1.8H4.75l.35 1.8Z'/%3E%3C/svg%3E") center/contain no-repeat!important;
+  filter:drop-shadow(0 2px 1px rgba(30,18,0,.38))!important;
+}
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::after{
+  position:absolute!important;
+  right:3px!important;
+  bottom:3px!important;
+  z-index:2!important;
+  display:grid!important;
+  place-items:center!important;
+  width:17px!important;
+  height:17px!important;
+  border:1px solid rgba(255,255,255,.76)!important;
+  border-radius:50%!important;
+  color:#fff!important;
+  background:linear-gradient(180deg,#0b5d63,#032f34)!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.36),inset 0 1px rgba(255,255,255,.28)!important;
+  font:900 11px/1 'Patrick Hand SC',cursive!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.72)!important;
+}
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon:hover{
+  filter:brightness(1.08) saturate(1.08)!important;
+  transform:translateY(-2px) rotate(-2deg) scale(1.04)!important;
+  box-shadow:
+    0 7px 0 color-mix(in srgb,var(--rank-dark) 85%,#000),
+    0 14px 23px rgba(2,44,48,.34),
+    0 0 20px rgba(var(--rank-glow),.4),
+    inset 0 1px rgba(255,255,255,.96)!important;
+}
+body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon{
+  --rank-light:#fff4b5;--rank-mid:#e1a91f;--rank-dark:#805000;--rank-glow:255,214,72;
+}
+body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon::after{content:'1'!important}
+body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon{
+  --rank-light:#e6f7ff;--rank-mid:#63a8dc;--rank-dark:#255783;--rank-glow:91,176,255;
+}
+body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon::after{content:'2'!important}
+body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon{
+  --rank-light:#ffd8b7;--rank-mid:#c97a42;--rank-dark:#74391a;--rank-glow:240,143,79;
+}
+body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon::after{content:'3'!important}
+
+@media(max-width:1100px){
+  body.home-clean .footer-brand{min-width:0!important}
+  body.home-clean .footer-brand .footer-stats{flex-wrap:wrap!important}
+  body.home-clean .footer-stat{min-width:72px!important}
+}
