@@ -1,6 +1,15 @@
 (()=>{
   'use strict';
 
+  const ensureHomepageFont=()=>{
+    if(document.getElementById('patrickHandHomepageFont'))return;
+    const link=document.createElement('link');
+    link.id='patrickHandHomepageFont';
+    link.rel='stylesheet';
+    link.href='/home-font-patrick.css?v=20260730-2016';
+    document.head.append(link);
+  };
+
   const ensureFilter=()=>{
     if(document.getElementById('sroElectricFilterDefs'))return;
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -29,6 +38,7 @@
   };
 
   const decorateAll=()=>{
+    ensureHomepageFont();
     ensureFilter();
     document.querySelectorAll('#serverGrid .server-card:not(.server-card-skeleton)').forEach(decorateCard);
   };
