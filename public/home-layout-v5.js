@@ -36,7 +36,7 @@
   if(content&&portal&&portal.parentElement!==content)content.append(portal);
   if(frame){
     frame.removeAttribute('style');
-    frame.setAttribute('scrolling','auto');
+    frame.setAttribute('scrolling','yes');
     frame.style.overflow='auto';
   }
 
@@ -65,10 +65,10 @@
       style=doc.createElement('style');
       style.id='sro-parent-embed-fix';
       style.textContent=`
-        html,body{height:auto!important;min-height:0!important;overflow:visible!important;overscroll-behavior:none!important;width:100%!important;max-width:100%!important}
-        body{overflow-x:hidden!important;padding-bottom:0!important}
+        html,body{height:auto!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:auto!important;width:100%!important;max-width:100%!important;scrollbar-gutter:stable!important}
+        body{padding-bottom:0!important}
         body.embedded-view>.site-header,body.embedded-view>.site-footer{display:none!important}
-        body.embedded-view main,body.embedded-view .page-shell,body.embedded-view .portal-shell,body.embedded-view .creator-shell,body.embedded-view .network-shell,body.embedded-view .application-shell{min-height:0!important;height:auto!important;overflow:visible!important}
+        body.embedded-view main,body.embedded-view .page-shell,body.embedded-view .portal-shell,body.embedded-view .creator-shell,body.embedded-view .network-shell,body.embedded-view .application-shell{min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important}
       `;
       doc.head?.append(style);
     }
@@ -93,7 +93,7 @@
           return Math.max(max,rect.bottom+(innerDoc.defaultView?.scrollY||0));
         },0);
         const measured=Math.ceil(Math.max(body.scrollHeight,body.offsetHeight,html.scrollHeight,html.offsetHeight,childBottom,mainBottom));
-        const next=Math.max(620,Math.min(20000,measured+12));
+        const next=Math.max(720,Math.min(20000,measured+16));
         const current=parseFloat(frame.style.height)||0;
         if(Math.abs(next-current)>3)frame.style.height=`${next}px`;
       },40);
