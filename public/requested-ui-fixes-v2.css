@@ -1,0 +1,151 @@
+/* Requested UI fixes only. Ranking/electric border files are untouched. */
+
+/* Footer: body copy white, headings and social-button styling stay unchanged. */
+body.home-clean .site-footer .footer-brand p,
+body.home-clean .site-footer .footer-box p,
+body.home-clean .site-footer .footer-bottom{
+  color:#fff!important;
+}
+body.home-clean .site-footer .footer-brand .brand{
+  min-height:0!important;
+  width:auto!important;
+  overflow:visible!important;
+}
+body.home-clean .site-footer .footer-logo{
+  display:block!important;
+  width:240px!important;
+  max-width:100%!important;
+  height:auto!important;
+  object-fit:contain!important;
+}
+
+/* Upper side ads: remain inside their sponsor-slot and cover it from top to bottom. */
+@media (min-width:1181px){
+  body.home-clean .sponsor-stack{
+    grid-template-rows:minmax(420px,420px) minmax(0,1fr)!important;
+  }
+  body.home-clean .sponsor-stack .sponsor-slot:first-child{
+    position:relative!important;
+    display:block!important;
+    width:100%!important;
+    height:420px!important;
+    min-height:420px!important;
+    padding:0!important;
+    overflow:hidden!important;
+  }
+  body.home-clean #leftSponsor,
+  body.home-clean #rightSponsor{
+    position:relative!important;
+    top:auto!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    display:block!important;
+    align-self:stretch!important;
+    width:100%!important;
+    min-width:100%!important;
+    max-width:none!important;
+    height:100%!important;
+    min-height:100%!important;
+    max-height:none!important;
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:12px!important;
+    background-size:cover!important;
+    background-position:center top!important;
+    background-repeat:no-repeat!important;
+    writing-mode:horizontal-tb!important;
+    transform:none!important;
+  }
+}
+
+/* Gold 3D stars and a separate review-count colour. */
+body.home-clean .server-card .card-stars,
+body.home-clean .server-detail-dialog .detail-stars{
+  color:#ffd34f!important;
+  font-weight:900!important;
+  text-shadow:
+    0 1px 0 #c58a00,
+    0 2px 0 #9c6900,
+    0 3px 0 #704800,
+    0 5px 9px rgba(87,55,0,.42),
+    0 0 14px rgba(255,211,79,.55)!important;
+  filter:drop-shadow(0 2px 2px rgba(77,48,0,.30))!important;
+  transform:translateZ(0)!important;
+}
+body.home-clean .server-card .score-row small,
+body.home-clean .server-detail-dialog .detail-score small{
+  color:#7b2f70!important;
+  font-weight:800!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.55)!important;
+}
+
+/* Give the vote button a stronger, visible colour while preserving its effect. */
+body.home-clean .server-card .card-actions button[data-review]{
+  color:#fff!important;
+  border:1px solid rgba(224,255,251,.92)!important;
+  background:linear-gradient(135deg,#087c84 0%,#16aaa8 42%,#53ddd2 72%,#087c84 100%)!important;
+  background-size:220% 220%!important;
+  box-shadow:0 7px 0 #055a61,0 12px 22px rgba(3,72,77,.28),inset 0 1px rgba(255,255,255,.75)!important;
+  text-shadow:0 1px 1px rgba(0,45,49,.55)!important;
+}
+body.home-clean .server-card .card-actions button[data-review]:hover{
+  color:#fff!important;
+  background-position:100% 50%!important;
+  box-shadow:0 9px 0 #055a61,0 16px 28px rgba(3,72,77,.34),0 0 24px rgba(83,221,210,.45),inset 0 1px #fff!important;
+}
+body.home-clean .server-card .card-actions button[data-review]:active{
+  box-shadow:0 2px 0 #055a61,0 6px 12px rgba(3,72,77,.25),inset 0 1px #fff!important;
+}
+
+/* Application intro stays at the top and no longer stretches with the form. */
+body.application-page .application-shell{
+  min-height:0!important;
+  height:auto!important;
+  align-items:start!important;
+  padding-top:24px!important;
+}
+body.application-page .application-intro{
+  position:static!important;
+  top:auto!important;
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+}
+body.application-page .application-intro h1{
+  margin-top:0!important;
+}
+
+/* Embedded creators/giveaways/application pages can scroll normally. */
+html.embedded-view-root,
+body.embedded-view{
+  min-height:100%!important;
+  height:auto!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:auto!important;
+  scrollbar-gutter:stable!important;
+}
+body.embedded-view :is(.network-shell,.application-shell,.creator-shell,main){
+  min-height:0!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+}
+body.home-clean #portalView{
+  min-height:0!important;
+  height:auto!important;
+  overflow:visible!important;
+}
+body.home-clean #portalView iframe{
+  min-height:720px!important;
+  max-height:none!important;
+  overflow:auto!important;
+  overscroll-behavior:auto!important;
+}
+
+@media(max-width:900px){
+  body.home-clean .site-footer .footer-logo{width:205px!important}
+}
