@@ -1,0 +1,101 @@
+@import url('/requested-ui-fixes-v4.css?v=20260731-0046');
+
+/* Top-three rank icons: code-drawn pencil trophies, no medal or rounded tile. */
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{
+  --cup-number:#4b2b00;
+  position:absolute!important;
+  display:block!important;
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  min-height:38px!important;
+  padding:0!important;
+  overflow:visible!important;
+  border:0!important;
+  border-radius:0!important;
+  color:transparent!important;
+  background:none!important;
+  box-shadow:none!important;
+  filter:none!important;
+  isolation:isolate!important;
+  transform:rotate(-1.2deg)!important;
+  transition:transform .18s ease,filter .18s ease!important;
+}
+
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::before{
+  content:''!important;
+  position:absolute!important;
+  left:-3px!important;
+  top:-3px!important;
+  z-index:1!important;
+  display:block!important;
+  width:44px!important;
+  height:44px!important;
+  border:0!important;
+  border-radius:0!important;
+  background-color:transparent!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  background-size:44px 44px!important;
+  box-shadow:none!important;
+  filter:drop-shadow(0 3px 2px rgba(2,31,34,.34))!important;
+  transform:none!important;
+}
+
+/* Rank is written directly on the trophy bowl. */
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::after{
+  position:absolute!important;
+  left:50%!important;
+  top:8px!important;
+  z-index:3!important;
+  display:grid!important;
+  place-items:center!important;
+  width:18px!important;
+  height:17px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  color:var(--cup-number)!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font:900 13px/1 'Patrick Hand SC',cursive!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.52)!important;
+  transform:translateX(-50%) rotate(1.5deg)!important;
+}
+
+/* Gold pencil trophy. */
+body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon{
+  --cup-number:#593300;
+}
+body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23fff2a7'/%3E%3Cstop offset='.48' stop-color='%23e5ac25'/%3E%3Cstop offset='1' stop-color='%23a86508'/%3E%3C/linearGradient%3E%3Cfilter id='r' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.055' numOctaves='2' seed='8' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='.7' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23r)' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 6.7Q24 5 34 6.7l-1.5 12.1Q31.5 27 24 30Q16.5 27 15.5 18.8Z' fill='url(%23g)' stroke='%23653b00' stroke-width='2.25'/%3E%3Cpath d='M15 10H8.8Q7 10 7 12v3.3q0 7.2 9.5 8.2M33 10h6.2Q41 10 41 12v3.3q0 7.2-9.5 8.2M24 30v6M18.6 36.2h10.8M16.5 40h15' fill='none' stroke='%23653b00' stroke-width='2.4'/%3E%3Cpath d='M16.2 9q7.7-1.1 15.6 0M17 14.2q7 .9 14 0M18 18q6 .8 12 0M19 21.6q5 .7 10 0' fill='none' stroke='%23fff7c9' stroke-width='1.05' opacity='.78'/%3E%3Cpath d='M14.6 7.2Q24 5.8 33.4 7.2M8.2 10.5q-.6 7.7 8.1 11.9M39.8 10.5q.6 7.7-8.1 11.9M17 40.5h14.5' fill='none' stroke='%23814d05' stroke-width='.8' opacity='.68' transform='translate(.45 -.3)'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon::after{content:'1'!important}
+
+/* Blue-silver pencil trophy. */
+body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon{
+  --cup-number:#173c5d;
+}
+body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23effaff'/%3E%3Cstop offset='.48' stop-color='%237db5df'/%3E%3Cstop offset='1' stop-color='%233d73a1'/%3E%3C/linearGradient%3E%3Cfilter id='r' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.055' numOctaves='2' seed='11' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='.7' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23r)' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 6.7Q24 5 34 6.7l-1.5 12.1Q31.5 27 24 30Q16.5 27 15.5 18.8Z' fill='url(%23g)' stroke='%23234869' stroke-width='2.25'/%3E%3Cpath d='M15 10H8.8Q7 10 7 12v3.3q0 7.2 9.5 8.2M33 10h6.2Q41 10 41 12v3.3q0 7.2-9.5 8.2M24 30v6M18.6 36.2h10.8M16.5 40h15' fill='none' stroke='%23234869' stroke-width='2.4'/%3E%3Cpath d='M16.2 9q7.7-1.1 15.6 0M17 14.2q7 .9 14 0M18 18q6 .8 12 0M19 21.6q5 .7 10 0' fill='none' stroke='%23f4fcff' stroke-width='1.05' opacity='.86'/%3E%3Cpath d='M14.6 7.2Q24 5.8 33.4 7.2M8.2 10.5q-.6 7.7 8.1 11.9M39.8 10.5q.6 7.7-8.1 11.9M17 40.5h14.5' fill='none' stroke='%23315f86' stroke-width='.8' opacity='.7' transform='translate(.45 -.3)'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon::after{content:'2'!important}
+
+/* Bronze pencil trophy. */
+body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon{
+  --cup-number:#542712;
+}
+body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23ffe2ca'/%3E%3Cstop offset='.48' stop-color='%23ca7b47'/%3E%3Cstop offset='1' stop-color='%238f4825'/%3E%3C/linearGradient%3E%3Cfilter id='r' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.055' numOctaves='2' seed='15' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='.7' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23r)' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 6.7Q24 5 34 6.7l-1.5 12.1Q31.5 27 24 30Q16.5 27 15.5 18.8Z' fill='url(%23g)' stroke='%23652f16' stroke-width='2.25'/%3E%3Cpath d='M15 10H8.8Q7 10 7 12v3.3q0 7.2 9.5 8.2M33 10h6.2Q41 10 41 12v3.3q0 7.2-9.5 8.2M24 30v6M18.6 36.2h10.8M16.5 40h15' fill='none' stroke='%23652f16' stroke-width='2.4'/%3E%3Cpath d='M16.2 9q7.7-1.1 15.6 0M17 14.2q7 .9 14 0M18 18q6 .8 12 0M19 21.6q5 .7 10 0' fill='none' stroke='%23ffe8d5' stroke-width='1.05' opacity='.82'/%3E%3Cpath d='M14.6 7.2Q24 5.8 33.4 7.2M8.2 10.5q-.6 7.7 8.1 11.9M39.8 10.5q.6 7.7-8.1 11.9M17 40.5h14.5' fill='none' stroke='%23874928' stroke-width='.8' opacity='.72' transform='translate(.45 -.3)'/%3E%3C/g%3E%3C/svg%3E")!important;
+}
+body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon::after{content:'3'!important}
+
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon:hover{
+  filter:brightness(1.08) saturate(1.08) drop-shadow(0 0 7px rgba(255,255,255,.42))!important;
+  transform:translateY(-2px) rotate(1.4deg) scale(1.08)!important;
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{transition:none!important}
+}
