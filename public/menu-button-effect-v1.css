@@ -92,11 +92,11 @@ body.home-clean .header-side{
   align-content:center!important;
   justify-items:stretch!important;
   gap:10px!important;
-  width:218px!important;
+  width:243px!important;
   min-height:132px!important;
   padding:14px!important;
   justify-self:end!important;
-  transform:translateX(-30px)!important;
+  transform:translateX(-5px)!important;
   border:1px solid rgba(116,241,229,.48)!important;
   border-radius:16px!important;
   background:
@@ -123,23 +123,29 @@ body.home-clean .header-side > *{
 }
 body.home-clean .header-side .account-actions,
 body.home-clean .header-side .account-menu,
-body.home-clean .header-side .account-menu-trigger,
-body.home-clean .header-side .header-language{
+body.home-clean .header-side .account-menu-trigger{
   box-sizing:border-box!important;
   width:100%!important;
   max-width:none!important;
+  margin-left:0!important;
   justify-self:stretch!important;
+}
+body.home-clean .header-side .header-language{
+  box-sizing:border-box!important;
+  width:calc(100% - 25px)!important;
+  max-width:none!important;
+  justify-self:start!important;
 }
 body.home-clean .header-side .language-trigger{
   width:100%!important;
 }
 
-/* Profile button is now 25px wider in total and remains centered. */
+/* The profile button grows only to the right and always stays inside its outer panel. */
 @media (min-width:1181px){
   body.home-clean .header-side .account-menu-trigger{
-    width:calc(100% + 25px)!important;
-    margin-left:-12.5px!important;
-    justify-self:center!important;
+    width:100%!important;
+    margin:0!important;
+    justify-self:stretch!important;
   }
 }
 
@@ -156,6 +162,9 @@ body.home-clean .header-side .language-trigger{
     padding:10px!important;
     justify-self:stretch!important;
     transform:none!important;
+  }
+  body.home-clean .header-side .header-language{
+    width:100%!important;
   }
 }
 
