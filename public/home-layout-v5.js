@@ -13,12 +13,18 @@
   const grid=document.getElementById('serverGrid');
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
-  const requestedStyleHref='/requested-ui-fixes-v2.css?v=20260730-2302';
+  const requestedStyleHref='/requested-ui-fixes-v3.css?v=20260730-2326';
   const fixedFrameHeight='clamp(680px, calc(100vh - 230px), 900px)';
 
   const ensureRequestedStyle=doc=>{
-    if(!doc?.head||doc.querySelector('link[data-requested-ui-fixes]'))return;
-    const link=doc.createElement('link');
+    if(!doc?.head)return;
+    let link=doc.querySelector('link[data-requested-ui-fixes]')||doc.querySelector('link[href*="requested-ui-fixes-v3.css"]');
+    if(link){
+      link.dataset.requestedUiFixes='true';
+      if(!link.getAttribute('href')?.includes('20260730-2326'))link.href=requestedStyleHref;
+      return;
+    }
+    link=doc.createElement('link');
     link.rel='stylesheet';
     link.href=requestedStyleHref;
     link.dataset.requestedUiFixes='true';
@@ -79,14 +85,34 @@
       style=doc.createElement('style');
       style.id='sro-parent-embed-fix';
       style.textContent=`
-        html{height:100%!important;min-height:100%!important;overflow:hidden!important;width:100%!important;max-width:100%!important;background:#85d9d2!important}
-        body{height:100%!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;width:100%!important;max-width:100%!important;padding-bottom:0!important;background:#85d9d2!important}
+        html{height:100%!important;min-height:100%!important;overflow:hidden!important;width:100%!important;max-width:100%!important;background:transparent!important}
+        body{height:100%!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;width:100%!important;max-width:100%!important;padding-bottom:0!important;background:transparent!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
+        html::-webkit-scrollbar,body::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
         body.embedded-view>.site-header,body.embedded-view>.site-footer{display:none!important}
         body.embedded-view main,body.embedded-view .page-shell,body.embedded-view .portal-shell,body.embedded-view .creator-shell,body.embedded-view .network-shell,body.embedded-view .application-shell{min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important}
       `;
       doc.head?.append(style);
     }
     frame.style.height=fixedFrameHeight;
+  };
+
+  let viewRequest=0;
+  const frameMatchesView=view=>{
+    if(!frame||!routes[view])return false;
+    try{
+      const current=new URL(frame.contentWindow.location.href,location.href);
+      const expected=new URL(routes[view],location.href);
+      return current.pathname===expected.pathname;
+    }catch{return false}
+  };
+  const finishFrameLoad=(requestId,view)=>{
+    if(requestId!==viewRequest||frame?.dataset.view!==view||!frameMatchesView(view))return;
+    prepareEmbeddedDocument();
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(requestId!==viewRequest||frame?.dataset.view!==view||!frameMatchesView(view))return;
+      portal?.classList.remove('is-loading');
+      frame?.removeAttribute('aria-busy');
+    }));
   };
 
   const stableSwitchHomeView=(view,url=routes[view],remember=false)=>{
@@ -97,25 +123,26 @@
     portal?.classList.toggle('hidden',showServers);
 
     if(showServers){
+      viewRequest+=1;
       portal?.classList.remove('is-loading');
+      frame?.removeAttribute('aria-busy');
       frameCleanup();
       if(remember)history.pushState({homeView:'servers'},'',location.pathname);
       return;
     }
 
     if(!portal||!frame)return;
+    const requestId=++viewRequest;
     portal.classList.add('is-loading');
+    frame.setAttribute('aria-busy','true');
     frame.style.height=fixedFrameHeight;
-    frame.onload=()=>{
-      portal.classList.remove('is-loading');
-      prepareEmbeddedDocument();
-    };
-    if(frame.dataset.view!==view){
+    frame.onload=()=>finishFrameLoad(requestId,view);
+
+    if(frame.dataset.view!==view||!frameMatchesView(view)){
       frame.dataset.view=view;
       frame.src=url||routes[view];
     }else{
-      portal.classList.remove('is-loading');
-      prepareEmbeddedDocument();
+      finishFrameLoad(requestId,view);
     }
     if(remember)history.pushState({homeView:view},'',location.pathname);
   };
