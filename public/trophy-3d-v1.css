@@ -1,0 +1,66 @@
+/* Scoped 3D treatment for the existing simple top-three trophy icons. */
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{
+  --cup-edge:#5b3500;
+  --cup-shadow:rgba(36,27,4,.42);
+  perspective:180px!important;
+  transform:perspective(180px) rotateX(4deg) rotateY(-7deg) translateZ(0)!important;
+  transform-origin:50% 70%!important;
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),filter .2s ease!important;
+}
+
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::before{
+  background:
+    linear-gradient(105deg,
+      var(--cup-bottom) 0%,
+      var(--cup-edge) 11%,
+      var(--cup-mid) 27%,
+      var(--cup-top) 41%,
+      #fffbdc 49%,
+      var(--cup-top) 57%,
+      var(--cup-mid) 73%,
+      var(--cup-bottom) 100%)!important;
+  filter:
+    drop-shadow(0 1px 0 rgba(255,255,255,.82))
+    drop-shadow(1px 0 0 rgba(255,255,255,.24))
+    drop-shadow(-1px 0 0 var(--cup-edge))
+    drop-shadow(0 3px 0 var(--cup-edge))
+    drop-shadow(0 6px 4px var(--cup-shadow))!important;
+  transform:translateZ(8px)!important;
+}
+
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::after{
+  color:#fff!important;
+  text-shadow:
+    0 1px 0 var(--cup-edge),
+    1px 1px 0 var(--cup-edge),
+    -1px 1px 0 var(--cup-edge),
+    0 2px 2px rgba(0,0,0,.48),
+    0 -1px 0 rgba(255,255,255,.52)!important;
+  transform:translateX(-50%) translateZ(14px)!important;
+}
+
+body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon{
+  --cup-edge:#684000;
+  --cup-shadow:rgba(95,58,0,.4);
+}
+body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon{
+  --cup-edge:#244e72;
+  --cup-shadow:rgba(29,71,104,.4);
+}
+body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon{
+  --cup-edge:#633018;
+  --cup-shadow:rgba(83,39,18,.4);
+}
+
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon:hover{
+  filter:brightness(1.12) saturate(1.08)!important;
+  transform:perspective(180px) translateY(-3px) rotateX(-5deg) rotateY(8deg) scale(1.08)!important;
+}
+
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon:active{
+  transform:perspective(180px) translateY(1px) rotateX(3deg) rotateY(-3deg) scale(.98)!important;
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{transition:none!important}
+}
