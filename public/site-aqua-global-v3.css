@@ -1,0 +1,154 @@
+/* SRO Rating — shared aqua surface, dark typography and header menu fixes. */
+:root{
+  --site-aqua-page:#85d9d2;
+  --site-aqua-page-top:#bfeeea;
+  --site-aqua-page-bottom:#58bfb9;
+  --site-aqua-ink:#063b40;
+  --site-aqua-ink-soft:#285f63;
+  --site-aqua-line:rgba(4,85,91,.42);
+  --site-aqua-panel:rgba(216,242,239,.94);
+}
+
+html{
+  background:var(--site-aqua-page)!important;
+}
+
+body.home-clean,
+body.network-page,
+body.creator-page,
+body.application-page,
+body.dashboard-body,
+body.auth-page{
+  color-scheme:light!important;
+  color:var(--site-aqua-ink)!important;
+  background:
+    radial-gradient(circle at 8% 5%,rgba(255,255,255,.42),transparent 30%),
+    radial-gradient(circle at 92% 8%,rgba(37,184,175,.28),transparent 32%),
+    linear-gradient(180deg,var(--site-aqua-page-top) 0%,var(--site-aqua-page) 48%,var(--site-aqua-page-bottom) 100%)!important;
+  background-attachment:fixed!important;
+}
+
+:is(body.home-clean,body.network-page,body.creator-page,body.application-page,body.dashboard-body,body.auth-page)
+:is(h1,h2,h3,h4,h5,h6,p,label,small,strong,span,a,button,input,select,textarea,option,li,td,th,time,em,b){
+  color:var(--site-aqua-ink)!important;
+}
+
+:is(body.home-clean,body.network-page,body.creator-page,body.application-page,body.dashboard-body,body.auth-page)
+:is(.desc,.muted,.panel-lead,.upload-hint,.network-count,.review-count,.footer-bottom){
+  color:var(--site-aqua-ink-soft)!important;
+}
+
+:is(body.home-clean,body.network-page,body.creator-page,body.application-page,body.dashboard-body,body.auth-page)
+:is(input,select,textarea){
+  caret-color:var(--site-aqua-ink)!important;
+}
+
+:is(body.home-clean,body.network-page,body.creator-page,body.application-page,body.dashboard-body,body.auth-page)
+:is(.danger,.bad,.danger-link,.account-menu-logout){
+  color:#8a2832!important;
+}
+
+/* Profile identity line under the display name. */
+body.home-clean .account-menu-trigger strong{
+  color:#04383c!important;
+  font-weight:800!important;
+}
+body.home-clean .account-menu-trigger small{
+  color:#245f63!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  line-height:1.2!important;
+  letter-spacing:.1px!important;
+}
+
+/* The profile dropdown opens below both the profile and language controls. */
+body.home-clean .account-menu{
+  position:relative!important;
+  width:100%!important;
+}
+body.home-clean .account-menu-panel{
+  top:calc(100% + 62px)!important;
+  right:0!important;
+  left:auto!important;
+  width:100%!important;
+  min-width:100%!important;
+  padding:8px!important;
+  display:grid!important;
+  gap:4px!important;
+  border:1px solid var(--site-aqua-line)!important;
+  border-radius:14px!important;
+  background:linear-gradient(145deg,rgba(218,244,241,.99),rgba(168,220,216,.99))!important;
+  box-shadow:0 20px 44px rgba(3,72,77,.28),inset 0 1px rgba(255,255,255,.70)!important;
+  backdrop-filter:blur(14px)!important;
+  overflow:hidden!important;
+}
+body.home-clean .account-menu-panel.hidden{
+  display:none!important;
+}
+body.home-clean .account-menu-panel .account-menu-item{
+  width:100%!important;
+  min-width:0!important;
+  height:44px!important;
+  margin:0!important;
+  padding:0 12px!important;
+  border:1px solid transparent!important;
+  border-radius:9px!important;
+  background:rgba(237,252,250,.36)!important;
+  color:var(--site-aqua-ink)!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+body.home-clean .account-menu-panel .account-menu-item span{
+  color:var(--site-aqua-ink)!important;
+}
+body.home-clean .account-menu-panel .account-menu-item:hover{
+  border-color:rgba(4,85,91,.34)!important;
+  background:rgba(235,255,252,.72)!important;
+  color:#032f33!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+body.home-clean .account-menu-panel .account-menu-logout{
+  margin-top:4px!important;
+  border-top:1px solid rgba(4,85,91,.24)!important;
+  color:#8a2832!important;
+}
+
+/* Empty ad canvases: no label, no pattern; future uploaded images remain supported. */
+body.home-clean .sponsor-slot{
+  overflow:hidden!important;
+}
+body.home-clean .sponsor-rail.empty-sponsor,
+body.home-clean .sponsor-rail.sponsor-placeholder{
+  color:transparent!important;
+  font-size:0!important;
+  text-shadow:none!important;
+  background-color:rgba(215,242,239,.22)!important;
+  background-image:none!important;
+  border:1px dashed rgba(4,85,91,.38)!important;
+}
+body.home-clean .sponsor-rail.empty-sponsor::before,
+body.home-clean .sponsor-rail.empty-sponsor::after,
+body.home-clean .sponsor-rail.sponsor-placeholder::before,
+body.home-clean .sponsor-rail.sponsor-placeholder::after{
+  display:none!important;
+  content:none!important;
+}
+body.home-clean .sponsor-rail.has-image{
+  color:transparent!important;
+  font-size:0!important;
+  background-position:center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+}
+
+@media(max-width:1180px){
+  body.home-clean,
+  body.network-page,
+  body.creator-page,
+  body.application-page,
+  body.dashboard-body,
+  body.auth-page{
+    background:linear-gradient(180deg,var(--site-aqua-page-top),var(--site-aqua-page-bottom))!important;
+  }
+}
