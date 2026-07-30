@@ -29,7 +29,7 @@ body.auth-page{
 }
 
 :is(body.home-clean,body.network-page,body.creator-page,body.application-page,body.dashboard-body,body.auth-page)
-:is(h1,h2,h3,h4,h5,h6,p,label,small,strong,a,button,input,select,textarea,option,li,td,th,time,em,b){
+:is(h1,h2,h3,h4,h5,h6,p,label,small,strong,span,a,button,input,select,textarea,option,li,td,th,time,em,b){
   color:var(--site-aqua-ink)!important;
 }
 
@@ -97,6 +97,9 @@ body.home-clean .account-menu-panel .account-menu-item{
   color:var(--site-aqua-ink)!important;
   box-shadow:none!important;
   transform:none!important;
+}
+body.home-clean .account-menu-panel .account-menu-item span{
+  color:var(--site-aqua-ink)!important;
 }
 body.home-clean .account-menu-panel .account-menu-item:hover{
   border-color:rgba(4,85,91,.34)!important;
