@@ -14,21 +14,17 @@
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
 
-  /* Keep both side ad boxes, but remove their configured background images. */
+  /* Preserve configured ad images; only clean truly empty placeholders. */
   const sideAds=[document.getElementById('leftSponsor'),document.getElementById('rightSponsor')].filter(Boolean);
-  const clearSideAdImages=()=>{
-    sideAds.forEach(ad=>{
-      if(ad.style.backgroundImage)ad.style.removeProperty('background-image');
-      if(ad.classList.contains('has-image'))ad.classList.remove('has-image');
-      if(!ad.classList.contains('empty-sponsor'))ad.classList.add('empty-sponsor');
-      if(ad.textContent.trim()!=='Reklam alanı')ad.textContent='Reklam alanı';
-    });
-  };
-  clearSideAdImages();
-  if(window.MutationObserver){
-    const adObserver=new MutationObserver(clearSideAdImages);
-    sideAds.forEach(ad=>adObserver.observe(ad,{attributes:true,attributeFilter:['class','style'],childList:true}));
-  }
+  sideAds.forEach(ad=>{
+    if(ad.classList.contains('has-image'))return;
+    ad.classList.add('empty-sponsor');
+    ad.textContent='';
+  });
+  document.querySelectorAll('.sponsor-placeholder').forEach(ad=>{
+    ad.classList.add('empty-sponsor');
+    ad.textContent='';
+  });
 
   let serversPanel=document.getElementById('serversPanel');
   if(content&&toolbar&&grid&&!serversPanel){
@@ -40,8 +36,8 @@
   if(content&&portal&&portal.parentElement!==content)content.append(portal);
   if(frame){
     frame.removeAttribute('style');
-    frame.setAttribute('scrolling','no');
-    frame.style.overflow='hidden';
+    frame.setAttribute('scrolling','auto');
+    frame.style.overflow='auto';
   }
 
   const setActiveView=view=>{
@@ -69,15 +65,17 @@
       style=doc.createElement('style');
       style.id='sro-parent-embed-fix';
       style.textContent=`
-        html,body{height:auto!important;min-height:0!important;overflow:visible!important;overscroll-behavior:none!important}
+        html,body{height:auto!important;min-height:0!important;overflow:visible!important;overscroll-behavior:none!important;width:100%!important;max-width:100%!important}
         body{overflow-x:hidden!important;padding-bottom:0!important}
         body.embedded-view>.site-header,body.embedded-view>.site-footer{display:none!important}
-        body.embedded-view main,body.embedded-view .page-shell,body.embedded-view .portal-shell,body.embedded-view .creator-shell{min-height:0!important}
+        body.embedded-view main,body.embedded-view .page-shell,body.embedded-view .portal-shell,body.embedded-view .creator-shell,body.embedded-view .network-shell,body.embedded-view .application-shell{min-height:0!important;height:auto!important;overflow:visible!important}
       `;
       doc.head?.append(style);
     }
 
     let timer=0;
+    let pulseTimer=0;
+    let pulseCount=0;
     const measure=()=>{
       clearTimeout(timer);
       timer=setTimeout(()=>{
@@ -90,15 +88,19 @@
           const rect=node.getBoundingClientRect();
           return Math.max(max,rect.bottom+(innerDoc.defaultView?.scrollY||0));
         },0);
-        const measured=Math.ceil(Math.max(body.scrollHeight,body.offsetHeight,html.scrollHeight,html.offsetHeight,childBottom));
-        const next=Math.max(620,Math.min(14000,measured+4));
+        const mainBottom=[...innerDoc.querySelectorAll('main,.network-shell,.application-shell,.community-dashboard')].reduce((max,node)=>{
+          const rect=node.getBoundingClientRect();
+          return Math.max(max,rect.bottom+(innerDoc.defaultView?.scrollY||0));
+        },0);
+        const measured=Math.ceil(Math.max(body.scrollHeight,body.offsetHeight,html.scrollHeight,html.offsetHeight,childBottom,mainBottom));
+        const next=Math.max(620,Math.min(20000,measured+12));
         const current=parseFloat(frame.style.height)||0;
         if(Math.abs(next-current)>3)frame.style.height=`${next}px`;
-      },60);
+      },40);
     };
 
     const mutation=new MutationObserver(measure);
-    mutation.observe(doc.body,{childList:true,subtree:true,characterData:true});
+    mutation.observe(doc.body,{childList:true,subtree:true,characterData:true,attributes:true});
     const imageListeners=[];
     doc.querySelectorAll('img').forEach(image=>{
       if(image.complete)return;
@@ -109,10 +111,16 @@
     });
     const resizeListener=()=>measure();
     addEventListener('resize',resizeListener,{passive:true});
-    [0,180,500,1000,1800].forEach(delay=>setTimeout(measure,delay));
+    [0,100,250,500,900,1500,2500].forEach(delay=>setTimeout(measure,delay));
+    pulseTimer=setInterval(()=>{
+      measure();
+      pulseCount+=1;
+      if(pulseCount>=20){clearInterval(pulseTimer);pulseTimer=0}
+    },300);
 
     frameCleanup=()=>{
       clearTimeout(timer);
+      if(pulseTimer)clearInterval(pulseTimer);
       mutation.disconnect();
       removeEventListener('resize',resizeListener);
       imageListeners.forEach(([image,listener])=>{
@@ -178,7 +186,6 @@
     new MutationObserver(removeProfileLanguage).observe(accountActions,{childList:true,subtree:true});
   }
 
-  /* Custom dark language picker avoids the native white option popup. */
   const languageRoot=document.getElementById('headerLanguage');
   const languageTrigger=document.getElementById('languageTrigger');
   const languageLabel=document.getElementById('languageLabel');
