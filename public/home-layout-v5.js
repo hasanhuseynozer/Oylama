@@ -13,6 +13,16 @@
   const grid=document.getElementById('serverGrid');
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
+  const requestedStyleHref='/requested-ui-fixes-v2.css?v=20260730-2245';
+  const ensureRequestedStyle=doc=>{
+    if(!doc?.head||doc.querySelector('link[data-requested-ui-fixes]'))return;
+    const link=doc.createElement('link');
+    link.rel='stylesheet';
+    link.href=requestedStyleHref;
+    link.dataset.requestedUiFixes='true';
+    doc.head.append(link);
+  };
+  ensureRequestedStyle(document);
 
   /* Preserve configured ad images; only clean truly empty placeholders. */
   const sideAds=[document.getElementById('leftSponsor'),document.getElementById('rightSponsor')].filter(Boolean);
@@ -57,6 +67,7 @@
     try{doc=frame.contentDocument}catch{return}
     if(!doc?.body||!doc.documentElement)return;
 
+    ensureRequestedStyle(doc);
     doc.documentElement.classList.add('embedded-view-root');
     doc.body.classList.add('embedded-view');
 
