@@ -1,0 +1,3 @@
+deployment=restore-after-codex-breakage
+base=5527f2c4bcb697e9c3fdb49dd04bba34e519064f
+date=2026-07-30T14:38:00+03:00
