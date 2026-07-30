@@ -13,7 +13,7 @@
   const grid=document.getElementById('serverGrid');
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
-  const requestedStyleHref='/requested-ui-fixes-v4.css?v=20260731-0046';
+  const requestedStyleHref='/requested-ui-fixes-v5.css?v=20260731-0118';
   const fixedFrameHeight='clamp(680px, calc(100vh - 230px), 900px)';
 
   const ensureRequestedStyle=doc=>{
