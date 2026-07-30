@@ -1,0 +1,2 @@
+Rollback deployment trigger: 2026-07-30T13:41:00+03:00
+Source commit: d171ab903061533787d01979f08238f6d3ece49f
