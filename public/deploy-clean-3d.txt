@@ -1,0 +1,3 @@
+deployment=clean-3d-homepage
+commit=464da5eb93aa1a20451d0965cae559fd64418819
+date=2026-07-30T14:10:00+03:00
