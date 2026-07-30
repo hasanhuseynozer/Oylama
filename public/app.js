@@ -292,18 +292,19 @@ function serverCard(server,index){
 
 function bindServerCards(){
   $$("[data-review]").forEach(button=>button.onclick=()=>openServer(Number(button.dataset.review),true));
+  const canTilt=matchMedia("(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)").matches;
   $$(".server-card").forEach(card=>{
     card.onclick=event=>{if(!event.target.closest("button,a"))openServer(Number(card.dataset.server),true)};
     card.onkeydown=event=>{if((event.key==="Enter"||event.key===" ")&&!event.target.closest("button,a")){event.preventDefault();openServer(Number(card.dataset.server),true)}};
-    card.onpointermove=event=>{
+    card.onpointermove=canTilt?event=>{
       const box=card.getBoundingClientRect();
       const x=(event.clientX-box.left)/box.width;
       const y=(event.clientY-box.top)/box.height;
-      card.style.setProperty("--rx",`${(0.5-y)*10}deg`);
-      card.style.setProperty("--ry",`${(x-0.5)*12}deg`);
+      card.style.setProperty("--rx",`${(0.5-y)*5}deg`);
+      card.style.setProperty("--ry",`${(x-0.5)*6}deg`);
       card.style.setProperty("--mx",`${x*100}%`);
       card.style.setProperty("--my",`${y*100}%`);
-    };
+    }:null;
     card.onpointerleave=()=>{
       card.style.removeProperty("--rx");
       card.style.removeProperty("--ry");
