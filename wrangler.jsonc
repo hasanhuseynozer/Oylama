@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sro-rating",
-  "main": "src/index.js",
+  "main": "src/wrapper.js",
   "compatibility_date": "2026-07-26",
   "assets": {
     "directory": "./public",
