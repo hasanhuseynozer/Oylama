@@ -77,9 +77,9 @@ body.home-clean .main-navigation a:active{
   transition:box-shadow .2s ease-in,transform .08s ease-in!important;
 }
 
-/* Header logo alignment: previous 18px + requested additional 50px. */
+/* Header logo alignment: moved 5px left from the previous 68px position. */
 body.home-clean .site-header .header-inner > .brand{
-  transform:translateX(68px)!important;
+  transform:translateX(63px)!important;
 }
 
 /* Framed account and language panel in the upper-right header area. */
