@@ -13,7 +13,9 @@
   const grid=document.getElementById('serverGrid');
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
-  const requestedStyleHref='/requested-ui-fixes-v2.css?v=20260730-2245';
+  const requestedStyleHref='/requested-ui-fixes-v2.css?v=20260730-2302';
+  const fixedFrameHeight='clamp(680px, calc(100vh - 230px), 900px)';
+
   const ensureRequestedStyle=doc=>{
     if(!doc?.head||doc.querySelector('link[data-requested-ui-fixes]'))return;
     const link=doc.createElement('link');
@@ -48,6 +50,7 @@
     frame.removeAttribute('style');
     frame.setAttribute('scrolling','yes');
     frame.style.overflow='auto';
+    frame.style.height=fixedFrameHeight;
   }
 
   const setActiveView=view=>{
@@ -76,69 +79,14 @@
       style=doc.createElement('style');
       style.id='sro-parent-embed-fix';
       style.textContent=`
-        html,body{height:auto!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:auto!important;width:100%!important;max-width:100%!important;scrollbar-gutter:stable!important}
-        body{padding-bottom:0!important}
+        html{height:100%!important;min-height:100%!important;overflow:hidden!important;width:100%!important;max-width:100%!important;background:#85d9d2!important}
+        body{height:100%!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;width:100%!important;max-width:100%!important;padding-bottom:0!important;background:#85d9d2!important}
         body.embedded-view>.site-header,body.embedded-view>.site-footer{display:none!important}
         body.embedded-view main,body.embedded-view .page-shell,body.embedded-view .portal-shell,body.embedded-view .creator-shell,body.embedded-view .network-shell,body.embedded-view .application-shell{min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important}
       `;
       doc.head?.append(style);
     }
-
-    let timer=0;
-    let pulseTimer=0;
-    let pulseCount=0;
-    const measure=()=>{
-      clearTimeout(timer);
-      timer=setTimeout(()=>{
-        let innerDoc;
-        try{innerDoc=frame.contentDocument}catch{return}
-        if(!innerDoc?.body)return;
-        const body=innerDoc.body;
-        const html=innerDoc.documentElement;
-        const childBottom=[...body.children].reduce((max,node)=>{
-          const rect=node.getBoundingClientRect();
-          return Math.max(max,rect.bottom+(innerDoc.defaultView?.scrollY||0));
-        },0);
-        const mainBottom=[...innerDoc.querySelectorAll('main,.network-shell,.application-shell,.community-dashboard')].reduce((max,node)=>{
-          const rect=node.getBoundingClientRect();
-          return Math.max(max,rect.bottom+(innerDoc.defaultView?.scrollY||0));
-        },0);
-        const measured=Math.ceil(Math.max(body.scrollHeight,body.offsetHeight,html.scrollHeight,html.offsetHeight,childBottom,mainBottom));
-        const next=Math.max(720,Math.min(20000,measured+16));
-        const current=parseFloat(frame.style.height)||0;
-        if(Math.abs(next-current)>3)frame.style.height=`${next}px`;
-      },40);
-    };
-
-    const mutation=new MutationObserver(measure);
-    mutation.observe(doc.body,{childList:true,subtree:true,characterData:true,attributes:true});
-    const imageListeners=[];
-    doc.querySelectorAll('img').forEach(image=>{
-      if(image.complete)return;
-      const listener=()=>measure();
-      image.addEventListener('load',listener,{once:true});
-      image.addEventListener('error',listener,{once:true});
-      imageListeners.push([image,listener]);
-    });
-    const resizeListener=()=>measure();
-    addEventListener('resize',resizeListener,{passive:true});
-    [0,100,250,500,900,1500,2500].forEach(delay=>setTimeout(measure,delay));
-    pulseTimer=setInterval(()=>{
-      measure();
-      pulseCount+=1;
-      if(pulseCount>=20){clearInterval(pulseTimer);pulseTimer=0}
-    },300);
-
-    frameCleanup=()=>{
-      clearTimeout(timer);
-      if(pulseTimer)clearInterval(pulseTimer);
-      mutation.disconnect();
-      removeEventListener('resize',resizeListener);
-      imageListeners.forEach(([image,listener])=>{
-        image.removeEventListener('load',listener);
-        image.removeEventListener('error',listener);
-      });
-    };
+    frame.style.height=fixedFrameHeight;
   };
 
   const stableSwitchHomeView=(view,url=routes[view],remember=false)=>{
@@ -157,7 +105,7 @@
 
     if(!portal||!frame)return;
     portal.classList.add('is-loading');
-    frame.style.height='760px';
+    frame.style.height=fixedFrameHeight;
     frame.onload=()=>{
       portal.classList.remove('is-loading');
       prepareEmbeddedDocument();
