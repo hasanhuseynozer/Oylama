@@ -1,0 +1,54 @@
+/* Keep the application shell stable for RTL locales while rendering text correctly. */
+html[data-text-direction="rtl"],
+html[data-text-direction="rtl"] body {
+  direction: ltr;
+}
+
+html[data-text-direction="rtl"] [data-i18n],
+html[data-text-direction="rtl"] .language-label,
+html[data-text-direction="rtl"] .account-role,
+html[data-text-direction="rtl"] .account-name,
+html[data-text-direction="rtl"] .network-page,
+html[data-text-direction="rtl"] .profile-page {
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+html[data-text-direction="rtl"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-text-direction="rtl"] textarea,
+html[data-text-direction="rtl"] select {
+  direction: rtl;
+  text-align: right;
+}
+
+html[data-text-direction="rtl"] .main-navigation a,
+html[data-text-direction="rtl"] .language-trigger,
+html[data-text-direction="rtl"] .language-menu button,
+html[data-text-direction="rtl"] .filters button,
+html[data-text-direction="rtl"] .new-filter,
+html[data-text-direction="rtl"] .favorite-filter,
+html[data-text-direction="rtl"] #clearFilters {
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+/* Structural areas must never mirror or reorder. */
+html[data-text-direction="rtl"] .header-inner,
+html[data-text-direction="rtl"] .header-center,
+html[data-text-direction="rtl"] .header-side,
+html[data-text-direction="rtl"] .main-navigation,
+html[data-text-direction="rtl"] .page-layout,
+html[data-text-direction="rtl"] .filters,
+html[data-text-direction="rtl"] .server-grid,
+html[data-text-direction="rtl"] .sponsor-stack,
+html[data-text-direction="rtl"] .footer-inner {
+  direction: ltr;
+}
+
+/* Restore RTL alignment only inside translated labels after structural direction is fixed. */
+html[data-text-direction="rtl"] .main-navigation a,
+html[data-text-direction="rtl"] .filter-field > span,
+html[data-text-direction="rtl"] .language-trigger > span:nth-child(2) {
+  direction: rtl;
+  text-align: center;
+}
