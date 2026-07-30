@@ -10,7 +10,7 @@
 </head>
 <body class="creator-page application-page">
 <header class="network-header">
-  <a class="network-brand" href="/"><img src="/sro-rating-header.png" alt="SRO RATING"></a>
+  <a class="network-brand" href="/"><img src="/sro-rating-logo.png" alt="SRO RATING"></a>
   <nav aria-label="Ana menü"><a href="/">Sunucular</a><a href="/yayinclar/">Yayıncılar</a><a href="/cekilisler/">Çekilişler</a><a class="active" href="/yayinci-basvuru/">Yayıncı Başvurusu</a><a href="/profil/">Profilim</a></nav>
 </header>
 <main class="application-shell">
@@ -26,17 +26,31 @@
     <div class="creator-channel-grid">
       <label>E-posta<input id="creatorEmail" type="email" maxlength="160" required></label>
       <label>Discord kullanıcı adı<input id="creatorDiscord" maxlength="80" autocomplete="off" placeholder="kullaniciadi" required></label>
-      <label>YouTube<input id="creatorYoutube" type="url" placeholder="https://youtube.com/@..."></label>
-      <label>Twitch<input id="creatorTwitch" type="url" placeholder="https://twitch.tv/..."></label>
-      <label>Kick<input id="creatorKick" type="url" placeholder="https://kick.com/..."></label>
-      <label>TikTok<input id="creatorTiktok" type="url" placeholder="https://tiktok.com/@..."></label>
+      <label>Discord ID<input id="creatorDiscordId" inputmode="numeric" pattern="[0-9]{15,24}" maxlength="24" placeholder="123456789012345678" required></label>
+      <label>Ana platform<select id="creatorPrimaryPlatform" required><option value="">Seçin</option><option>YouTube</option><option>Twitch</option><option>Kick</option><option>TikTok</option></select></label>
+      <label>YouTube URL<input id="creatorYoutube" type="url" placeholder="https://youtube.com/@..."></label>
+      <label>Twitch URL<input id="creatorTwitch" type="url" placeholder="https://twitch.tv/..."></label>
+      <label>Kick URL<input id="creatorKick" type="url" placeholder="https://kick.com/..."></label>
+      <label>TikTok URL<input id="creatorTiktok" type="url" placeholder="https://tiktok.com/@..."></label>
+      <label>Instagram URL <small>İsteğe bağlı</small><input id="creatorInstagram" type="url" placeholder="https://instagram.com/..."></label>
+      <label>X (Twitter) URL <small>İsteğe bağlı</small><input id="creatorX" type="url" placeholder="https://x.com/..."></label>
+      <label>Facebook URL <small>İsteğe bağlı</small><input id="creatorFacebook" type="url" placeholder="https://facebook.com/..."></label>
+      <label>Ülke<input id="creatorCountry" maxlength="60" required></label>
+      <label>Konuşulan diller<input id="creatorLanguages" maxlength="160" placeholder="Türkçe, İngilizce" required></label>
+      <label>Yayın dili<input id="creatorStreamingLanguage" maxlength="60" required></label>
+      <label>Ortalama izleyici<input id="creatorAverageViewers" type="number" min="0" max="10000000" required></label>
+      <label>Takipçi sayısı<input id="creatorFollowers" type="number" min="0" max="1000000000" required></label>
+      <label>Yayın programı<input id="creatorSchedule" maxlength="300" placeholder="Pazartesi, Çarşamba ve Cuma 20:00" required></label>
+      <label>İçerik kategorisi<input id="creatorCategory" maxlength="120" placeholder="PvP, rehber, etkinlik" required></label>
     </div>
-    <label>Kendini ve içeriklerini tanıt<textarea id="creatorIntroduction" minlength="20" maxlength="500" rows="7" placeholder="Yayın yaptığın platformları, içerik türünü ve topluluğunu kısaca anlat." required></textarea></label>
+    <label>Kısa biyografi<textarea id="creatorIntroduction" minlength="40" maxlength="500" rows="5" placeholder="İçeriklerini ve topluluğunu kısaca tanıt." required></textarea></label>
+    <label>Neden resmî yayıncı olmak istiyorsun?<textarea id="creatorMotivation" minlength="40" maxlength="750" rows="5" required></textarea></label>
+    <label>Ek notlar <small>İsteğe bağlı</small><textarea id="creatorNotes" maxlength="500" rows="3"></textarea></label>
     <div class="review-meta"><span>Başvurun yönetici incelemesine gönderilir.</span><strong><span id="introCount">0</span>/500</strong></div>
     <button class="primary" type="submit">Başvuruyu Gönder</button>
     <p id="applicationMessage"></p>
   </form>
 </main>
-<script src="/yayinci-basvuru/application.js?v=20260728-1" defer></script>
+<script src="/i18n.js?v=1" defer></script><script src="/yayinci-basvuru/application.js?v=20260730-2" defer></script>
 </body>
 </html>

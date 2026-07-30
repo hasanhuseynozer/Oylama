@@ -11,7 +11,7 @@
 <body class="dashboard-body">
 <main class="profile-shell community-dashboard">
   <header class="topbar dashboard-topbar">
-    <a class="dashboard-brand" href="/" aria-label="Ana sayfa"><img class="profile-brand-logo" src="/sro-rating-header.png" alt="SRO RATING"></a>
+    <a class="dashboard-brand" href="/" aria-label="Ana sayfa"><img class="profile-brand-logo" src="/sro-rating-logo.png" alt="SRO RATING"></a>
     <nav class="dashboard-nav" aria-label="Profil menüsü">
       <a class="dashboard-nav-link active" href="/profil/"><span>◉</span><span>Profilim</span></a>
       <a id="ownerPanelLink" class="dashboard-nav-link hidden" href="/sunucu-paneli/"><span>♛</span><span>Sunucu Paneli</span></a>
@@ -24,7 +24,7 @@
 
   <section class="profile-hero profile-identity dashboard-hero">
     <div class="profile-avatar" aria-hidden="true"><img src="/sro-rating-logo.png" alt=""></div>
-    <div class="profile-hero-copy"><p class="eyebrow">TOPLULUK PROFİLİ</p><h1 id="profileGreeting">Profilim</h1><label class="profile-language">Dil <select id="languageSelect"><option value="tr">🇹🇷 Türkçe</option><option value="en">🇬🇧 English</option><option value="ar">🇸🇦 العربية</option><option value="ru">🇷🇺 Русский</option><option value="de">🇩🇪 Deutsch</option><option value="nl">🇳🇱 Nederlands</option><option value="vi">🇻🇳 Tiếng Việt</option><option value="es">🇪🇸 Español</option></select></label><p>Oyun kimliğini, sunucularını ve topluluk geçmişini tek yerden yönet.</p><div id="profileBadges" class="badge-wall"></div></div>
+    <div class="profile-hero-copy"><p class="eyebrow">TOPLULUK PROFİLİ</p><h1 id="profileGreeting">Profilim</h1><label class="profile-language">🌐 Dil <select id="languageSelect" data-language-select><option value="tr">🇹🇷 Türkçe</option><option value="en">🇬🇧 English</option><option value="ar">🇪🇬 العربية</option><option value="ru">🇷🇺 Русский</option><option value="de">🇩🇪 Deutsch</option><option value="fr">🇫🇷 Français</option><option value="es">🇪🇸 Español</option><option value="pt">🇵🇹 Português</option><option value="it">🇮🇹 Italiano</option><option value="vi">🇻🇳 Tiếng Việt</option><option value="pl">🇵🇱 Polski</option><option value="fa">🇮🇷 فارسی</option><option value="zh-CN">🇨🇳 简体中文</option><option value="zh-TW">🇹🇼 繁體中文</option><option value="ja">🇯🇵 日本語</option><option value="ko">🇰🇷 한국어</option></select></label><p>Oyun kimliğini, sunucularını ve topluluk geçmişini tek yerden yönet.</p><div id="profileBadges" class="badge-wall"></div></div>
     <div class="profile-completion"><span>Profil Merkezi</span><strong>Kimliğini tamamla</strong><small>Rozetlerini ve oyun geçmişini toplulukla paylaş.</small></div>
   </section>
 
@@ -55,6 +55,6 @@
 </main>
 
 <dialog id="editReviewDialog" class="edit-review-dialog"><button id="closeEditReview" class="close" type="button" aria-label="Kapat">×</button><form id="editReviewForm"><p class="eyebrow">DEĞERLENDİRMENİ GÜNCELLE</p><h2>Puan ve Yorum</h2><label>Puan<select id="editRating"><option value="1">1 — Çok kötü</option><option value="2">2 — Geliştirilmeli</option><option value="3">3 — Ortalama</option><option value="4">4 — Çok iyi</option><option value="5">5 — Mükemmel</option></select></label><label>Yorum<textarea id="editComment" minlength="3" maxlength="500" rows="6" required></textarea></label><button class="primary">Değişiklikleri Kaydet</button><p id="editReviewMessage"></p></form></dialog>
-<script src="/profile.js?v=20260728-4" defer></script><script src="/notification-popover.js?v=20260728-4" defer></script>
+<script src="/i18n.js?v=1" defer></script><script src="/profile.js?v=20260730-1" defer></script><script src="/notification-popover.js?v=20260728-4" defer></script>
 </body>
 </html>

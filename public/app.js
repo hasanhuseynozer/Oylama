@@ -40,27 +40,33 @@ async function init(){
 function setupHomeNavigation(){
   const routes={servers:"/",creators:"/yayinclar/?embed=1",giveaways:"/cekilisler/?embed=1",application:"/yayinci-basvuru/?embed=1"};
   document.querySelectorAll("[data-home-view]").forEach(link=>link.addEventListener("click",event=>{
-    event.preventDefault();switchHomeView(link.dataset.homeView,routes[link.dataset.homeView]);
+    event.preventDefault();switchHomeView(link.dataset.homeView,routes[link.dataset.homeView],true);
   }));
-  const initialView=new URLSearchParams(location.search).get("view");
-  if(routes[initialView]&&initialView!=="servers")switchHomeView(initialView,routes[initialView]);
+  addEventListener("popstate",event=>{
+    const view=event.state?.homeView||"servers";
+    switchHomeView(view,routes[view],false);
+  });
 }
 
-function switchHomeView(view,url){
+function switchHomeView(view,url,remember=false){
   document.querySelectorAll("[data-home-view]").forEach(link=>link.classList.toggle("active",link.dataset.homeView===view));
   const servers=view==="servers";
   $("#serverView").classList.toggle("hidden",!servers);
   $("#portalView").classList.toggle("hidden",servers);
-  if(servers){history.replaceState(null,"","/");return}
+  if(servers){if(remember)history.pushState({homeView:"servers"},"",location.href);return}
   const frame=$("#portalFrame");
+  $("#portalView").classList.add("is-loading");
   frame.onload=()=>{
     try{
       frame.contentDocument.body.classList.add("embedded-view");
-      frame.style.height=`${Math.max(720,frame.contentDocument.documentElement.scrollHeight)}px`;
+      const resize=()=>frame.style.height=`${Math.max(720,frame.contentDocument.documentElement.scrollHeight)}px`;
+      resize();
+      new ResizeObserver(resize).observe(frame.contentDocument.documentElement);
     }catch{}
+    $("#portalView").classList.remove("is-loading");
   };
   if(frame.dataset.view!==view){frame.dataset.view=view;frame.src=url}
-  history.replaceState({view},"",`/?view=${view}`);
+  if(remember)history.pushState({homeView:view},"",location.href);
   scrollTo({top:document.querySelector(".site-header").offsetHeight,behavior:"smooth"});
 }
 
@@ -75,7 +81,7 @@ function syncStickyHeaderOffset(){
 
 function applySettings(){
   const settings=state.settings;
-  const logo=settings.logo_image||"/sro-rating-header.png";
+  const logo="/sro-rating-logo.png";
   $("#siteLogo").src=logo;
   setVisual($("#banner"),settings.banner_image);
   configureSponsor($("#banner"),settings.banner_image,settings.banner_text,settings.banner_url);
@@ -112,15 +118,16 @@ function setLink(element,url){
 function renderAccount(){
   const box=$("#accountActions");
   if(!state.user)return;
-  const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":"✦ Üye";
+  const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":state.user.role==="creator"?"◆ Onaylı Yayıncı":"✦ Üye";
   box.innerHTML=`<div class="account-menu">
     <button class="account-menu-trigger" type="button" aria-expanded="false" aria-haspopup="menu">
       <img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span><i>⌄</i>
     </button>
     <div class="account-menu-panel hidden" role="menu">
       <a class="account-menu-item" href="/profil/" role="menuitem"><span>👤</span><span>Profilim</span></a>
-      <label class="account-language"><span>◎</span><select aria-label="Dil"><option value="tr">Türkçe</option><option value="en">English</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="de">Deutsch</option><option value="nl">Nederlands</option><option value="vi">Tiếng Việt</option><option value="es">Español</option></select></label>
       <button class="account-menu-item notification-menu-item" type="button" data-notification-toggle role="menuitem"><span>🔔</span><span>Bildirimler</span><b></b></button>
+      <label class="account-language"><span>🌐</span><select aria-label="Dil"><option value="tr">🇹🇷 Türkçe</option><option value="en">🇬🇧 English</option><option value="ar">🇪🇬 العربية</option><option value="ru">🇷🇺 Русский</option><option value="de">🇩🇪 Deutsch</option><option value="fr">🇫🇷 Français</option><option value="es">🇪🇸 Español</option><option value="pt">🇵🇹 Português</option><option value="it">🇮🇹 Italiano</option><option value="vi">🇻🇳 Tiếng Việt</option><option value="pl">🇵🇱 Polski</option><option value="fa">🇮🇷 فارسی</option><option value="zh-CN">🇨🇳 简体中文</option><option value="zh-TW">🇹🇼 繁體中文</option><option value="ja">🇯🇵 日本語</option><option value="ko">🇰🇷 한국어</option></select></label>
+      ${state.user.role==="creator"?'<a class="account-menu-item" href="/yayinclar/panel.html" role="menuitem"><span>◆</span><span>Yayıncı Paneli</span></a>':""}
       <button id="logoutBtn" class="account-menu-item account-menu-logout" type="button" role="menuitem"><span>↪</span><span>Çıkış Yap</span></button>
     </div>
   </div>`;
@@ -263,14 +270,16 @@ function renderServers(){
   syncFilterUrl();
 }
 
-function serverCard(server){
+function serverCard(server,index){
   const rating=Number(server.average_rating||0);
   const ratingTier=rating>=4.5?"legendary":rating>=3.5?"elite":rating>=2?"standard":"newcomer";
   const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<45*86400000;
   const [statusClass,statusText]=statusInfo(server);
   const event=nextEvent(server);
   const cover=server.image_url?`<div class="server-cover" style="background-image:url('${esc(server.image_url)}')"></div>`:'<div class="server-cover server-cover-placeholder"><span>SRO RATING</span></div>';
-  return `<article class="server-card rating-${ratingTier}" data-server="${server.id}" tabindex="0" aria-label="${esc(server.name)} için oy ver">
+  const rank=index<3?["rank-gold","rank-silver","rank-bronze"][index]:"";
+  return `<article class="server-card rating-${ratingTier} ${rank}" data-server="${server.id}" tabindex="0" aria-label="${esc(server.name)} için oy ver">
+    ${rank?`<span class="rank-ribbon" aria-label="${index+1}. sıra">#${index+1}</span>`:""}
     <button class="favorite-button ${server.is_favorite?"active":""}" data-favorite="${server.id}" type="button" aria-pressed="${Boolean(server.is_favorite)}" aria-label="${server.is_favorite?"Favorilerden çıkar":"Favorilere ekle"}">♥</button>
     <div class="server-status ${statusClass}" title="${esc(server.status_note||statusText)}"><i></i>${statusText}</div>
     ${cover}<div class="server-card-body"><div class="server-badges"><span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div>

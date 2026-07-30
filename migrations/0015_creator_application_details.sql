@@ -1,0 +1,14 @@
+ALTER TABLE role_applications ADD COLUMN discord_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN instagram_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN x_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN facebook_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN primary_platform TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN country TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN languages TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN streaming_language TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN average_viewers INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE role_applications ADD COLUMN followers INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE role_applications ADD COLUMN streaming_schedule TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN content_category TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN motivation TEXT NOT NULL DEFAULT '';
+ALTER TABLE role_applications ADD COLUMN additional_notes TEXT NOT NULL DEFAULT '';
