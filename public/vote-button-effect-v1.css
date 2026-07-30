@@ -1,0 +1,79 @@
+/* Aqua adaptation of the requested btn-77 effect for server vote buttons. */
+body.home-clean .card-actions button[data-review]{
+  width:100%!important;
+  height:44px!important;
+  min-height:44px!important;
+  border:0!important;
+  border-radius:40px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  position:relative!important;
+  z-index:2!important;
+  overflow:hidden!important;
+  padding:0 20px!important;
+  color:#075c61!important;
+  background:linear-gradient(to right,#25aaa9,#c9fff8,#45d7cb,#b6fff5,#168f94)!important;
+  background-size:200% 200%!important;
+  box-shadow:5px 5px 10px rgba(0,0,0,.20),0 0 16px rgba(104,234,223,.14)!important;
+  font-family:'Patrick Hand SC',cursive!important;
+  font-size:18px!important;
+  font-weight:700!important;
+  letter-spacing:.04em!important;
+  text-decoration:none!important;
+  cursor:pointer!important;
+  user-select:none!important;
+  transition:transform 3s ease,background-position 3s ease,box-shadow .25s ease,color .25s ease!important;
+}
+
+body.home-clean .card-actions button[data-review]::before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:-1!important;
+  border-radius:inherit!important;
+  background:linear-gradient(110deg,transparent 0 35%,rgba(255,255,255,.78) 48%,transparent 62%)!important;
+  transform:translateX(-120%)!important;
+  transition:transform .75s ease!important;
+  pointer-events:none!important;
+}
+
+body.home-clean .card-actions button[data-review]:hover{
+  color:#03383c!important;
+  transform:scale(.95)!important;
+  background-position:right center!important;
+  animation:sro-vote-gradient 5s ease infinite!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.26),0 0 28px rgba(104,234,223,.34)!important;
+}
+
+body.home-clean .card-actions button[data-review]:hover::before{
+  transform:translateX(120%)!important;
+}
+
+body.home-clean .card-actions button[data-review]:active{
+  transform:scale(.91)!important;
+  transition-duration:.08s!important;
+  box-shadow:0 4px 10px rgba(0,0,0,.22),0 0 12px rgba(104,234,223,.18)!important;
+}
+
+body.home-clean .card-actions button[data-review]:disabled{
+  pointer-events:none!important;
+  opacity:.65!important;
+  color:#7e7e7e!important;
+  background:#dcdcdc!important;
+  box-shadow:none!important;
+  animation:none!important;
+}
+
+@keyframes sro-vote-gradient{
+  0%{background-position:0 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0 50%}
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.home-clean .card-actions button[data-review]{transition:none!important}
+  body.home-clean .card-actions button[data-review]:hover{animation:none!important}
+  body.home-clean .card-actions button[data-review]::before{display:none!important}
+}
