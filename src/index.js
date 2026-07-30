@@ -1268,10 +1268,10 @@ function json(data,status=200,extra={}) {
 }
 function secureResponse(response) {
   const headers=new Headers(response.headers);
-  headers.set("X-Content-Type-Options","nosniff"); headers.set("X-Frame-Options","DENY");
+  headers.set("X-Content-Type-Options","nosniff"); headers.set("X-Frame-Options","SAMEORIGIN");
   headers.set("Referrer-Policy","strict-origin-when-cross-origin");
   headers.set("Permissions-Policy","camera=(), microphone=(), geolocation=()");
-  headers.set("Content-Security-Policy","default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests");
+  headers.set("Content-Security-Policy","default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self' https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests");
   headers.set("Cross-Origin-Opener-Policy","same-origin-allow-popups");
   headers.set("Cross-Origin-Resource-Policy","same-origin");
   headers.set("Strict-Transport-Security","max-age=31536000; includeSubDomains");
