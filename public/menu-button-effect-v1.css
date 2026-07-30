@@ -120,9 +120,9 @@ body.home-clean .header-side .account-menu-trigger{
 }
 body.home-clean .header-side .header-language{
   box-sizing:border-box!important;
-  width:calc(100% - 30px)!important;
+  width:calc(100% - 50px)!important;
   max-width:none!important;
-  justify-self:start!important;
+  justify-self:center!important;
 }
 body.home-clean .header-side .language-trigger{
   width:100%!important;
