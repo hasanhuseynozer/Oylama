@@ -1,6 +1,6 @@
-/* Dramatic animated electric borders for homepage server cards. */
+/* Performance-optimized electric borders for homepage server cards. */
 body.home-clean .toolbar{
-  margin-bottom:29px!important; /* previous 14px + requested 15px */
+  margin-bottom:29px!important;
 }
 
 body.home-clean .server-card{
@@ -8,7 +8,7 @@ body.home-clean .server-card{
   --electric-card-rgb:221,132,72;
   --electric-card-secondary:#72d9cd;
   overflow:visible!important;
-  border-color:rgba(var(--electric-card-rgb),.32)!important;
+  border-color:rgba(var(--electric-card-rgb),.30)!important;
 }
 body.home-clean .server-card.rank-gold{
   --electric-card-color:#ffc64f;
@@ -25,9 +25,7 @@ body.home-clean .server-card.rank-bronze{
   --electric-card-rgb:239,141,82;
   --electric-card-secondary:#ffc278;
 }
-body.home-clean .server-card .server-cover{
-  border-radius:16px 16px 0 0!important;
-}
+body.home-clean .server-card .server-cover{border-radius:16px 16px 0 0!important}
 body.home-clean .server-card .server-card-body{
   border-radius:0 0 16px 16px!important;
   background:linear-gradient(155deg,#0a242a,#05171c 65%,#041116)!important;
@@ -35,158 +33,155 @@ body.home-clean .server-card .server-card-body{
 
 body.home-clean .electric-card-frame{
   position:absolute;
-  inset:-3px;
+  inset:-2px;
   z-index:28;
-  border-radius:20px;
+  border-radius:19px;
   pointer-events:none;
   overflow:visible;
   color:var(--electric-card-color);
-  filter:drop-shadow(0 0 4px rgba(var(--electric-card-rgb),.34));
+  transform:translateZ(0);
 }
-body.home-clean .electric-card-frame > i{
+body.home-clean .electric-card-frame>i{
   position:absolute;
-  inset:2px;
   display:block;
-  border-radius:18px;
   pointer-events:none;
+  border-radius:18px;
 }
 
-/* Jagged displaced electrical outline. */
+/* Static sharp border: no SVG turbulence and no continuous repaint. */
 body.home-clean .electric-border-line{
-  border:2px solid currentColor;
-  opacity:.82;
-  filter:url(#sro-electric-card-displace) drop-shadow(0 0 2px currentColor);
-  animation:electric-border-flicker 2.45s steps(1,end) infinite;
-}
-
-/* Wide fantasy halo behind the outline. */
-body.home-clean .electric-border-glow{
-  inset:0!important;
-  border:2px solid currentColor;
-  opacity:.30;
-  filter:blur(7px);
+  inset:2px;
+  border:1px solid currentColor;
+  opacity:.62;
   box-shadow:
-    0 0 18px rgba(var(--electric-card-rgb),.46),
-    0 0 34px rgba(var(--electric-card-rgb),.16),
-    inset 0 0 15px rgba(var(--electric-card-rgb),.20);
-  animation:electric-border-breathe 2.2s ease-in-out infinite;
+    0 0 4px rgba(var(--electric-card-rgb),.30),
+    inset 0 0 3px rgba(var(--electric-card-rgb),.12);
+  transition:opacity .18s ease,box-shadow .18s ease;
 }
 
-/* Bright electrical pulses travelling around the perimeter. */
+/* Lightweight static halo. */
+body.home-clean .electric-border-glow{
+  inset:1px;
+  border:1px solid currentColor;
+  opacity:.16;
+  filter:blur(4px);
+  transform:scale(.998) translateZ(0);
+  transition:opacity .18s ease,transform .18s ease;
+}
+
+/* Static energy fragments; rotation starts only on the hovered card. */
 body.home-clean .electric-border-sparks{
-  inset:-1px!important;
-  padding:3px;
-  opacity:.90;
+  inset:-1px;
+  padding:2px;
+  opacity:.48;
   background:conic-gradient(
-    from var(--electric-angle,0deg),
-    transparent 0 5%,
-    rgba(255,255,255,1) 6%,
-    currentColor 7.5%,
-    transparent 10% 30%,
-    var(--electric-card-secondary) 32%,
-    rgba(255,255,255,.9) 33%,
-    transparent 36% 58%,
-    currentColor 60%,
-    transparent 63% 82%,
-    rgba(255,255,255,.95) 84%,
-    var(--electric-card-secondary) 85%,
-    transparent 88% 100%
+    from 0deg,
+    transparent 0 8%,
+    rgba(255,255,255,.92) 9%,
+    currentColor 10%,
+    transparent 12% 34%,
+    var(--electric-card-secondary) 36%,
+    transparent 39% 62%,
+    currentColor 64%,
+    transparent 67% 84%,
+    rgba(255,255,255,.86) 86%,
+    var(--electric-card-secondary) 87%,
+    transparent 90% 100%
   );
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   mask-composite:exclude;
-  filter:drop-shadow(0 0 5px currentColor) drop-shadow(0 0 9px rgba(var(--electric-card-rgb),.50));
-  animation:electric-border-orbit 3.4s linear infinite;
+  transform:rotate(0deg) translateZ(0);
+  transition:opacity .18s ease;
 }
 
-/* Electrified corner nodes. */
+/* Static electric corner accents. */
 body.home-clean .electric-card-frame::before,
 body.home-clean .electric-card-frame::after{
   content:"";
   position:absolute;
   z-index:3;
-  width:42px;
-  height:42px;
+  width:34px;
+  height:34px;
   border-color:currentColor;
-  opacity:.78;
-  filter:drop-shadow(0 0 5px currentColor);
-  animation:electric-corner-pulse 1.9s ease-in-out infinite alternate;
+  opacity:.58;
+  filter:drop-shadow(0 0 3px currentColor);
+  transition:opacity .18s ease,transform .18s ease;
 }
 body.home-clean .electric-card-frame::before{
-  left:-1px;
-  top:-1px;
+  left:0;
+  top:0;
   border-left:2px solid;
   border-top:2px solid;
-  border-radius:19px 0 0 0;
+  border-radius:18px 0 0 0;
 }
 body.home-clean .electric-card-frame::after{
-  right:-1px;
-  bottom:-1px;
+  right:0;
+  bottom:0;
   border-right:2px solid;
   border-bottom:2px solid;
-  border-radius:0 0 19px 0;
-  animation-delay:-.95s;
+  border-radius:0 0 18px 0;
 }
 
-body.home-clean .server-card:hover{
-  border-color:rgba(var(--electric-card-rgb),.72)!important;
+/* Only the card under the pointer animates. */
+body.home-clean .server-card:hover,
+body.home-clean .server-card:focus-within{
+  border-color:rgba(var(--electric-card-rgb),.68)!important;
   box-shadow:
-    0 38px 82px rgba(0,0,0,.55),
-    0 0 30px rgba(var(--electric-card-rgb),.22),
-    0 0 58px rgba(var(--electric-card-rgb),.10),
-    inset 0 1px rgba(255,255,255,.07)!important;
+    0 34px 72px rgba(0,0,0,.52),
+    0 0 24px rgba(var(--electric-card-rgb),.16),
+    inset 0 1px rgba(255,255,255,.06)!important;
 }
-body.home-clean .server-card:hover .electric-border-line{
+body.home-clean .server-card:hover .electric-border-line,
+body.home-clean .server-card:focus-within .electric-border-line{
   opacity:1;
-  filter:url(#sro-electric-card-displace) drop-shadow(0 0 4px currentColor) drop-shadow(0 0 12px currentColor);
-}
-body.home-clean .server-card:hover .electric-border-glow{
-  opacity:.68;
-  filter:blur(9px);
   box-shadow:
-    0 0 30px rgba(var(--electric-card-rgb),.68),
-    0 0 58px rgba(var(--electric-card-rgb),.24),
-    inset 0 0 22px rgba(var(--electric-card-rgb),.30);
+    0 0 7px rgba(var(--electric-card-rgb),.74),
+    0 0 14px rgba(var(--electric-card-rgb),.32),
+    inset 0 0 5px rgba(var(--electric-card-rgb),.22);
+  animation:electric-border-flicker 1.9s steps(1,end) infinite;
 }
-body.home-clean .server-card:hover .electric-border-sparks{
+body.home-clean .server-card:hover .electric-border-glow,
+body.home-clean .server-card:focus-within .electric-border-glow{
+  opacity:.42;
+  transform:scale(1.004) translateZ(0);
+  animation:electric-border-breathe 1.8s ease-in-out infinite;
+}
+body.home-clean .server-card:hover .electric-border-sparks,
+body.home-clean .server-card:focus-within .electric-border-sparks{
   opacity:1;
-  animation-duration:1.65s;
+  will-change:transform;
+  animation:electric-border-spin 1.85s linear infinite;
+}
+body.home-clean .server-card:hover .electric-card-frame::before,
+body.home-clean .server-card:hover .electric-card-frame::after,
+body.home-clean .server-card:focus-within .electric-card-frame::before,
+body.home-clean .server-card:focus-within .electric-card-frame::after{
+  opacity:1;
+  transform:scale(1.035);
 }
 
-body.home-clean .electric-filter-defs{
-  position:absolute;
-  width:0;
-  height:0;
-  overflow:hidden;
-  pointer-events:none;
-}
-
-@property --electric-angle{
-  syntax:'<angle>';
-  inherits:false;
-  initial-value:0deg;
-}
-@keyframes electric-border-orbit{to{--electric-angle:360deg}}
+@keyframes electric-border-spin{to{transform:rotate(360deg) translateZ(0)}}
 @keyframes electric-border-breathe{
-  0%,100%{opacity:.22;transform:scale(.997)}
-  50%{opacity:.48;transform:scale(1.006)}
+  0%,100%{opacity:.30;transform:scale(.999) translateZ(0)}
+  50%{opacity:.48;transform:scale(1.004) translateZ(0)}
 }
 @keyframes electric-border-flicker{
-  0%,8%,12%,37%,42%,68%,73%,100%{opacity:.84}
-  9%,38%,69%{opacity:.30}
-  10%,39%,70%{opacity:1}
+  0%,12%,16%,48%,52%,78%,82%,100%{opacity:1}
+  13%,49%,79%{opacity:.56}
 }
-@keyframes electric-corner-pulse{
-  from{opacity:.42;transform:scale(.96)}
-  to{opacity:1;transform:scale(1.04)}
+
+/* Touch devices keep the effect static. */
+@media (hover:none),(pointer:coarse){
+  body.home-clean .electric-border-line,
+  body.home-clean .electric-border-glow,
+  body.home-clean .electric-border-sparks{animation:none!important}
+  body.home-clean .electric-border-sparks{opacity:.38!important}
 }
 
 @media (prefers-reduced-motion:reduce){
   body.home-clean .electric-border-line,
   body.home-clean .electric-border-glow,
-  body.home-clean .electric-border-sparks,
-  body.home-clean .electric-card-frame::before,
-  body.home-clean .electric-card-frame::after{animation:none!important}
-  body.home-clean .electric-border-sparks{--electric-angle:34deg}
+  body.home-clean .electric-border-sparks{animation:none!important;transition:none!important}
 }
