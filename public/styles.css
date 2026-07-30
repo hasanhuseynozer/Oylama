@@ -1021,3 +1021,14 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
   .toolbar{position:relative!important;top:auto!important}.server-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
 }
 @media(max-width:500px){.server-grid{grid-template-columns:1fr!important}}
+/* Unified portal navigation, creator channels and final brand layout */
+.portal-view{width:min(1540px,calc(100% - 32px));margin:18px auto 40px;min-height:720px;border:1px solid #29474d;border-radius:22px;overflow:hidden;background:#091519;box-shadow:0 24px 80px rgba(0,0,0,.32)}
+.portal-view iframe{display:block;width:100%;min-height:720px;border:0;background:#091519}
+.embedded-view .network-header{display:none!important}.embedded-view .application-shell,.embedded-view .creator-shell,.embedded-view .giveaway-shell{width:min(1360px,calc(100% - 32px))!important;margin:28px auto!important}
+.creator-channel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.creator-channel-grid label{margin:0}
+.profile-language{display:inline-flex!important;align-items:center;gap:9px;margin:0 0 12px;color:#8eb9b5;font-size:12px}.profile-language select{min-width:170px;padding:8px 11px}
+.account-language{display:grid;grid-template-columns:24px 1fr;align-items:center;gap:8px;padding:8px 10px}.account-language select{width:100%;padding:8px;border-color:#31535a;background:#0b181c;color:#c9e3df}
+.header-inner{grid-template-columns:minmax(240px,300px) minmax(520px,1fr) minmax(210px,270px)!important}.site-logo{width:100%!important;max-width:290px!important;height:118px!important;object-fit:contain!important}
+.page-layout{grid-template-columns:150px minmax(0,1fr) 150px!important}.sponsor-stack{width:150px!important}.sponsor-rail{width:150px!important;height:280px!important;min-height:280px!important;max-height:280px!important;position:sticky!important;top:var(--site-header-offset,160px)!important}
+@media(max-width:1450px){.page-layout{grid-template-columns:110px minmax(0,1fr) 110px!important}.sponsor-stack,.sponsor-rail{width:110px!important}}
+@media(max-width:1120px){.page-layout{grid-template-columns:1fr!important}.sponsor-stack{display:none!important}.header-inner{grid-template-columns:190px minmax(0,1fr)!important}.account-actions{grid-column:1/-1!important}.creator-channel-grid{grid-template-columns:1fr}}

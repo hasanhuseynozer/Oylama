@@ -15,6 +15,7 @@
     <nav class="dashboard-nav" aria-label="Profil menüsü">
       <a class="dashboard-nav-link active" href="/profil/"><span>◉</span><span>Profilim</span></a>
       <a id="ownerPanelLink" class="dashboard-nav-link hidden" href="/sunucu-paneli/"><span>♛</span><span>Sunucu Paneli</span></a>
+      <a id="creatorPanelLink" class="dashboard-nav-link hidden" href="/yayinclar/panel.html"><span>◆</span><span>Yayıncı Paneli</span></a>
       <button class="dashboard-nav-link notification-link" type="button" data-notification-toggle><span>🔔</span><span>Bildirimler</span><b></b></button>
       <a class="dashboard-nav-link" href="/"><span>⌂</span><span>Siteye Dön</span></a>
       <button id="logout" class="dashboard-nav-link danger-link" type="button"><span>↪</span><span>Çıkış</span></button>
@@ -23,7 +24,7 @@
 
   <section class="profile-hero profile-identity dashboard-hero">
     <div class="profile-avatar" aria-hidden="true"><img src="/sro-rating-logo.png" alt=""></div>
-    <div class="profile-hero-copy"><p class="eyebrow">TOPLULUK PROFİLİ</p><h1 id="profileGreeting">Profilim</h1><p>Oyun kimliğini, sunucularını ve topluluk geçmişini tek yerden yönet.</p><div id="profileBadges" class="badge-wall"></div></div>
+    <div class="profile-hero-copy"><p class="eyebrow">TOPLULUK PROFİLİ</p><h1 id="profileGreeting">Profilim</h1><label class="profile-language">Dil <select id="languageSelect"><option value="tr">🇹🇷 Türkçe</option><option value="en">🇬🇧 English</option><option value="ar">🇸🇦 العربية</option><option value="ru">🇷🇺 Русский</option><option value="de">🇩🇪 Deutsch</option><option value="nl">🇳🇱 Nederlands</option><option value="vi">🇻🇳 Tiếng Việt</option><option value="es">🇪🇸 Español</option></select></label><p>Oyun kimliğini, sunucularını ve topluluk geçmişini tek yerden yönet.</p><div id="profileBadges" class="badge-wall"></div></div>
     <div class="profile-completion"><span>Profil Merkezi</span><strong>Kimliğini tamamla</strong><small>Rozetlerini ve oyun geçmişini toplulukla paylaş.</small></div>
   </section>
 
@@ -34,6 +35,7 @@
       <div class="profile-field-grid"><label>Kullanıcı adı<input id="displayName" required minlength="2" maxlength="40"></label><label>Genel karakter adı<input id="gameAlias" maxlength="40" placeholder="İsteğe bağlı"></label></div>
       <label>Kısa profil yazısı<textarea id="bio" maxlength="240" rows="4" placeholder="Topluluğa kendinden ve oyun tarzından bahset…"></textarea></label>
       <label>E-posta<input id="email" disabled></label>
+      <label>Profil unvanı<select id="profileTitle"><option>SRO Rating User</option><option>Veteran</option><option>Elite</option><option>Game Master</option><option>Creator</option></select></label>
       <div class="section-heading"><div><h3>Oynadığım Sunucular</h3><p>Her sunucu için farklı karakter adı belirleyebilirsin.</p></div><span id="playedCount" class="selection-counter">0 / 20</span></div>
       <div class="server-picker"><input id="serverSearch" type="search" placeholder="Sunucu ara…"><div id="playingServers" class="server-choice-grid"></div></div>
       <button class="primary profile-save">Değişiklikleri Kaydet</button>

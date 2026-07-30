@@ -23,7 +23,14 @@
   <form id="creatorApplicationForm" class="application-card">
     <div class="panel-heading"><div><p class="eyebrow">BAŞVURU FORMU</p><h2>Yayıncı Başvurusu</h2></div><span class="panel-icon">◉</span></div>
     <div id="applicationStatus" class="application-status">Hesap bilgileri kontrol ediliyor…</div>
-    <label>Discord kullanıcı adı<input id="creatorDiscord" maxlength="80" autocomplete="off" placeholder="kullaniciadi" required></label>
+    <div class="creator-channel-grid">
+      <label>E-posta<input id="creatorEmail" type="email" maxlength="160" required></label>
+      <label>Discord kullanıcı adı<input id="creatorDiscord" maxlength="80" autocomplete="off" placeholder="kullaniciadi" required></label>
+      <label>YouTube<input id="creatorYoutube" type="url" placeholder="https://youtube.com/@..."></label>
+      <label>Twitch<input id="creatorTwitch" type="url" placeholder="https://twitch.tv/..."></label>
+      <label>Kick<input id="creatorKick" type="url" placeholder="https://kick.com/..."></label>
+      <label>TikTok<input id="creatorTiktok" type="url" placeholder="https://tiktok.com/@..."></label>
+    </div>
     <label>Kendini ve içeriklerini tanıt<textarea id="creatorIntroduction" minlength="20" maxlength="500" rows="7" placeholder="Yayın yaptığın platformları, içerik türünü ve topluluğunu kısaca anlat." required></textarea></label>
     <div class="review-meta"><span>Başvurun yönetici incelemesine gönderilir.</span><strong><span id="introCount">0</span>/500</strong></div>
     <button class="primary" type="submit">Başvuruyu Gönder</button>

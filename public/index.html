@@ -6,11 +6,11 @@
 </head><body class="app-loading">
 <header class="site-header"><div class="shell header-inner">
 <a class="brand" href="/" aria-label="SRO RATING ana sayfa"><img id="siteLogo" class="site-logo" src="/sro-rating-header.png" alt="SRO RATING"><span class="brand-text hidden">SRO RATING</span></a>
-<div class="header-center"><nav class="main-navigation" aria-label="Ana menü"><a class="active" href="/">Sunucular</a><a href="/yayinclar/">Yayıncılar</a><a href="/cekilisler/">Çekilişler</a><a href="/yayinci-basvuru/">Yayıncı Başvurusu</a></nav><a id="banner" class="banner" href="#" rel="nofollow"><span>SRO RATING</span></a></div>
+<div class="header-center"><nav class="main-navigation" aria-label="Ana menü"><a class="active" data-home-view="servers" href="/">Sunucular</a><a data-home-view="creators" href="/yayinclar/">Yayıncılar</a><a data-home-view="giveaways" href="/cekilisler/">Çekilişler</a><a data-home-view="application" href="/yayinci-basvuru/">Yayıncı Başvurusu</a></nav><a id="banner" class="banner" href="#" rel="nofollow"><span>SRO RATING</span></a></div>
 <div id="accountActions" class="account-actions">
 <a class="outline community-link" href="/yayinclar/">Yayıncılar</a><a class="outline" href="/giris/">Giriş Yap</a><a class="primary" href="/kayit/">Kayıt Ol</a>
 </div></div></header>
-<div class="shell page-layout">
+<div id="serverView" class="shell page-layout">
 <aside class="sponsor-stack sponsor-stack-left"><a id="leftSponsor" class="sponsor-rail" href="#" rel="nofollow">Reklam alanı</a><a class="sponsor-rail sponsor-placeholder" href="#" rel="nofollow">Reklam alanı</a></aside>
 <main class="content">
 <div class="toolbar"><div><p class="eyebrow">SRO RATING</p><h1>Sunucu Değerlendirmeleri</h1></div>
@@ -19,6 +19,7 @@
 </main>
 <aside class="sponsor-stack sponsor-stack-right"><a id="rightSponsor" class="sponsor-rail" href="#" rel="nofollow">Reklam alanı</a><a class="sponsor-rail sponsor-placeholder" href="#" rel="nofollow">Reklam alanı</a></aside>
 </div>
+<section id="portalView" class="portal-view hidden" aria-live="polite"><iframe id="portalFrame" title="SRO RATING içerik alanı"></iframe></section>
 <footer class="site-footer"><div class="footer-inner"><div class="footer-brand"><a class="brand" href="/">SRO <span>Rating</span></a><p id="footerTagline">Silkroad topluluğunun buluşma noktası.</p></div><div class="footer-box"><span class="footer-icon">✉</span><div><strong>İletişim</strong><p id="contactText"></p></div></div><div class="footer-box"><span class="footer-icon">⚖</span><div><strong>Topluluk İlkeleri</strong><p id="disclaimerText"></p></div></div><div class="footer-box"><span class="footer-icon">▶</span><div><strong>Bizi Takip Et</strong><div id="socials" class="socials"></div></div></div></div><div class="footer-bottom">© <span id="footerYear"></span> SRO Rating · Oyunu keşfet, topluluğa katıl.</div></footer>
 <dialog id="reviewDialog"><form id="reviewForm" class="modal">
 <button id="closeDialog" class="close" type="button">×</button><p class="eyebrow">DENEYİMİNİ PAYLAŞ</p><h2 id="reviewServerName">Oy ve Yorum</h2><p class="modal-lead">Puanın ve yorumun diğer oyuncuların doğru sunucuyu bulmasına yardımcı olur.</p>

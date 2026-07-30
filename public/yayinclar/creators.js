@@ -1,6 +1,7 @@
 const $=selector=>document.querySelector(selector);
 const esc=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]));
 let creators=[];
+fetch("/api/auth/me").then(r=>r.json()).then(({user})=>document.querySelector("#creatorPanelLink")?.classList.toggle("hidden",user?.role!=="creator")).catch(()=>{});
 
 async function api(url,options={}){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);

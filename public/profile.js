@@ -52,12 +52,20 @@ function fillIdentity(){
   $("#gameAlias").value=state.user.gameAlias||"";
   $("#bio").value=state.user.bio||"";
   $("#email").value=state.user.email;
+  $("#profileTitle").value=state.user.selectedTitle||"SRO Rating User";
+  [...$("#profileTitle").options].forEach(option=>{
+    if(option.value==="Veteran")option.disabled=Number(state.user.accountAgeDays||0)<365;
+    if(option.value==="Elite")option.disabled=Number(state.profile?.stats?.review_count||0)<10;
+    if(option.value==="Game Master")option.disabled=state.user.role!=="owner";
+    if(option.value==="Creator")option.disabled=state.user.role!=="creator";
+  });
   $("#profileGreeting").textContent=`Merhaba, ${state.user.displayName}`;
 }
 
 function renderOwnerAccess(){
   const isOwner=state.user.role==="owner"||state.community.ownedServers.length>0;
   $("#ownerPanelLink").classList.toggle("hidden",!isOwner);
+  $("#creatorPanelLink").classList.toggle("hidden",state.user.role!=="creator");
 }
 
 function renderServers(query=""){
@@ -149,6 +157,7 @@ $("#profileForm").onsubmit=async event=>{
       displayName:$("#displayName").value,
       gameAlias:$("#gameAlias").value,
       bio:$("#bio").value,
+      selectedTitle:$("#profileTitle").value,
       playedServers
     }));
     show("Profil güncellendi.","good");
@@ -157,6 +166,11 @@ $("#profileForm").onsubmit=async event=>{
     show(error.message,"bad");
   }
 };
+
+const languageSelect=$("#languageSelect");
+languageSelect.value=localStorage.getItem("sro_locale")||"tr";
+document.documentElement.lang=languageSelect.value;
+languageSelect.onchange=()=>{localStorage.setItem("sro_locale",languageSelect.value);document.documentElement.lang=languageSelect.value};
 
 function syncVisiblePlayedRows(){
   document.querySelectorAll("[data-played-server]").forEach(row=>{

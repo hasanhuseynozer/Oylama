@@ -26,6 +26,7 @@ async function init(){
   applySettings();
   syncStickyHeaderOffset();
   renderAccount();
+  setupHomeNavigation();
   setupCalendar();
   setupDiscovery();
   await loadServers();
@@ -34,6 +35,31 @@ async function init(){
     history.replaceState(null,"",location.pathname);
     await openServer(requestedServer,false,requestedReview);
   }
+}
+
+function setupHomeNavigation(){
+  const routes={servers:"/",creators:"/yayinclar/?embed=1",giveaways:"/cekilisler/?embed=1",application:"/yayinci-basvuru/?embed=1"};
+  document.querySelectorAll("[data-home-view]").forEach(link=>link.addEventListener("click",event=>{
+    event.preventDefault();switchHomeView(link.dataset.homeView,routes[link.dataset.homeView]);
+  }));
+}
+
+function switchHomeView(view,url){
+  document.querySelectorAll("[data-home-view]").forEach(link=>link.classList.toggle("active",link.dataset.homeView===view));
+  const servers=view==="servers";
+  $("#serverView").classList.toggle("hidden",!servers);
+  $("#portalView").classList.toggle("hidden",servers);
+  if(servers){history.replaceState(null,"","/");return}
+  const frame=$("#portalFrame");
+  frame.onload=()=>{
+    try{
+      frame.contentDocument.body.classList.add("embedded-view");
+      frame.style.height=`${Math.max(720,frame.contentDocument.documentElement.scrollHeight)}px`;
+    }catch{}
+  };
+  if(frame.dataset.view!==view){frame.dataset.view=view;frame.src=url}
+  history.replaceState({view},"",`/?view=${view}`);
+  scrollTo({top:document.querySelector(".site-header").offsetHeight,behavior:"smooth"});
 }
 
 function syncStickyHeaderOffset(){
@@ -90,9 +116,8 @@ function renderAccount(){
       <img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span><i>⌄</i>
     </button>
     <div class="account-menu-panel hidden" role="menu">
-      <a class="account-menu-item" href="/yayinclar/" role="menuitem"><span>◉</span><span>Yayıncılar</span></a>
-      <a class="account-menu-item" href="/cekilisler/" role="menuitem"><span>✦</span><span>Çekilişler</span></a>
       <a class="account-menu-item" href="/profil/" role="menuitem"><span>👤</span><span>Profilim</span></a>
+      <label class="account-language"><span>◎</span><select aria-label="Dil"><option value="tr">Türkçe</option><option value="en">English</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="de">Deutsch</option><option value="nl">Nederlands</option><option value="vi">Tiếng Việt</option><option value="es">Español</option></select></label>
       <button class="account-menu-item notification-menu-item" type="button" data-notification-toggle role="menuitem"><span>🔔</span><span>Bildirimler</span><b></b></button>
       <button id="logoutBtn" class="account-menu-item account-menu-logout" type="button" role="menuitem"><span>↪</span><span>Çıkış Yap</span></button>
     </div>
@@ -105,6 +130,9 @@ function renderAccount(){
   document.addEventListener("click",event=>{if(!box.contains(event.target))closeMenu()});
   document.addEventListener("keydown",event=>{if(event.key==="Escape")closeMenu()});
   $("#logoutBtn").onclick=async()=>{await api("/api/auth/logout",{method:"POST"});location.reload()};
+  const locale=box.querySelector(".account-language select");
+  locale.value=localStorage.getItem("sro_locale")||"tr";
+  locale.onchange=()=>{localStorage.setItem("sro_locale",locale.value);document.documentElement.lang=locale.value};
 }
 
 function setupCalendar(){
@@ -115,7 +143,7 @@ function setupCalendar(){
   button.className="account-menu-item calendar-button";
   button.type="button";
   button.innerHTML="<span>📅</span><span>Sunucu Takvimi</span>";
-  panel.prepend(button);
+  panel.insertBefore(button,panel.querySelector(".notification-menu-item"));
   const dialog=document.createElement("dialog");
   dialog.className="calendar-dialog";
   dialog.innerHTML='<button class="close" type="button" aria-label="Kapat">×</button><p class="eyebrow">SUNUCU TAKVİMİ</p><h2>Beta ve Açılış Takvimi</h2><p class="panel-lead">Tarihler yerel saatinize göre gösterilir.</p><div class="calendar-events"></div>';

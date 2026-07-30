@@ -174,7 +174,9 @@ async function handleApi(request, env, url) {
     const password = String(body.password || "");
     const accountType = body.accountType === "owner" ? "owner" : "user";
     const discord = cleanText(body.discord).slice(0,80);
+    const contactEmail = normalizeEmail(body.contactEmail || user.email);
     const introduction = cleanText(body.introduction).slice(0,500);
+    const twitchUrl=cleanUrl(body.twitchUrl),kickUrl=cleanUrl(body.kickUrl),youtubeUrl=cleanUrl(body.youtubeUrl),tiktokUrl=cleanUrl(body.tiktokUrl);
 
     if (!isValidEmail(email)) return json({ error: "Geçerli bir e-posta adresi yazın." }, 400);
     if (displayName.length < 2 || displayName.length > 40) return json({ error: "Kullanıcı adı 2–40 karakter olmalıdır." }, 400);
@@ -277,13 +279,13 @@ async function handleApi(request, env, url) {
     const discord = cleanText(body.discord).slice(0,80);
     const introduction = cleanText(body.introduction).slice(0,500);
     if (user.account_role === "creator") return json({ error: "Hesabınız zaten yayıncı olarak onaylı." }, 409);
-    if (!discord || introduction.length < 20) return json({ error: "Discord adresi ve en az 20 karakterlik tanıtım gereklidir." }, 400);
+    if (!discord || !contactEmail || introduction.length < 20 || ![twitchUrl,kickUrl,youtubeUrl,tiktokUrl].some(Boolean)) return json({ error: "E-posta, Discord, en az bir yayın platformu ve en az 20 karakterlik tanıtım gereklidir." }, 400);
     if (hasProfanity(discord) || hasProfanity(introduction)) return json({ error: "Başvuru yasaklı ifade içeriyor." }, 400);
     const pending = await env.DB.prepare("SELECT id FROM role_applications WHERE user_id=? AND application_type='creator' AND status='pending'").bind(user.id).first();
     if (pending) return json({ error: "İncelenmekte olan bir yayıncı başvurunuz zaten var." }, 409);
     await env.DB.batch([
-      env.DB.prepare("INSERT INTO role_applications(user_id,application_type,discord,contact_email,introduction) VALUES(?,'creator',?,?,?)").bind(user.id,discord,user.email,introduction),
-      env.DB.prepare("INSERT OR IGNORE INTO creator_profiles(user_id,slug,headline,biography,discord,contact_email) VALUES(?,?,?,?,?,?)").bind(user.id,`yayin-${user.id}`,"Yeni yayıncı",introduction,discord,user.email)
+      env.DB.prepare("INSERT INTO role_applications(user_id,application_type,discord,contact_email,introduction,twitch_url,kick_url,youtube_url,tiktok_url) VALUES(?,'creator',?,?,?,?,?,?,?)").bind(user.id,discord,contactEmail,introduction,twitchUrl,kickUrl,youtubeUrl,tiktokUrl),
+      env.DB.prepare("INSERT OR IGNORE INTO creator_profiles(user_id,slug,headline,biography,discord,contact_email,twitch_url,kick_url,youtube_url,tiktok_url) VALUES(?,?,?,?,?,?,?,?,?,?)").bind(user.id,`yayin-${user.id}`,"Yeni yayıncı",introduction,discord,contactEmail,twitchUrl,kickUrl,youtubeUrl,tiktokUrl)
     ]);
     return json({ message: "Yayıncı başvurunuz yönetici incelemesine gönderildi." }, 201);
   }
@@ -299,9 +301,16 @@ async function handleApi(request, env, url) {
     const nameExists = await env.DB.prepare("SELECT id FROM users WHERE lower(display_name)=lower(?) AND id<>?").bind(displayName,user.id).first();
     if (nameExists) return json({ error: "Bu kullanıcı adı zaten kullanılıyor." }, 409);
     const gameAlias=cleanText(body.gameAlias).slice(0,40),bio=cleanText(body.bio).slice(0,240);
+    const availableTitles=["SRO Rating User","Veteran","Elite","Game Master","Creator"];
+    const selectedTitle=availableTitles.includes(body.selectedTitle)?body.selectedTitle:"SRO Rating User";
+    const reviewCount=await env.DB.prepare("SELECT COUNT(*) count FROM ratings WHERE user_id=?").bind(user.id).first();
+    if(selectedTitle==="Veteran"&&Number(user.account_age_days||0)<365)return json({error:"Veteran unvanı için en az bir yıllık üyelik gerekir."},403);
+    if(selectedTitle==="Elite"&&Number(reviewCount.count||0)<10)return json({error:"Elite unvanı için en az 10 değerlendirme gerekir."},403);
+    if(selectedTitle==="Game Master"&&user.account_role!=="owner")return json({error:"Bu unvan yalnızca sunucu sahipleri içindir."},403);
+    if(selectedTitle==="Creator"&&user.account_role!=="creator")return json({error:"Bu unvan yalnızca onaylı yayıncılar içindir."},403);
     if(hasProfanity(gameAlias)||hasProfanity(bio))return json({error:"Profil bilgileri yasaklı ifade içeriyor."},400);
-    await env.DB.prepare("UPDATE users SET display_name=?,game_alias=?,bio=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
-      .bind(displayName,gameAlias,bio,user.id).run();
+    await env.DB.prepare("UPDATE users SET display_name=?,game_alias=?,bio=?,selected_title=?,updated_at=CURRENT_TIMESTAMP WHERE id=?")
+      .bind(displayName,gameAlias,bio,selectedTitle,user.id).run();
     const playedServers=Array.isArray(body.playedServers)
       ? body.playedServers.slice(0,20).map(x=>({serverId:Number(x.serverId),characterName:cleanText(x.characterName).slice(0,40)})).filter(x=>Number.isInteger(x.serverId))
       : (Array.isArray(body.serverIds)?body.serverIds:[]).slice(0,20).map(serverId=>({serverId:Number(serverId),characterName:""})).filter(x=>Number.isInteger(x.serverId));
@@ -316,7 +325,7 @@ async function handleApi(request, env, url) {
 
   const publicProfile=path.match(/^\/api\/users\/(\d+)\/profile$/);
   if(method==="GET"&&publicProfile){
-    const userId=Number(publicProfile[1]),profile=await env.DB.prepare("SELECT id,display_name,account_role,game_alias,bio,created_at FROM users WHERE id=? AND status='active'").bind(userId).first();
+    const userId=Number(publicProfile[1]),profile=await env.DB.prepare("SELECT id,display_name,account_role,game_alias,bio,selected_title,created_at FROM users WHERE id=? AND status='active'").bind(userId).first();
     if(!profile)return json({error:"Kullanıcı bulunamadı."},404);
     const servers=await env.DB.prepare("SELECT s.id,s.name,p.character_name FROM user_playing_servers p JOIN servers s ON s.id=p.server_id WHERE p.user_id=? AND s.is_active=1 ORDER BY s.name").bind(userId).all();
     const stats=await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM reviews WHERE user_id=?) reviews,
@@ -364,8 +373,8 @@ async function handleApi(request, env, url) {
     if(!profile)return json({error:"Yayıncı profiliniz bulunmuyor veya başvurunuz tamamlanmadı."},403);
     const headline=cleanText(body.headline).slice(0,100),biography=cleanText(body.biography).slice(0,750);
     if(headline.length<3||biography.length<10||hasProfanity(headline)||hasProfanity(biography))return json({error:"Yayıncı bilgileri geçersiz."},400);
-    await env.DB.prepare(`UPDATE creator_profiles SET headline=?,biography=?,twitch_url=?,kick_url=?,youtube_url=?,discord=?,contact_email=?,language=?,collaboration_status=?,updated_at=CURRENT_TIMESTAMP WHERE user_id=?`)
-      .bind(headline,biography,cleanUrl(body.twitch_url),cleanUrl(body.kick_url),cleanUrl(body.youtube_url),cleanText(body.discord).slice(0,80),normalizeEmail(body.contact_email),cleanText(body.language).slice(0,10),body.collaboration_status==="closed"?"closed":"open",user.id).run();
+    await env.DB.prepare(`UPDATE creator_profiles SET headline=?,biography=?,twitch_url=?,kick_url=?,youtube_url=?,tiktok_url=?,discord=?,contact_email=?,language=?,collaboration_status=?,updated_at=CURRENT_TIMESTAMP WHERE user_id=?`)
+      .bind(headline,biography,cleanUrl(body.twitch_url),cleanUrl(body.kick_url),cleanUrl(body.youtube_url),cleanUrl(body.tiktok_url),cleanText(body.discord).slice(0,80),normalizeEmail(body.contact_email),cleanText(body.language).slice(0,10),body.collaboration_status==="closed"?"closed":"open",user.id).run();
     return json({message:"Yayıncı profiliniz güncellendi."});
   }
 
@@ -1066,7 +1075,8 @@ async function getCurrentUser(request, db) {
   const tokenHash = await sha256(token);
   const now = Math.floor(Date.now() / 1000);
   const user = await db.prepare(`
-    SELECT u.id,u.email,u.email_normalized,u.display_name,u.role,u.account_role,u.game_alias,u.bio,u.status
+    SELECT u.id,u.email,u.email_normalized,u.display_name,u.role,u.account_role,u.game_alias,u.bio,u.selected_title,u.status,
+      CAST(julianday('now')-julianday(u.created_at) AS INTEGER) account_age_days
     FROM user_sessions s JOIN users u ON u.id=s.user_id
     WHERE s.token_hash=? AND s.expires_at>? AND u.status='active'
   `).bind(tokenHash, now).first();
@@ -1091,7 +1101,7 @@ async function createUserSession(db, userId) {
 }
 
 function publicUser(user) {
-  return { id:user.id,email:user.email,displayName:user.display_name,role:user.account_role||user.role||"user",gameAlias:user.game_alias||"",bio:user.bio||"" };
+  return { id:user.id,email:user.email,displayName:user.display_name,role:user.account_role||user.role||"user",gameAlias:user.game_alias||"",bio:user.bio||"",selectedTitle:user.selected_title||"SRO Rating User",accountAgeDays:Number(user.account_age_days||0) };
 }
 
 async function hashPassword(password, saltHex, iterations=PBKDF2_ITERATIONS) {
