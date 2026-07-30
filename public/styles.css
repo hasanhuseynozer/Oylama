@@ -1035,6 +1035,7 @@ h1,h2,.profile-hero h1,.admin-hero h1,.panel>h2,.section-heading h3{font-family:
 
 /* Production design system */
 .portal-view{position:relative;transition:opacity .24s ease,transform .24s ease}.portal-view.is-loading{opacity:.55;transform:translateY(4px)}.portal-view.is-loading::after{content:"";position:absolute;inset:28px auto auto 50%;width:28px;height:28px;border:3px solid #31545a;border-top-color:#8ddbd2;border-radius:50%;animation:spin .7s linear infinite}
+.page-layout.hidden{display:none!important}
 .site-logo,.profile-brand-logo,.auth-logo,.admin-brand-logo,.footer-logo,.network-brand img{object-fit:contain;filter:drop-shadow(0 12px 24px rgba(0,0,0,.38))}
 .header-inner .site-logo{max-width:300px!important;height:128px!important}
 .sponsor-stack{grid-template-rows:repeat(2,280px)!important;height:auto!important;max-height:none!important;gap:18px!important;top:calc(var(--site-header-offset,172px) + 14px)!important}
