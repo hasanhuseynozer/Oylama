@@ -1,0 +1,6 @@
+deployment=fantasy-home-v4
+css=home-fantasy-v4.css
+js=home-fantasy-v4.js
+hud=enabled
+ads=fixed-rails
+date=2026-07-30T14:50:00+03:00
