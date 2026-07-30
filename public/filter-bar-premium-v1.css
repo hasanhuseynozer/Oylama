@@ -1,0 +1,292 @@
+/* Premium filter bar alignment and aqua 3D controls. Scoped to the homepage toolbar only. */
+body.home-clean .toolbar{
+  padding:8px 5px!important;
+  overflow:visible!important;
+}
+
+body.home-clean .toolbar .filters{
+  display:flex!important;
+  flex-flow:row nowrap!important;
+  align-items:flex-end!important;
+  justify-content:flex-start!important;
+  gap:0!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  overflow:visible!important;
+}
+
+body.home-clean .toolbar .filters>*{
+  box-sizing:border-box!important;
+  min-width:0!important;
+  margin-left:5px!important;
+  margin-right:5px!important;
+}
+
+body.home-clean .toolbar .filter-field{
+  display:grid!important;
+  grid-template-rows:12px 38px!important;
+  gap:4px!important;
+  flex:1 1 0!important;
+  width:auto!important;
+  min-width:0!important;
+  color:#10383b!important;
+  font-size:10px!important;
+  line-height:12px!important;
+  letter-spacing:.04em!important;
+  text-align:center!important;
+}
+
+body.home-clean .toolbar .filter-field:first-child{flex-grow:1.16!important}
+body.home-clean .toolbar .filter-field:nth-child(2){flex-grow:1.06!important}
+
+body.home-clean .toolbar .filter-field>span{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  height:12px!important;
+  line-height:12px!important;
+  overflow:hidden!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+}
+
+body.home-clean .toolbar .filters input[type='search'],
+body.home-clean .toolbar .filters select,
+body.home-clean .toolbar .filters button,
+body.home-clean .toolbar .new-filter{
+  box-sizing:border-box!important;
+  height:38px!important;
+  min-height:38px!important;
+  padding-left:5px!important;
+  padding-right:5px!important;
+  border:1px solid rgba(58,143,148,.5)!important;
+  border-radius:9px!important;
+  color:#0b3235!important;
+  background-color:rgba(238,255,253,.62)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.82),
+    inset 0 -1px 0 rgba(44,118,123,.14),
+    0 2px 0 rgba(64,135,139,.24),
+    0 5px 11px rgba(18,93,98,.1)!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  letter-spacing:.015em!important;
+  white-space:nowrap!important;
+  transition:
+    transform .2s cubic-bezier(.2,.8,.2,1),
+    box-shadow .2s ease,
+    border-color .2s ease,
+    background .2s ease,
+    filter .2s ease!important;
+}
+
+body.home-clean .toolbar .filters input[type='search']{
+  width:100%!important;
+  text-align:center!important;
+}
+body.home-clean .toolbar .filters input[type='search']::placeholder{
+  color:#436f71!important;
+  opacity:1!important;
+  text-align:center!important;
+}
+
+body.home-clean .toolbar .filters select{
+  width:100%!important;
+  padding:0 5px!important;
+  text-align:center!important;
+  text-align-last:center!important;
+  cursor:pointer!important;
+}
+body.home-clean .toolbar .filters select option{text-align:center!important}
+
+body.home-clean .toolbar .filters button,
+body.home-clean .toolbar .new-filter{
+  position:relative!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-self:flex-end!important;
+  overflow:hidden!important;
+  text-align:center!important;
+  cursor:pointer!important;
+  user-select:none!important;
+  isolation:isolate!important;
+}
+
+body.home-clean .toolbar .new-filter{
+  flex:0 0 112px!important;
+  width:112px!important;
+  gap:5px!important;
+}
+body.home-clean .toolbar .favorite-filter{
+  flex:0 0 105px!important;
+  width:105px!important;
+}
+body.home-clean .toolbar #clearFilters{
+  flex:0 0 72px!important;
+  width:72px!important;
+}
+
+/* Aqua 3D surface for the three action controls. */
+body.home-clean .toolbar .new-filter,
+body.home-clean .toolbar .favorite-filter,
+body.home-clean .toolbar #clearFilters{
+  border-color:rgba(38,141,147,.58)!important;
+  background:
+    linear-gradient(180deg,rgba(253,255,255,.92) 0%,rgba(207,246,243,.9) 48%,rgba(161,221,219,.88) 100%)!important;
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.9),
+    inset 0 -2px 0 rgba(40,128,133,.18),
+    0 3px 0 rgba(45,126,131,.42),
+    0 7px 13px rgba(18,92,97,.2)!important;
+  transform:translateY(0) perspective(160px) rotateX(0deg)!important;
+}
+
+body.home-clean .toolbar .new-filter::before,
+body.home-clean .toolbar .favorite-filter::before,
+body.home-clean .toolbar #clearFilters::before{
+  content:''!important;
+  position:absolute!important;
+  top:-35%!important;
+  bottom:-35%!important;
+  left:-70%!important;
+  z-index:-1!important;
+  width:34%!important;
+  pointer-events:none!important;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.78),transparent)!important;
+  transform:skewX(-18deg)!important;
+  transition:left .55s cubic-bezier(.2,.75,.25,1)!important;
+}
+
+body.home-clean .toolbar .new-filter:hover,
+body.home-clean .toolbar .favorite-filter:hover,
+body.home-clean .toolbar #clearFilters:hover{
+  border-color:rgba(24,173,181,.86)!important;
+  background:
+    linear-gradient(180deg,#fff 0%,#d8fffb 46%,#91e4e1 100%)!important;
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,1),
+    inset 0 -2px 0 rgba(25,133,140,.22),
+    0 5px 0 rgba(35,132,138,.48),
+    0 10px 20px rgba(24,153,160,.28),
+    0 0 14px rgba(96,247,240,.42)!important;
+  filter:saturate(1.08) brightness(1.03)!important;
+  transform:translateY(-2px) perspective(160px) rotateX(4deg)!important;
+}
+
+body.home-clean .toolbar .new-filter:hover::before,
+body.home-clean .toolbar .favorite-filter:hover::before,
+body.home-clean .toolbar #clearFilters:hover::before{left:138%!important}
+
+body.home-clean .toolbar .new-filter:active,
+body.home-clean .toolbar .favorite-filter:active,
+body.home-clean .toolbar #clearFilters:active{
+  box-shadow:
+    inset 0 3px 6px rgba(20,91,96,.24),
+    inset 0 1px 0 rgba(255,255,255,.65),
+    0 1px 0 rgba(37,112,117,.4),
+    0 3px 7px rgba(16,82,87,.18)!important;
+  transform:translateY(2px) perspective(160px) rotateX(-3deg) scale(.985)!important;
+}
+
+/* Clear active states for favourites and the new-only toggle. */
+body.home-clean .toolbar .favorite-filter.active,
+body.home-clean .toolbar .new-filter:has(#newOnly:checked){
+  color:#062d30!important;
+  border-color:#16b9bd!important;
+  background:
+    linear-gradient(180deg,#f9ffff 0%,#aef4ef 46%,#55ccc9 100%)!important;
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.95),
+    inset 0 -2px 0 rgba(5,120,126,.24),
+    0 3px 0 rgba(11,121,127,.56),
+    0 8px 17px rgba(14,156,163,.3),
+    0 0 15px rgba(71,255,246,.5)!important;
+}
+
+/* Compact toggle inside “Yalnızca Yeni”. */
+body.home-clean .toolbar #newOnly{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  flex:0 0 27px!important;
+  width:27px!important;
+  height:15px!important;
+  min-height:15px!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid rgba(26,112,117,.54)!important;
+  border-radius:999px!important;
+  background:
+    radial-gradient(circle at 7px 50%,#f8ffff 0 4px,transparent 4.7px),
+    linear-gradient(180deg,#7faeb0,#5d8f92)!important;
+  box-shadow:inset 0 2px 4px rgba(8,54,57,.3),0 1px 0 rgba(255,255,255,.72)!important;
+  cursor:pointer!important;
+  transition:background .2s ease,box-shadow .2s ease,filter .2s ease!important;
+}
+body.home-clean .toolbar #newOnly:checked{
+  background:
+    radial-gradient(circle at 19px 50%,#fff 0 4px,transparent 4.7px),
+    linear-gradient(180deg,#39ddd7,#0b9fa4)!important;
+  box-shadow:inset 0 2px 4px rgba(4,83,87,.28),0 0 9px rgba(48,239,232,.65)!important;
+}
+
+body.home-clean .toolbar .filters input[type='search']:focus,
+body.home-clean .toolbar .filters select:focus,
+body.home-clean .toolbar .filters button:focus-visible,
+body.home-clean .toolbar #newOnly:focus-visible{
+  outline:2px solid rgba(13,159,166,.55)!important;
+  outline-offset:2px!important;
+  border-color:#159da3!important;
+}
+
+@media(max-width:1180px) and (min-width:901px){
+  body.home-clean .toolbar .new-filter{flex-basis:106px!important;width:106px!important}
+  body.home-clean .toolbar .favorite-filter{flex-basis:99px!important;width:99px!important}
+  body.home-clean .toolbar #clearFilters{flex-basis:68px!important;width:68px!important}
+  body.home-clean .toolbar .filters input[type='search'],
+  body.home-clean .toolbar .filters select,
+  body.home-clean .toolbar .filters button,
+  body.home-clean .toolbar .new-filter{font-size:9px!important}
+}
+
+@media(max-width:900px){
+  body.home-clean .toolbar .filters{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    align-items:stretch!important;
+    gap:10px!important;
+  }
+  body.home-clean .toolbar .filters>*{
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+  }
+  body.home-clean .toolbar .filter-field,
+  body.home-clean .toolbar .filter-field:first-child,
+  body.home-clean .toolbar .filter-field:nth-child(2),
+  body.home-clean .toolbar .new-filter,
+  body.home-clean .toolbar .favorite-filter,
+  body.home-clean .toolbar #clearFilters{
+    flex:none!important;
+    width:100%!important;
+  }
+  body.home-clean .toolbar .filter-field:first-child{grid-column:1/-1!important}
+}
+
+@media(max-width:520px){
+  body.home-clean .toolbar .filters{grid-template-columns:1fr!important}
+  body.home-clean .toolbar .filter-field:first-child{grid-column:auto!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.home-clean .toolbar .filters input,
+  body.home-clean .toolbar .filters select,
+  body.home-clean .toolbar .filters button,
+  body.home-clean .toolbar .new-filter,
+  body.home-clean .toolbar .new-filter::before,
+  body.home-clean .toolbar .favorite-filter::before,
+  body.home-clean .toolbar #clearFilters::before{transition:none!important}
+}
