@@ -1,0 +1,69 @@
+/* Canonical side-ad geometry: four identical, centered boxes. */
+@media (min-width:1181px){
+  body.home-clean .page-layout{
+    grid-template-columns:150px minmax(0,1fr) 150px!important;
+    column-gap:16px!important;
+    align-items:start!important;
+    padding-top:18px!important;
+  }
+
+  body.home-clean .sponsor-stack{
+    position:static!important;
+    box-sizing:border-box!important;
+    display:grid!important;
+    grid-template-rows:300px 300px!important;
+    align-content:start!important;
+    align-items:center!important;
+    justify-content:center!important;
+    justify-items:center!important;
+    width:150px!important;
+    height:646px!important;
+    gap:16px!important;
+    margin:0!important;
+    padding:15px!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    transform:none!important;
+  }
+
+  body.home-clean .sponsor-stack-left{justify-self:start!important}
+  body.home-clean .sponsor-stack-right{justify-self:end!important}
+
+  body.home-clean .sponsor-stack .sponsor-rail,
+  body.home-clean .sponsor-stack .sponsor-rail:first-child,
+  body.home-clean .sponsor-stack .sponsor-placeholder{
+    box-sizing:border-box!important;
+    display:grid!important;
+    place-items:center!important;
+    align-self:center!important;
+    justify-self:center!important;
+    width:120px!important;
+    min-width:120px!important;
+    max-width:120px!important;
+    height:300px!important;
+    min-height:300px!important;
+    max-height:300px!important;
+    margin:0!important;
+    padding:10px!important;
+    writing-mode:vertical-rl!important;
+    text-orientation:mixed!important;
+    text-align:center!important;
+    transform:none!important;
+  }
+
+  body.home-clean .sponsor-stack .sponsor-rail:hover{
+    transform:none!important;
+  }
+
+  body.home-clean .sponsor-stack .sponsor-rail::before,
+  body.home-clean .sponsor-stack .sponsor-rail::after{
+    display:none!important;
+    content:none!important;
+  }
+}
+
+@media (max-width:1180px){
+  body.home-clean .sponsor-stack{display:none!important}
+}
