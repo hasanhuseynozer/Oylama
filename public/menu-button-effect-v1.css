@@ -120,12 +120,19 @@ body.home-clean .header-side .account-menu-trigger{
 }
 body.home-clean .header-side .header-language{
   box-sizing:border-box!important;
-  width:calc(100% - 50px)!important;
+  width:calc(100% - 75px)!important;
   max-width:none!important;
   justify-self:center!important;
 }
 body.home-clean .header-side .language-trigger{
   width:100%!important;
+  grid-template-columns:24px minmax(0,1fr) 12px!important;
+}
+body.home-clean .header-side .language-trigger>span:first-child{
+  font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif!important;
+  font-size:16px!important;
+  line-height:1!important;
+  color:inherit!important;
 }
 
 /* The profile button grows only to the right and always stays inside its layout area. */
