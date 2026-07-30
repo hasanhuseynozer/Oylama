@@ -27,9 +27,9 @@ body.home-page {
 
 .home-page .header-inner {
   width: min(1872px, calc(100% - 32px));
-  min-height: 138px !important;
+  min-height: 138px;
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) 220px !important;
+  grid-template-columns: 220px minmax(0, 1fr) 220px;
   align-items: center;
   gap: 16px;
   padding: 8px 0;
@@ -41,8 +41,8 @@ body.home-page {
 }
 
 .home-page .header-inner .site-logo {
-  width: 176px !important;
-  height: 112px !important;
+  width: 176px;
+  height: 112px;
   max-width: 100%;
   max-height: none;
   object-fit: contain;
@@ -102,9 +102,9 @@ body.home-page {
   position: relative;
   inset: auto;
   width: 100%;
-  height: 80px !important;
-  min-height: 80px !important;
-  margin: 0 !important;
+  height: 80px;
+  min-height: 80px;
+  margin: 0;
   overflow: hidden;
   border: 1px solid var(--home-line-strong);
   border-radius: 12px;
@@ -183,8 +183,8 @@ body.home-page {
   width: min(1920px, 100%);
   max-width: none;
   display: grid;
-  grid-template-columns: 124px minmax(0, 1fr) 124px !important;
-  align-items: start !important;
+  grid-template-columns: 124px minmax(0, 1fr) 124px;
+  align-items: start;
   gap: 16px;
   margin: 0 auto;
   padding: 16px 20px 30px;
@@ -214,12 +214,12 @@ body.home-page {
 }
 
 .home-page .sponsor-stack .sponsor-rail {
-  position: relative !important;
-  inset: auto !important;
+  position: relative;
+  inset: auto;
   width: 124px;
-  height: 250px !important;
-  min-height: 250px !important;
-  max-height: 250px !important;
+  height: 250px;
+  min-height: 250px;
+  max-height: 250px;
   margin: 0;
   display: flex;
   align-items: center;
@@ -256,9 +256,9 @@ body.home-page {
   inset: auto;
   z-index: auto;
   min-height: 70px;
-  display: block !important;
-  margin: 0 0 14px !important;
-  padding: 9px 10px !important;
+  display: block;
+  margin: 0 0 14px;
+  padding: 9px 10px;
   overflow: visible;
   border: 1px solid var(--home-line);
   border-radius: 13px;
@@ -273,7 +273,7 @@ body.home-page {
 .home-page .filters {
   width: 100%;
   max-width: none;
-  display: flex !important;
+  display: flex;
   align-items: flex-end;
   gap: 8px;
   margin: 0;
@@ -370,7 +370,7 @@ body.home-page {
 
 .home-page .server-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
   gap: 16px;
   padding: 0 0 24px;
@@ -387,7 +387,7 @@ body.home-page {
   isolation: isolate;
   width: 100%;
   min-width: 0;
-  min-height: 398px !important;
+  min-height: 398px;
   height: 100%;
   padding: 0;
   overflow: visible;
@@ -454,8 +454,8 @@ body.home-page {
 
 .home-page .server-cover {
   position: relative;
-  height: 138px !important;
-  min-height: 138px !important;
+  height: 138px;
+  min-height: 138px;
   overflow: hidden;
   border-bottom: 1px solid #29464c;
   border-radius: 15px 15px 0 0;
@@ -492,8 +492,8 @@ body.home-page {
   background-color: #08171c;
   background-image: linear-gradient(180deg, rgba(4, 14, 17, .28), rgba(4, 14, 17, .7)), url("/sro-rating-logo.png");
   background-repeat: no-repeat;
-  background-position: center !important;
-  background-size: cover, 72% !important;
+  background-position: center;
+  background-size: cover, 72%;
 }
 
 .home-page .server-cover-placeholder::before { display: none; }
@@ -514,7 +514,7 @@ body.home-page {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 16px !important;
+  padding: 16px;
   transform: translateZ(8px);
 }
 
@@ -552,10 +552,10 @@ body.home-page {
   min-height: 25px;
   max-height: 50px;
   display: -webkit-box;
-  margin: 0 0 9px !important;
+  margin: 0 0 9px;
   overflow: hidden;
   color: #edf6f4;
-  font: 700 20px/1.25 Marcellus, serif !important;
+  font: 700 20px/1.25 Marcellus, serif;
   letter-spacing: .01em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -773,12 +773,12 @@ body.home-page {
 
 @media (max-width: 1599px) {
   .home-page .header-inner {
-    grid-template-columns: 190px minmax(0, 1fr) 210px !important;
+    grid-template-columns: 190px minmax(0, 1fr) 210px;
   }
 
   .home-page .header-inner .site-logo {
-    width: 175px !important;
-    height: 100px !important;
+    width: 175px;
+    height: 100px;
   }
 
   .home-page .header-inner > .account-actions,
@@ -787,13 +787,13 @@ body.home-page {
   }
 
   .home-page .page-layout {
-    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr);
     padding-inline: 22px;
   }
 
   .home-page .page-layout > .content { grid-column: 1; }
-  .home-page .sponsor-stack { display: none !important; }
-  .home-page .server-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .home-page .sponsor-stack { display: none; }
+  .home-page .server-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .home-page .filters { flex-wrap: wrap; }
   .home-page .filter-field { flex: 1 1 118px; }
   .home-page .filter-field:has(#searchInput) { flex: 2 1 260px; }
@@ -801,26 +801,26 @@ body.home-page {
 
 @media (max-width: 1199px) {
   .home-page .header-inner {
-    grid-template-columns: 170px minmax(0, 1fr) !important;
+    grid-template-columns: 170px minmax(0, 1fr);
     align-items: start;
   }
 
   .home-page .header-inner .site-logo {
-    width: 158px !important;
-    height: 90px !important;
+    width: 158px;
+    height: 90px;
   }
 
   .home-page .header-inner > .brand { grid-column: 1; grid-row: 1; align-self: center; }
   .home-page .header-center { grid-column: 2; grid-row: 1; }
   .home-page .header-inner > .account-actions { grid-column: 1; grid-row: 2; }
   .home-page .home-language { grid-column: 2; grid-row: 2; justify-self: end; }
-  .home-page .server-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .home-page .server-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 767px) {
   .home-page .header-inner {
     width: calc(100% - 24px);
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr;
     gap: 9px;
     padding: 10px 0;
   }
@@ -836,11 +836,11 @@ body.home-page {
   }
 
   .home-page .header-inner > .brand { justify-self: center; }
-  .home-page .header-inner .site-logo { width: 190px !important; height: 82px !important; object-position: center; }
+  .home-page .header-inner .site-logo { width: 190px; height: 82px; object-position: center; }
   .home-page .header-center { grid-template-rows: auto 72px; }
   .home-page .main-navigation { overflow-x: auto; }
   .home-page .main-navigation a { min-width: max-content; flex: 1 0 auto; padding-inline: 12px; }
-  .home-page .header-center > .banner { height: 72px !important; min-height: 72px !important; }
+  .home-page .header-center > .banner { height: 72px; min-height: 72px; }
 
   .home-page .account-menu-trigger,
   .home-page .account-actions > .outline,
@@ -850,7 +850,7 @@ body.home-page {
   }
 
   .home-page .page-layout { padding: 12px; }
-  .home-page .filters { display: grid !important; grid-template-columns: 1fr 1fr !important; align-items: end; }
+  .home-page .filters { display: grid; grid-template-columns: 1fr 1fr; align-items: end; }
   .home-page .filter-field,
   .home-page .filter-field:has(#searchInput),
   .home-page .filter-field:has(#sortSelect),
@@ -858,8 +858,8 @@ body.home-page {
   .home-page .filter-field:has(#searchInput) { grid-column: 1 / -1; }
   .home-page .filters > .new-filter,
   .home-page .filters > button { width: 100%; min-width: 0; }
-  .home-page .server-grid { grid-template-columns: 1fr !important; gap: 14px; }
-  .home-page .server-card { min-height: 386px !important; }
+  .home-page .server-grid { grid-template-columns: 1fr; gap: 14px; }
+  .home-page .server-card { min-height: 386px; }
   .home-page .footer-inner { width: calc(100% - 24px); grid-template-columns: 1fr; }
   .home-page .footer-box { border-top: 1px solid #29464c; border-left: 0; }
 }
