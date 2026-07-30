@@ -42,6 +42,8 @@ function setupHomeNavigation(){
   document.querySelectorAll("[data-home-view]").forEach(link=>link.addEventListener("click",event=>{
     event.preventDefault();switchHomeView(link.dataset.homeView,routes[link.dataset.homeView]);
   }));
+  const initialView=new URLSearchParams(location.search).get("view");
+  if(routes[initialView]&&initialView!=="servers")switchHomeView(initialView,routes[initialView]);
 }
 
 function switchHomeView(view,url){
