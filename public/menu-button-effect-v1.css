@@ -134,11 +134,11 @@ body.home-clean .header-side .language-trigger{
   width:100%!important;
 }
 
-/* Widen only the logged-in profile button by 10px and keep it centered. */
+/* Profile button is now 25px wider in total and remains centered. */
 @media (min-width:1181px){
   body.home-clean .header-side .account-menu-trigger{
-    width:calc(100% + 10px)!important;
-    margin-left:-5px!important;
+    width:calc(100% + 25px)!important;
+    margin-left:-12.5px!important;
     justify-self:center!important;
   }
 }
