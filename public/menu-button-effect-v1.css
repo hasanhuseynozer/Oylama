@@ -1,4 +1,17 @@
 /* Aqua adaptation of the requested btn-96 effect for homepage navigation. */
+body.home-clean .main-navigation{
+  border:0!important;
+  border-radius:0!important;
+  padding:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+body.home-clean .main-navigation::after{
+  display:none!important;
+  content:none!important;
+}
+
 body.home-clean .main-navigation a{
   position:relative!important;
   isolation:isolate!important;
@@ -64,9 +77,9 @@ body.home-clean .main-navigation a:active{
   transition:box-shadow .2s ease-in,transform .08s ease-in!important;
 }
 
-/* Header logo alignment */
+/* Header logo alignment: previous 18px + requested additional 50px. */
 body.home-clean .site-header .header-inner > .brand{
-  transform:translateX(18px)!important;
+  transform:translateX(68px)!important;
 }
 
 @keyframes sro-menu-shine-96{
