@@ -20,11 +20,11 @@
   <style>html{background:#071014}body.app-loading{opacity:0}body{transition:opacity .16s ease}</style>
   <link rel="stylesheet" href="/styles.css?v=20260730-3">
   <link rel="stylesheet" href="/home-fantasy-v4.css?v=20260730-1439">
-  <link rel="stylesheet" href="/home-fantasy-v4-hud.css?v=20260730-1445">
+  <link rel="stylesheet" href="/home-layout-v5.css?v=20260730-1818">
   <style>
     body.home-clean{--fx-gold-bright:#ffe38c}
-    body.home-clean.fx-view-transition #serverView,body.home-clean.fx-view-transition #portalView{animation:fx-view-flash .62s cubic-bezier(.2,.8,.2,1) both}
-    @keyframes fx-view-flash{0%{opacity:.2;transform:translateY(16px) scale(.992);filter:blur(5px)}55%{opacity:1;transform:translateY(-2px) scale(1.002);filter:blur(0)}100%{opacity:1;transform:none;filter:none}}
+    body.home-clean.fx-view-transition #serversPanel,body.home-clean.fx-view-transition #portalView{animation:fx-view-flash .48s cubic-bezier(.2,.8,.2,1) both}
+    @keyframes fx-view-flash{0%{opacity:.25;transform:translateY(10px) scale(.995);filter:blur(3px)}65%{opacity:1;transform:translateY(-1px);filter:blur(0)}100%{opacity:1;transform:none;filter:none}}
   </style>
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
@@ -49,12 +49,29 @@
           <a class="outline" href="/giris/">Giriş Yap</a>
           <a class="primary" href="/kayit/">Kayıt Ol</a>
         </div>
-        <label class="header-language" aria-label="Dil seçimi">
-          <span aria-hidden="true">◎</span>
-          <select id="pageLanguage" aria-label="Dil">
-            <option value="tr">Türkçe</option><option value="en">English</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="de">Deutsch</option><option value="fr">Français</option><option value="es">Español</option><option value="pt">Português</option><option value="it">Italiano</option><option value="vi">Tiếng Việt</option><option value="pl">Polski</option><option value="fa">فارسی</option><option value="zh-CN">简体中文</option><option value="zh-TW">繁體中文</option><option value="ja">日本語</option><option value="ko">한국어</option>
-          </select>
-        </label>
+        <div id="headerLanguage" class="header-language">
+          <button id="languageTrigger" class="language-trigger" type="button" aria-haspopup="menu" aria-expanded="false">
+            <span aria-hidden="true">◎</span><span id="languageLabel">Türkçe</span><i aria-hidden="true">⌄</i>
+          </button>
+          <div id="languageMenu" class="language-menu hidden" role="menu" aria-label="Dil seçimi">
+            <button type="button" role="menuitemradio" data-locale="tr">Türkçe</button>
+            <button type="button" role="menuitemradio" data-locale="en">English</button>
+            <button type="button" role="menuitemradio" data-locale="ar">العربية</button>
+            <button type="button" role="menuitemradio" data-locale="ru">Русский</button>
+            <button type="button" role="menuitemradio" data-locale="de">Deutsch</button>
+            <button type="button" role="menuitemradio" data-locale="fr">Français</button>
+            <button type="button" role="menuitemradio" data-locale="es">Español</button>
+            <button type="button" role="menuitemradio" data-locale="pt">Português</button>
+            <button type="button" role="menuitemradio" data-locale="it">Italiano</button>
+            <button type="button" role="menuitemradio" data-locale="vi">Tiếng Việt</button>
+            <button type="button" role="menuitemradio" data-locale="pl">Polski</button>
+            <button type="button" role="menuitemradio" data-locale="fa">فارسی</button>
+            <button type="button" role="menuitemradio" data-locale="zh-CN">简体中文</button>
+            <button type="button" role="menuitemradio" data-locale="zh-TW">繁體中文</button>
+            <button type="button" role="menuitemradio" data-locale="ja">日本語</button>
+            <button type="button" role="menuitemradio" data-locale="ko">한국어</button>
+          </div>
+        </div>
       </div>
     </div>
   </header>
@@ -65,11 +82,7 @@
       <a class="sponsor-rail sponsor-placeholder" href="#" rel="nofollow">Reklam alanı</a>
     </aside>
     <main class="content">
-      <div class="toolbar">
-        <div class="toolbar-heading">
-          <div><p class="eyebrow">SRO RATING</p><h1>Sunucu Değerlendirmeleri</h1></div>
-          <div id="fxLiveHud" class="fx-live-hud" aria-live="polite"></div>
-        </div>
+      <div class="toolbar" aria-label="Sunucu filtreleri">
         <div class="filters">
           <input id="searchInput" type="search" placeholder="Sunucu ara…">
           <select id="sortSelect" aria-label="Sıralama"><option value="rating">En yüksek puan</option><option value="comments">En çok yorum alan</option><option value="newest">Yeni açılanlar</option></select>
@@ -113,7 +126,7 @@
   <script src="/i18n.js?v=1" defer></script>
   <script src="/app.js?v=20260730-2" defer></script>
   <script src="/home-fantasy-v4.js?v=20260730-1445" defer></script>
-  <script src="/home-fantasy-v4-hud.js?v=20260730-1447" defer></script>
+  <script src="/home-layout-v5.js?v=20260730-1818" defer></script>
   <script src="/notification-popover.js?v=20260728-5" defer></script>
 </body>
 </html>
