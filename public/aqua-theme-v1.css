@@ -1,0 +1,220 @@
+/* SRO Rating — aqua-focused visual layer with lightweight button motion. */
+body.home-clean{
+  --fx-bg:#01090d;
+  --fx-bg-2:#03161c;
+  --fx-panel:rgba(4,26,32,.94);
+  --fx-panel-2:rgba(7,39,47,.96);
+  --fx-line:rgba(91,237,222,.30);
+  --fx-line-strong:rgba(151,255,244,.78);
+  --fx-text:#effffc;
+  --fx-muted:#92bdb8;
+  --fx-teal:#64eadc;
+  --fx-teal-bright:#c8fff8;
+  --fx-gold:#65eadc;
+  --fx-gold-bright:#d5fffa;
+  --aqua:#68eadf;
+  --aqua-bright:#c7fff8;
+  --aqua-deep:#087f82;
+  --aqua-rgb:104,234,223;
+  background:
+    radial-gradient(circle at var(--cursor-x) var(--cursor-y),rgba(100,234,220,.10),transparent 24%),
+    radial-gradient(circle at 10% 4%,rgba(27,191,190,.25),transparent 30%),
+    radial-gradient(circle at 90% 3%,rgba(36,139,181,.19),transparent 28%),
+    linear-gradient(180deg,#04161b 0%,#020b10 52%,#010609 100%)!important;
+}
+
+body.home-clean::before{
+  background-image:
+    linear-gradient(rgba(105,240,225,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(105,240,225,.045) 1px,transparent 1px),
+    radial-gradient(circle at 50% 50%,rgba(142,255,245,.10) 0 1px,transparent 1.7px)!important;
+}
+body.home-clean::after{
+  background:
+    radial-gradient(ellipse at 50% 0%,transparent 18%,rgba(0,0,0,.48) 84%),
+    linear-gradient(112deg,transparent 36%,rgba(92,235,222,.055) 48%,transparent 59%)!important;
+}
+
+body.home-clean .site-header{
+  border-bottom-color:rgba(var(--aqua-rgb),.30)!important;
+  background:linear-gradient(180deg,rgba(2,18,23,.98),rgba(2,11,15,.96))!important;
+  box-shadow:0 22px 70px rgba(0,0,0,.42),inset 0 -1px rgba(var(--aqua-rgb),.08)!important;
+}
+body.home-clean .main-navigation,
+body.home-clean .header-language,
+body.home-clean .account-menu-trigger,
+body.home-clean .toolbar,
+body.home-clean .sponsor-stack,
+body.home-clean .site-footer,
+body.home-clean dialog{
+  border-color:rgba(var(--aqua-rgb),.30)!important;
+  background:linear-gradient(145deg,rgba(5,34,41,.97),rgba(2,17,22,.98))!important;
+  box-shadow:0 18px 44px rgba(0,0,0,.32),inset 0 1px rgba(208,255,249,.045)!important;
+}
+body.home-clean .banner{
+  border-color:rgba(130,255,243,.48)!important;
+  color:var(--aqua-bright)!important;
+  background-image:
+    radial-gradient(circle at var(--hero-x) var(--hero-y),rgba(118,255,242,.30),transparent 22%),
+    radial-gradient(circle at 18% 66%,rgba(31,190,204,.20),transparent 28%),
+    linear-gradient(105deg,rgba(3,35,42,.98),rgba(7,29,42,.98) 50%,rgba(8,44,54,.97))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.08),0 18px 44px rgba(0,0,0,.34),0 0 30px rgba(var(--aqua-rgb),.12)!important;
+}
+body.home-clean .banner:hover{
+  border-color:rgba(198,255,249,.82)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.12),0 25px 58px rgba(0,0,0,.40),0 0 46px rgba(var(--aqua-rgb),.22)!important;
+}
+body.home-clean .fx-hero-copy small,
+body.home-clean .fx-hero-copy strong,
+body.home-clean .fx-hero-copy span{
+  color:var(--aqua-bright)!important;
+  text-shadow:0 0 20px rgba(var(--aqua-rgb),.32)!important;
+}
+
+body.home-clean .toolbar::before{
+  background:radial-gradient(520px circle at var(--filter-x,50%) var(--filter-y,0%),rgba(var(--aqua-rgb),.15),transparent 47%)!important;
+}
+body.home-clean .filters input[type="search"],
+body.home-clean .filters select,
+body.home-clean .filters button,
+body.home-clean .new-filter,
+body.home-clean .language-trigger,
+body.home-clean .language-menu button,
+body.home-clean dialog input,
+body.home-clean dialog select,
+body.home-clean dialog textarea{
+  border-color:rgba(var(--aqua-rgb),.32)!important;
+  background:rgba(2,24,29,.90)!important;
+  color:#effffc!important;
+}
+body.home-clean .filters input:focus,
+body.home-clean .filters select:focus,
+body.home-clean dialog input:focus,
+body.home-clean dialog select:focus,
+body.home-clean dialog textarea:focus{
+  border-color:rgba(179,255,247,.86)!important;
+  box-shadow:0 0 0 3px rgba(var(--aqua-rgb),.13),0 0 22px rgba(var(--aqua-rgb),.13)!important;
+  background:#06323a!important;
+}
+
+body.home-clean .server-card:not([data-global-rank]){
+  border-color:rgba(var(--aqua-rgb),.28)!important;
+  background:linear-gradient(155deg,#082b32,#041a20 65%,#031217)!important;
+  box-shadow:0 22px 48px rgba(0,0,0,.39),inset 0 1px rgba(255,255,255,.04),0 0 18px rgba(var(--aqua-rgb),.035)!important;
+}
+body.home-clean .server-card:not([data-global-rank]):hover{
+  border-color:rgba(156,255,244,.75)!important;
+  box-shadow:0 36px 78px rgba(0,0,0,.52),0 0 40px rgba(var(--aqua-rgb),.16),inset 0 1px rgba(255,255,255,.07)!important;
+}
+body.home-clean .server-card-body{
+  background:linear-gradient(155deg,#082a31,#041a20 65%,#031217)!important;
+}
+body.home-clean .server-badges span{
+  border-color:rgba(var(--aqua-rgb),.36)!important;
+  background:#073139!important;
+  color:#d7fffa!important;
+}
+body.home-clean .server-card h2,
+body.home-clean .score,
+body.home-clean .stars,
+body.home-clean .toolbar .eyebrow,
+body.home-clean .footer-box strong{
+  color:var(--aqua-bright)!important;
+  text-shadow:0 0 18px rgba(var(--aqua-rgb),.22)!important;
+}
+body.home-clean .score-row{border-top-color:rgba(var(--aqua-rgb),.22)!important}
+
+/* Aqua buttons */
+body.home-clean .primary,
+body.home-clean button.primary,
+body.home-clean a.primary,
+body.home-clean .main-navigation a.active{
+  color:#021517!important;
+  border-color:rgba(207,255,250,.72)!important;
+  background:linear-gradient(135deg,#42cfc3 0%,#8ff5e9 52%,#c4fff8 100%)!important;
+  box-shadow:0 12px 28px rgba(43,207,194,.25),inset 0 1px rgba(255,255,255,.72)!important;
+}
+body.home-clean .outline,
+body.home-clean button.outline,
+body.home-clean a.outline,
+body.home-clean .tiny,
+body.home-clean .detail-tabs button,
+body.home-clean .account-menu-item{
+  border-color:rgba(var(--aqua-rgb),.36)!important;
+  color:#d8fffb!important;
+  background:linear-gradient(180deg,rgba(9,54,62,.94),rgba(3,28,34,.96))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.045),0 8px 20px rgba(0,0,0,.18)!important;
+}
+
+/* Lightweight button animations: transform/opacity only, no heavy filters. */
+body.home-clean button,
+body.home-clean a.primary,
+body.home-clean a.outline,
+body.home-clean .main-navigation a,
+body.home-clean .language-trigger,
+body.home-clean .account-menu-trigger,
+body.home-clean .account-menu-item{
+  transform:translateZ(0);
+  transition:transform .20s cubic-bezier(.2,.8,.2,1),border-color .20s ease,background .20s ease,box-shadow .20s ease,color .20s ease!important;
+  will-change:transform;
+}
+body.home-clean button:hover,
+body.home-clean a.primary:hover,
+body.home-clean a.outline:hover,
+body.home-clean .main-navigation a:hover,
+body.home-clean .language-trigger:hover,
+body.home-clean .account-menu-trigger:hover,
+body.home-clean .account-menu-item:hover{
+  transform:translateY(-2px) scale(1.018)!important;
+  border-color:rgba(195,255,248,.86)!important;
+  box-shadow:0 15px 32px rgba(21,184,177,.24),0 0 24px rgba(var(--aqua-rgb),.13),inset 0 1px rgba(255,255,255,.10)!important;
+}
+body.home-clean button:active,
+body.home-clean a.primary:active,
+body.home-clean a.outline:active,
+body.home-clean .main-navigation a:active,
+body.home-clean .language-trigger:active,
+body.home-clean .account-menu-trigger:active,
+body.home-clean .account-menu-item:active{
+  transform:translateY(1px) scale(.965)!important;
+  transition-duration:.08s!important;
+}
+body.home-clean button:focus-visible,
+body.home-clean a:focus-visible{
+  outline:0!important;
+  box-shadow:0 0 0 3px rgba(5,17,20,.95),0 0 0 5px rgba(145,255,244,.72),0 0 24px rgba(var(--aqua-rgb),.24)!important;
+}
+
+/* A soft aqua shine when CTA buttons are hovered. */
+body.home-clean .primary:hover,
+body.home-clean .card-actions .primary:hover{
+  animation:aqua-button-breathe 1.15s ease-in-out infinite alternate!important;
+}
+body.home-clean .favorite-button:hover,
+body.home-clean .rating-buttons button:hover,
+body.home-clean .inline-rating button:hover,
+body.home-clean .close:hover{
+  color:#d8fffa!important;
+  background:#0a4b53!important;
+  box-shadow:0 0 20px rgba(var(--aqua-rgb),.25)!important;
+}
+
+body.home-clean .site-footer{
+  border-top:1px solid rgba(var(--aqua-rgb),.26)!important;
+  background:linear-gradient(180deg,rgba(3,23,29,.97),rgba(1,11,15,.99))!important;
+}
+body.home-clean .sponsor-slot{
+  border-color:rgba(var(--aqua-rgb),.25)!important;
+  background:linear-gradient(180deg,rgba(7,39,45,.82),rgba(3,23,28,.92))!important;
+}
+
+@keyframes aqua-button-breathe{
+  from{box-shadow:0 12px 28px rgba(43,207,194,.24),0 0 0 rgba(var(--aqua-rgb),0),inset 0 1px rgba(255,255,255,.70)}
+  to{box-shadow:0 16px 34px rgba(43,207,194,.34),0 0 26px rgba(var(--aqua-rgb),.22),inset 0 1px rgba(255,255,255,.88)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.home-clean button,
+  body.home-clean a,
+  body.home-clean .primary{animation:none!important;transition:none!important}
+}
