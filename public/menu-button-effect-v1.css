@@ -1,0 +1,75 @@
+/* Aqua adaptation of the requested btn-96 effect for homepage navigation. */
+body.home-clean .main-navigation a{
+  position:relative!important;
+  isolation:isolate!important;
+  overflow:hidden!important;
+  border:1px solid rgba(104,234,223,.42)!important;
+  border-radius:8px!important;
+  background:transparent!important;
+  color:#dffffb!important;
+  text-transform:uppercase!important;
+  font-weight:700!important;
+  letter-spacing:1.5px!important;
+  box-shadow:0 0 0 0 transparent!important;
+  cursor:pointer!important;
+  user-select:none!important;
+  transition:color .2s ease-in,background .2s ease-in,box-shadow .2s ease-in,transform .2s ease-in,border-color .2s ease-in!important;
+}
+
+body.home-clean .main-navigation a::before{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  z-index:2!important;
+  top:0!important;
+  left:0!important;
+  width:10px!important;
+  height:100%!important;
+  opacity:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:#fff!important;
+  box-shadow:0 0 50px 30px #fff!important;
+  transform:skewX(-20deg)!important;
+  pointer-events:none!important;
+}
+
+body.home-clean .main-navigation a:hover{
+  color:#021416!important;
+  background:linear-gradient(135deg,#45d7cb,#91f8ed 56%,#cafff9)!important;
+  border-color:#aafff6!important;
+  box-shadow:0 0 30px 5px rgba(63,238,225,.52),inset 0 1px rgba(255,255,255,.68)!important;
+  transform:translateY(-1px) scale(1.012)!important;
+  text-shadow:none!important;
+}
+
+body.home-clean .main-navigation a:hover::before{
+  animation:sro-menu-shine-96 .5s linear!important;
+}
+
+body.home-clean .main-navigation a.active{
+  color:#021416!important;
+  background:linear-gradient(135deg,#45d7cb,#91f8ed 56%,#cafff9)!important;
+  border-color:#c8fff9!important;
+  box-shadow:0 0 22px rgba(63,238,225,.32),inset 0 1px rgba(255,255,255,.72)!important;
+}
+
+body.home-clean .main-navigation a.active:hover{
+  box-shadow:0 0 34px 7px rgba(63,238,225,.58),inset 0 1px rgba(255,255,255,.78)!important;
+}
+
+body.home-clean .main-navigation a:active{
+  transform:translateY(1px) scale(.97)!important;
+  box-shadow:0 0 0 0 transparent!important;
+  transition:box-shadow .2s ease-in,transform .08s ease-in!important;
+}
+
+@keyframes sro-menu-shine-96{
+  0%{opacity:0;left:0}
+  50%{opacity:1}
+  100%{opacity:0;left:100%}
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.home-clean .main-navigation a:hover::before{animation:none!important}
+}
