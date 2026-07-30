@@ -14,6 +14,22 @@
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
 
+  /* Keep both side ad boxes, but remove their configured background images. */
+  const sideAds=[document.getElementById('leftSponsor'),document.getElementById('rightSponsor')].filter(Boolean);
+  const clearSideAdImages=()=>{
+    sideAds.forEach(ad=>{
+      if(ad.style.backgroundImage)ad.style.removeProperty('background-image');
+      if(ad.classList.contains('has-image'))ad.classList.remove('has-image');
+      if(!ad.classList.contains('empty-sponsor'))ad.classList.add('empty-sponsor');
+      if(ad.textContent.trim()!=='Reklam alanı')ad.textContent='Reklam alanı';
+    });
+  };
+  clearSideAdImages();
+  if(window.MutationObserver){
+    const adObserver=new MutationObserver(clearSideAdImages);
+    sideAds.forEach(ad=>adObserver.observe(ad,{attributes:true,attributeFilter:['class','style'],childList:true}));
+  }
+
   let serversPanel=document.getElementById('serversPanel');
   if(content&&toolbar&&grid&&!serversPanel){
     serversPanel=document.createElement('section');
