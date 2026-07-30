@@ -1,0 +1,105 @@
+@import url('/requested-ui-fixes-v2.css?v=20260730-2302');
+
+/* Professional metallic rank crests. No emoji artwork. */
+body.home-clean .server-card[data-global-rank]>.stable-rank-ribbon{
+  --rank-light:#ffe37a;
+  --rank-mid:#d89a13;
+  --rank-dark:#744500;
+  --rank-ink:#3d2500;
+  position:absolute!important;
+  display:block!important;
+  width:60px!important;
+  height:42px!important;
+  padding:0!important;
+  overflow:visible!important;
+  border:1px solid rgba(255,255,255,.72)!important;
+  border-radius:13px!important;
+  background:
+    linear-gradient(115deg,rgba(255,255,255,.44),transparent 28% 72%,rgba(0,0,0,.12)),
+    linear-gradient(145deg,var(--rank-light),var(--rank-mid) 58%,var(--rank-dark))!important;
+  box-shadow:
+    0 4px 0 color-mix(in srgb,var(--rank-dark) 82%,#000),
+    0 9px 18px rgba(3,48,52,.25),
+    inset 0 1px rgba(255,255,255,.86),
+    inset 0 -1px rgba(0,0,0,.18)!important;
+  font-size:0!important;
+  isolation:isolate!important;
+}
+body.home-clean .server-card[data-global-rank]>.stable-rank-ribbon::before{
+  content:''!important;
+  position:absolute!important;
+  left:9px!important;
+  top:8px!important;
+  width:25px!important;
+  height:25px!important;
+  background:linear-gradient(180deg,#fff8c9 0%,var(--rank-light) 38%,var(--rank-dark) 100%)!important;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 2h12v3h3v3c0 3-2 5-5 5h-1c-.55 1.9-1.65 3.25-3 4v2h4v3H8v-3h4v-2c-1.35-.75-2.45-2.1-3-4H8c-3 0-5-2-5-5V5h3V2Zm0 5H5v1c0 1.65.95 2.75 2.55 3A9.4 9.4 0 0 1 6 7Zm12 0a9.4 9.4 0 0 1-1.55 4C18.05 10.75 19 9.65 19 8V7h-1Z'/%3E%3C/svg%3E") center/contain no-repeat!important;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 2h12v3h3v3c0 3-2 5-5 5h-1c-.55 1.9-1.65 3.25-3 4v2h4v3H8v-3h4v-2c-1.35-.75-2.45-2.1-3-4H8c-3 0-5-2-5-5V5h3V2Zm0 5H5v1c0 1.65.95 2.75 2.55 3A9.4 9.4 0 0 1 6 7Zm12 0a9.4 9.4 0 0 1-1.55 4C18.05 10.75 19 9.65 19 8V7h-1Z'/%3E%3C/svg%3E") center/contain no-repeat!important;
+  filter:drop-shadow(0 2px 1px rgba(40,25,0,.34))!important;
+}
+body.home-clean .server-card[data-global-rank]>.stable-rank-ribbon::after{
+  position:absolute!important;
+  right:5px!important;
+  top:7px!important;
+  bottom:auto!important;
+  display:grid!important;
+  place-items:center!important;
+  width:18px!important;
+  height:28px!important;
+  border:1px solid rgba(255,255,255,.68)!important;
+  border-radius:8px!important;
+  color:#fff!important;
+  background:linear-gradient(180deg,rgba(4,46,51,.94),rgba(2,25,29,.96))!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.2),0 2px 5px rgba(0,0,0,.28)!important;
+  font:800 15px/1 'Patrick Hand SC',cursive!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.6)!important;
+}
+body.home-clean .server-card[data-global-rank='1']>.stable-rank-ribbon{
+  --rank-light:#ffe789;--rank-mid:#d89a13;--rank-dark:#7a4800;--rank-ink:#3b2300;
+}
+body.home-clean .server-card[data-global-rank='1']>.stable-rank-ribbon::after{content:'1'!important}
+body.home-clean .server-card[data-global-rank='2']>.stable-rank-ribbon{
+  --rank-light:#e3f4ff;--rank-mid:#6aa9dc;--rank-dark:#285b91;--rank-ink:#102d4f;
+}
+body.home-clean .server-card[data-global-rank='2']>.stable-rank-ribbon::after{content:'2'!important}
+body.home-clean .server-card[data-global-rank='3']>.stable-rank-ribbon{
+  --rank-light:#ffc28f;--rank-mid:#c46d35;--rank-dark:#713418;--rank-ink:#35180b;
+}
+body.home-clean .server-card[data-global-rank='3']>.stable-rank-ribbon::after{content:'3'!important}
+
+/* Embedded creator, giveaway and application pages: transparent canvas, working hidden scrollbar. */
+html.embedded-view-root,
+html.embedded-view-root body.embedded-view{
+  background:transparent!important;
+  background-image:none!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+  scrollbar-gutter:auto!important;
+}
+html.embedded-view-root::-webkit-scrollbar,
+html.embedded-view-root body.embedded-view::-webkit-scrollbar,
+html.embedded-view-root body.embedded-view *::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+  background:transparent!important;
+}
+html.embedded-view-root body.embedded-view :is(.network-shell,.application-shell,.creator-shell,main){
+  background:transparent!important;
+  background-image:none!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+body.home-clean #portalView,
+body.home-clean #portalView iframe{
+  background:transparent!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+body.home-clean #portalView iframe{
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
