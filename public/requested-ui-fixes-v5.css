@@ -1,4 +1,4 @@
-@import url('/requested-ui-fixes-v4.css?v=20260731-0046');
+@import url('/requested-ui-fixes-v4.css?v=20260731-2');
 
 /* Clear hand-drawn trophy icons for global top 3. Same 38x38 footprint as favourites. */
 body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{
