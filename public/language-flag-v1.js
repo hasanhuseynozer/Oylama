@@ -1,10 +1,10 @@
 (()=>{
   'use strict';
 
-  const styleHref='/language-flag-colors-v1.css?v=20260731-0202';
+  const styleHref='/language-flag-colors-v2.css?v=20260731-0212';
   const flags={
-    tr:'🇹🇷',en:'🇬🇧',ar:'🇸🇦',ru:'🇷🇺',de:'🇩🇪',fr:'🇫🇷',es:'🇪🇸',pt:'🇵🇹',
-    it:'🇮🇹',vi:'🇻🇳',pl:'🇵🇱',fa:'🇮🇷','zh-CN':'🇨🇳','zh-TW':'🇹🇼',ja:'🇯🇵',ko:'🇰🇷'
+    tr:'TR',en:'GB',ar:'SA',ru:'RU',de:'DE',fr:'FR',es:'ES',pt:'PT',
+    it:'IT',vi:'VN',pl:'PL',fa:'IR','zh-CN':'CN','zh-TW':'TW',ja:'JP',ko:'KR'
   };
   const names={
     tr:'Türkçe',en:'English',ar:'العربية',ru:'Русский',de:'Deutsch',fr:'Français',es:'Español',
@@ -34,8 +34,10 @@
     const icon=trigger?.querySelector('.language-flag')||trigger?.querySelector('span:first-child');
 
     if(icon){
-      icon.textContent=flags[value];
+      icon.textContent='';
       icon.classList.add('language-flag');
+      icon.setAttribute('aria-hidden','true');
+      icon.dataset.country=flags[value];
     }
     if(trigger){
       trigger.dataset.locale=value;
