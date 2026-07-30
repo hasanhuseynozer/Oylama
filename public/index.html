@@ -20,6 +20,7 @@
   <style>html{background:#071014}body.app-loading{opacity:0}body{transition:opacity .16s ease}</style>
   <link rel="stylesheet" href="/styles.css?v=20260730-3">
   <link rel="stylesheet" href="/home-fantasy-v4.css?v=20260730-1439">
+  <link rel="stylesheet" href="/home-fantasy-v4-hud.css?v=20260730-1445">
   <style>
     body.home-clean{--fx-gold-bright:#ffe38c}
     body.home-clean.fx-view-transition #serverView,body.home-clean.fx-view-transition #portalView{animation:fx-view-flash .62s cubic-bezier(.2,.8,.2,1) both}
@@ -65,7 +66,10 @@
     </aside>
     <main class="content">
       <div class="toolbar">
-        <div><p class="eyebrow">SRO RATING</p><h1>Sunucu Değerlendirmeleri</h1></div>
+        <div class="toolbar-heading">
+          <div><p class="eyebrow">SRO RATING</p><h1>Sunucu Değerlendirmeleri</h1></div>
+          <div id="fxLiveHud" class="fx-live-hud" aria-live="polite"></div>
+        </div>
         <div class="filters">
           <input id="searchInput" type="search" placeholder="Sunucu ara…">
           <select id="sortSelect" aria-label="Sıralama"><option value="rating">En yüksek puan</option><option value="comments">En çok yorum alan</option><option value="newest">Yeni açılanlar</option></select>
@@ -108,7 +112,7 @@
 
   <script src="/i18n.js?v=1" defer></script>
   <script src="/app.js?v=20260730-2" defer></script>
-  <script src="/home-fantasy-v4.js?v=20260730-1439" defer></script>
+  <script src="/home-fantasy-v4.js?v=20260730-1445" defer></script>
   <script src="/notification-popover.js?v=20260728-5" defer></script>
 </body>
 </html>
