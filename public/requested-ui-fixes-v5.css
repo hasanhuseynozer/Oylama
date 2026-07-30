@@ -1,13 +1,12 @@
 @import url('/requested-ui-fixes-v4.css?v=20260731-0046');
 
-/* Hand-drawn trophy badges for global top 3. Same 38x38 footprint as favourites. */
+/* Clear hand-drawn trophy icons for global top 3. Same 38x38 footprint as favourites. */
 body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{
-  --trophy-main:#e3aa21;
-  --trophy-dark:#6f4300;
-  --trophy-paper:#fff2b0;
+  --cup-fill:#e2aa22;
+  --cup-line:#694000;
+  --cup-light:#fff2a8;
   position:absolute!important;
-  display:grid!important;
-  place-items:center!important;
+  display:block!important;
   width:38px!important;
   height:38px!important;
   min-width:38px!important;
@@ -15,67 +14,71 @@ body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{
   padding:0!important;
   overflow:visible!important;
   border:0!important;
-  border-radius:11px!important;
-  background:rgba(255,255,255,.26)!important;
-  box-shadow:0 4px 0 rgba(3,67,71,.26),0 8px 15px rgba(3,67,71,.18),inset 0 0 0 1px rgba(255,255,255,.58)!important;
-  transform:rotate(-1.5deg)!important;
-  transition:transform .18s ease,filter .18s ease,box-shadow .18s ease!important;
+  border-radius:0!important;
+  color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:rotate(-1deg)!important;
+  transition:transform .18s ease,filter .18s ease!important;
 }
+
 body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::before{
   content:''!important;
   position:absolute!important;
-  inset:3px!important;
-  background:
-    linear-gradient(var(--trophy-main),var(--trophy-main)) center/100% 100% no-repeat!important;
-  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M10 4h12v3h5v4c0 4-2.8 7-7 7.6-.5 1.8-1.7 3.1-3.2 3.8V25H22v3H10v-3h5.2v-2.6c-1.5-.7-2.7-2-3.2-3.8C7.8 18 5 15 5 11V7h5V4Zm0 5H7v2c0 2.5 1.5 4.4 4 5-.7-2-1-4.4-1-7Zm12 0c0 2.6-.3 5-1 7 2.5-.6 4-2.5 4-5V9h-3Z'/%3E%3C/svg%3E") center/contain no-repeat!important;
-  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M10 4h12v3h5v4c0 4-2.8 7-7 7.6-.5 1.8-1.7 3.1-3.2 3.8V25H22v3H10v-3h5.2v-2.6c-1.5-.7-2.7-2-3.2-3.8C7.8 18 5 15 5 11V7h5V4Zm0 5H7v2c0 2.5 1.5 4.4 4 5-.7-2-1-4.4-1-7Zm12 0c0 2.6-.3 5-1 7 2.5-.6 4-2.5 4-5V9h-3Z'/%3E%3C/svg%3E") center/contain no-repeat!important;
-  filter:
-    drop-shadow(1px 0 0 var(--trophy-dark))
-    drop-shadow(-1px 0 0 var(--trophy-dark))
-    drop-shadow(0 1px 0 var(--trophy-dark))
-    drop-shadow(0 -1px 0 var(--trophy-dark))
-    drop-shadow(1.4px 1.8px 0 rgba(255,255,255,.34))
-    drop-shadow(0 3px 3px rgba(46,28,0,.28))!important;
-  transform:rotate(1.8deg) scale(.91)!important;
+  inset:0!important;
+  display:block!important;
+  width:38px!important;
+  height:38px!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  background-size:38px 38px!important;
+  filter:drop-shadow(0 3px 2px rgba(26,35,32,.28))!important;
 }
+
+/* The rank number sits inside the cup bowl, not in a separate badge. */
 body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon::after{
   position:absolute!important;
-  right:-3px!important;
-  bottom:-3px!important;
+  left:50%!important;
+  top:9px!important;
   z-index:3!important;
   display:grid!important;
   place-items:center!important;
   width:17px!important;
-  height:17px!important;
-  border:1.5px solid var(--trophy-dark)!important;
-  border-radius:48% 52% 46% 54%!important;
+  height:15px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
   color:#fff!important;
-  background:#07525a!important;
-  box-shadow:1px 2px 0 rgba(3,47,52,.45),inset 0 0 0 1px rgba(255,255,255,.2)!important;
-  font:900 11px/1 'Patrick Hand SC',cursive!important;
-  text-shadow:0 1px 0 rgba(0,0,0,.65)!important;
-  transform:rotate(3deg)!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font:900 12px/1 'Patrick Hand SC',cursive!important;
+  text-shadow:0 1px 0 rgba(0,0,0,.68),1px 0 0 rgba(0,0,0,.22)!important;
+  transform:translateX(-50%) rotate(1deg)!important;
 }
-body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon:hover{
-  filter:brightness(1.08) saturate(1.08)!important;
-  transform:translateY(-2px) rotate(1.5deg) scale(1.06)!important;
-  box-shadow:0 6px 0 rgba(3,67,71,.28),0 12px 20px rgba(3,67,71,.24),0 0 15px rgba(255,255,255,.38),inset 0 0 0 1px rgba(255,255,255,.7)!important;
-}
-body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon{
-  --trophy-main:#e4aa22;--trophy-dark:#704400;--trophy-paper:#fff0a4;
-  background:linear-gradient(145deg,rgba(255,246,189,.74),rgba(238,189,66,.42))!important;
+
+/* Gold pencil trophy. Double uneven strokes make it look hand sketched. */
+body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5.5h16l-1 11.7c-.4 5.2-3.1 8.7-7 10.1-3.9-1.4-6.6-4.9-7-10.1L12 5.5Z' fill='%23e3aa22' stroke='%236b4200' stroke-width='2.25'/%3E%3Cpath d='M12.6 9H7v4.1c0 4.8 2.7 7.4 7.1 7.8M27.4 9H33v4.1c0 4.8-2.7 7.4-7.1 7.8M20 27.2v4.2M15.8 31.5h8.4M14 35h12' fill='none' stroke='%236b4200' stroke-width='2.35'/%3E%3Cpath d='M13.4 6.8c3.9.6 9.2.5 13.3-.1M14.8 14.2c3.1.7 7.2.7 10.3-.1M15.5 17.5c2.7.6 6.2.5 8.8-.1' fill='none' stroke='%23fff2a8' stroke-width='1.15' opacity='.8'/%3E%3Cpath d='M12.2 5.9h15.5M7.4 9.4v3.3c0 4.2 2.4 6.5 6.3 7.1M32.6 9.4v3.3c0 4.2-2.4 6.5-6.3 7.1M14.4 35.5h11.1' fill='none' stroke='%23835400' stroke-width='.75' opacity='.7' transform='translate(.35 -.25)'/%3E%3C/g%3E%3C/svg%3E")!important;
 }
 body.home-clean .server-card[data-global-rank='1'] > .stable-rank-ribbon::after{content:'1'!important}
-body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon{
-  --trophy-main:#75a9d1;--trophy-dark:#244f72;--trophy-paper:#eaf8ff;
-  background:linear-gradient(145deg,rgba(234,248,255,.8),rgba(113,174,218,.42))!important;
+
+/* Blue-silver pencil trophy. */
+body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5.5h16l-1 11.7c-.4 5.2-3.1 8.7-7 10.1-3.9-1.4-6.6-4.9-7-10.1L12 5.5Z' fill='%2375a9d1' stroke='%23244f72' stroke-width='2.25'/%3E%3Cpath d='M12.6 9H7v4.1c0 4.8 2.7 7.4 7.1 7.8M27.4 9H33v4.1c0 4.8-2.7 7.4-7.1 7.8M20 27.2v4.2M15.8 31.5h8.4M14 35h12' fill='none' stroke='%23244f72' stroke-width='2.35'/%3E%3Cpath d='M13.4 6.8c3.9.6 9.2.5 13.3-.1M14.8 14.2c3.1.7 7.2.7 10.3-.1M15.5 17.5c2.7.6 6.2.5 8.8-.1' fill='none' stroke='%23eaf8ff' stroke-width='1.15' opacity='.86'/%3E%3Cpath d='M12.2 5.9h15.5M7.4 9.4v3.3c0 4.2 2.4 6.5 6.3 7.1M32.6 9.4v3.3c0 4.2-2.4 6.5-6.3 7.1M14.4 35.5h11.1' fill='none' stroke='%23356082' stroke-width='.75' opacity='.75' transform='translate(.35 -.25)'/%3E%3C/g%3E%3C/svg%3E")!important;
 }
-body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon::after{content:'2'!important;background:#315f82!important}
-body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon{
-  --trophy-main:#c87843;--trophy-dark:#713717;--trophy-paper:#ffe0c8;
-  background:linear-gradient(145deg,rgba(255,226,202,.78),rgba(202,119,67,.42))!important;
+body.home-clean .server-card[data-global-rank='2'] > .stable-rank-ribbon::after{content:'2'!important}
+
+/* Bronze pencil trophy. */
+body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cg stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5.5h16l-1 11.7c-.4 5.2-3.1 8.7-7 10.1-3.9-1.4-6.6-4.9-7-10.1L12 5.5Z' fill='%23c87843' stroke='%23713717' stroke-width='2.25'/%3E%3Cpath d='M12.6 9H7v4.1c0 4.8 2.7 7.4 7.1 7.8M27.4 9H33v4.1c0 4.8-2.7 7.4-7.1 7.8M20 27.2v4.2M15.8 31.5h8.4M14 35h12' fill='none' stroke='%23713717' stroke-width='2.35'/%3E%3Cpath d='M13.4 6.8c3.9.6 9.2.5 13.3-.1M14.8 14.2c3.1.7 7.2.7 10.3-.1M15.5 17.5c2.7.6 6.2.5 8.8-.1' fill='none' stroke='%23ffe0c8' stroke-width='1.15' opacity='.82'/%3E%3Cpath d='M12.2 5.9h15.5M7.4 9.4v3.3c0 4.2 2.4 6.5 6.3 7.1M32.6 9.4v3.3c0 4.2-2.4 6.5-6.3 7.1M14.4 35.5h11.1' fill='none' stroke='%23864b28' stroke-width='.75' opacity='.72' transform='translate(.35 -.25)'/%3E%3C/g%3E%3C/svg%3E")!important;
 }
-body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon::after{content:'3'!important;background:#7b4226!important}
+body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon::after{content:'3'!important}
+
+body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon:hover{
+  filter:brightness(1.1) saturate(1.08) drop-shadow(0 0 7px rgba(255,255,255,.45))!important;
+  transform:translateY(-2px) rotate(1.5deg) scale(1.08)!important;
+}
 
 @media(prefers-reduced-motion:reduce){
   body.home-clean .server-card[data-global-rank] > .stable-rank-ribbon{transition:none!important}
