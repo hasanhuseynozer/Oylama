@@ -5,6 +5,7 @@
   let topThree=[];
   let rankingReady=false;
   let replayTimer=0;
+  let isArranging=false;
 
   const calculateTopThree=servers=>{
     const list=Array.isArray(servers)?servers:[];
@@ -66,12 +67,38 @@
     card.append(frame);
   };
 
+  const arrangeCardsInRankOrder=()=>{
+    if(!rankingReady||isArranging)return;
+    const sortSelect=document.getElementById('sortSelect');
+    if(sortSelect&&sortSelect.value!=='rating')return;
+
+    const grid=document.getElementById('serverGrid');
+    if(!grid)return;
+    const children=[...grid.children];
+    const cards=children.filter(element=>element.matches?.('.server-card:not(.server-card-skeleton)'));
+    if(cards.length<2)return;
+
+    const rankIndex=card=>topThree.indexOf(Number(card.dataset.server));
+    const ranked=cards.filter(card=>rankIndex(card)>=0).sort((a,b)=>rankIndex(a)-rankIndex(b));
+    const unranked=cards.filter(card=>rankIndex(card)<0);
+    const nonCards=children.filter(element=>!cards.includes(element));
+    const desired=[...ranked,...unranked,...nonCards];
+    if(desired.every((element,index)=>element===children[index]))return;
+
+    isArranging=true;
+    const fragment=document.createDocumentFragment();
+    desired.forEach(element=>fragment.append(element));
+    grid.append(fragment);
+    requestAnimationFrame(()=>{isArranging=false});
+  };
+
   const decorateCards=()=>{
     if(!rankingReady)return;
     document.querySelectorAll('#serverGrid .server-card:not(.server-card-skeleton)').forEach(card=>{
       const rank=topThree.indexOf(Number(card.dataset.server))+1;
       decorateCard(card,rank);
     });
+    arrangeCardsInRankOrder();
   };
 
   const serversAreVisible=()=>{
