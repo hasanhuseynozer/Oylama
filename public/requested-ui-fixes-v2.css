@@ -6,6 +6,7 @@ body.home-clean .site-footer .footer-box p,
 body.home-clean .site-footer .footer-bottom{
   color:#fff!important;
 }
+body.home-clean .site-footer .footer-bottom span{color:inherit!important}
 body.home-clean .site-footer .footer-brand .brand{
   min-height:0!important;
   width:auto!important;
