@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand+SC&display=swap');
+
+/* Homepage typography */
+body.home-clean,
+body.home-clean button,
+body.home-clean input,
+body.home-clean select,
+body.home-clean textarea,
+body.home-clean option,
+body.home-clean a,
+body.home-clean p,
+body.home-clean span,
+body.home-clean small,
+body.home-clean strong,
+body.home-clean h1,
+body.home-clean h2,
+body.home-clean h3,
+body.home-clean h4,
+body.home-clean label,
+body.home-clean .main-navigation a,
+body.home-clean .server-card h2,
+body.home-clean .score,
+body.home-clean .toolbar h1,
+body.home-clean .fx-hero-copy strong,
+body.home-clean .footer-bottom,
+body.home-clean dialog {
+  font-family:'Patrick Hand SC',cursive!important;
+}
