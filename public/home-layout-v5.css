@@ -1,196 +1,205 @@
-/* Homepage v5: focused layout and navigation corrections. */
+/* Homepage v6: compact controls, balanced ad rails and stable embedded views. */
 body.home-clean{
-  --v5-edge:rgba(111,219,207,.28);
-  --v5-panel:#07191e;
-  --v5-panel-2:#0a252b;
-  --v5-text:#edf8f6;
-  --v5-muted:#88a39f;
-  --v5-gold:#e7b94d;
+  --v6-edge:rgba(111,219,207,.29);
+  --v6-edge-strong:rgba(137,235,223,.56);
+  --v6-panel:#07191e;
+  --v6-panel-2:#0a252b;
+  --v6-text:#edf8f6;
+  --v6-muted:#88a39f;
+  --v6-gold:#e7b94d;
 }
 
-/* Header proportions: larger logo, narrower centered menu/banner, compact language control. */
+/* Header: larger left logo, narrower centered navigation, taller hero. */
 body.home-clean .header-inner{
-  grid-template-columns:220px minmax(0,1fr) 190px!important;
-  gap:14px!important;
-  min-height:164px!important;
-  padding:10px 0 14px!important;
+  grid-template-columns:245px minmax(0,1fr) 188px!important;
+  gap:16px!important;
+  min-height:190px!important;
+  padding:10px 0 15px!important;
 }
-body.home-clean .brand{min-height:136px!important}
+body.home-clean .brand{
+  min-height:156px!important;
+  place-items:center start!important;
+  justify-items:start!important;
+  overflow:visible!important;
+}
 body.home-clean .site-logo{
-  width:205px!important;
-  max-width:205px!important;
-  height:134px!important;
+  width:232px!important;
+  max-width:232px!important;
+  height:152px!important;
+  transform-origin:left center!important;
 }
 body.home-clean .header-center{
-  width:min(1280px,100%)!important;
+  width:min(1220px,100%)!important;
+  justify-self:center!important;
+  grid-template-rows:44px 112px!important;
+  gap:10px!important;
+}
+body.home-clean .main-navigation{
+  width:64%!important;
+  min-width:620px!important;
+  height:44px!important;
   justify-self:center!important;
 }
+body.home-clean .main-navigation a{height:34px!important;font-size:12px!important}
+body.home-clean .banner{
+  width:100%!important;
+  height:112px!important;
+  min-height:112px!important;
+}
+body.home-clean .fx-hero-content{width:min(820px,86%)!important}
+body.home-clean .header-side{
+  width:178px!important;
+  justify-self:center!important;
+  justify-items:stretch!important;
+  align-content:center!important;
+}
 body.home-clean .account-actions,
-body.home-clean .header-side{width:190px!important;justify-self:end!important}
-
+body.home-clean .account-menu,
+body.home-clean .account-menu-trigger{width:178px!important}
 body.home-clean .header-language{
   position:relative!important;
   display:block!important;
-  width:166px!important;
+  width:178px!important;
   min-height:0!important;
-  justify-self:end!important;
+  justify-self:center!important;
   padding:0!important;
   border:0!important;
   background:none!important;
   box-shadow:none!important;
 }
 body.home-clean .language-trigger{
-  width:100%;
-  height:36px;
-  display:grid;
-  grid-template-columns:24px minmax(0,1fr) 14px;
-  align-items:center;
-  gap:7px;
-  padding:0 9px;
-  border:1px solid var(--v5-edge);
-  border-radius:10px;
-  color:var(--v5-text);
-  background:linear-gradient(180deg,#0a2228,#06171c);
+  width:100%;height:34px;display:grid;grid-template-columns:22px minmax(0,1fr) 12px;
+  align-items:center;gap:6px;padding:0 9px;border:1px solid var(--v6-edge);
+  border-radius:9px;color:var(--v6-text);background:linear-gradient(180deg,#0a2228,#06171c);
   box-shadow:inset 0 1px rgba(255,255,255,.035),0 8px 20px rgba(0,0,0,.18);
-  cursor:pointer;
-  font:700 12px/1 system-ui,sans-serif;
+  cursor:pointer;font:700 11px/1 system-ui,sans-serif;
 }
 body.home-clean .language-trigger>span:first-child{color:#72d9cd;text-align:center}
-body.home-clean .language-trigger>span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+body.home-clean .language-trigger>span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
 body.home-clean .language-trigger>i{font-style:normal;color:#91aaa6;transition:transform .2s ease}
 body.home-clean .language-trigger[aria-expanded="true"]>i{transform:rotate(180deg)}
 body.home-clean .language-menu{
-  position:absolute;
-  top:calc(100% + 7px);
-  right:0;
-  z-index:200;
-  width:184px;
-  max-height:300px;
-  overflow:auto;
-  padding:6px;
-  border:1px solid rgba(118,220,208,.35);
-  border-radius:11px;
-  background:#06161b;
-  box-shadow:0 20px 46px rgba(0,0,0,.58),inset 0 1px rgba(255,255,255,.035);
-  scrollbar-width:thin;
-  scrollbar-color:#315a60 #07171c;
+  position:absolute;top:calc(100% + 7px);right:0;z-index:400;width:178px;max-height:286px;
+  overflow:auto;padding:6px;border:1px solid rgba(118,220,208,.35);border-radius:10px;
+  background:#06161b;box-shadow:0 20px 46px rgba(0,0,0,.58),inset 0 1px rgba(255,255,255,.035);
+  scrollbar-width:thin;scrollbar-color:#315a60 #07171c;
 }
 body.home-clean .language-menu button{
-  width:100%;
-  min-height:32px;
-  display:flex;
-  align-items:center;
-  padding:0 10px;
-  border:0;
-  border-radius:7px;
-  color:#d7e8e5;
-  background:transparent;
-  cursor:pointer;
-  font:600 12px/1.2 system-ui,sans-serif;
-  text-align:left;
+  width:100%;min-height:30px;display:flex;align-items:center;padding:0 9px;border:0;border-radius:7px;
+  color:#d7e8e5;background:transparent;cursor:pointer;font:600 11px/1.2 system-ui,sans-serif;text-align:left;
 }
 body.home-clean .language-menu button:hover,
 body.home-clean .language-menu button.active{color:#071316;background:linear-gradient(135deg,#b9fff5,#67cabf)}
 
-/* Remove the title/statistics row marked in the screenshots. */
-body.home-clean .toolbar{gap:0!important;padding:12px 14px!important}
+/* Remove the title/statistics row and keep filters as one thin desktop row. */
+body.home-clean .toolbar{
+  gap:0!important;margin:0 0 14px!important;padding:8px 10px!important;min-height:58px!important;
+  border-radius:14px!important;overflow:visible!important;
+}
 body.home-clean .toolbar-heading,
 body.home-clean .fx-live-hud{display:none!important}
+body.home-clean .filters{
+  display:grid!important;
+  grid-template-columns:minmax(150px,1.55fr) minmax(118px,1fr) repeat(5,minmax(86px,.82fr)) minmax(102px,.85fr) minmax(94px,.78fr) 72px!important;
+  gap:6px!important;width:100%!important;align-items:end!important;margin:0!important;
+}
+body.home-clean .filter-field{
+  display:grid!important;grid-template-rows:8px 34px!important;gap:3px!important;min-width:0!important;
+  margin:0!important;font-size:8px!important;line-height:1!important;letter-spacing:.1em!important;
+}
+body.home-clean .filter-field span{height:8px!important;line-height:8px!important;overflow:hidden!important}
+body.home-clean .filters input[type="search"],
+body.home-clean .filters select,
+body.home-clean .filters button,
+body.home-clean .new-filter{
+  height:34px!important;min-height:34px!important;padding:0 9px!important;border-radius:9px!important;
+  font-size:10px!important;line-height:1!important;grid-column:auto!important;align-self:end!important;
+}
+body.home-clean .new-filter{display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;white-space:nowrap!important}
+body.home-clean .new-filter input{width:14px!important;height:14px!important;min-height:14px!important;padding:0!important}
+body.home-clean .favorite-filter,
+body.home-clean #clearFilters{display:grid!important;place-items:center!important;width:100%!important;white-space:nowrap!important}
 
-/* Ad rails: visible breathing room on every side, equal left/right geometry. */
+/* Equal ad columns with real outer breathing room. */
 body.home-clean .page-layout{
-  grid-template-columns:140px minmax(0,1fr) 140px!important;
-  gap:10px!important;
-  padding:18px 8px 36px!important;
+  grid-template-columns:142px minmax(0,1fr) 142px!important;
+  gap:16px!important;padding:18px 0 38px!important;align-items:start!important;
 }
 body.home-clean .sponsor-stack{
-  width:140px!important;
-  grid-template-rows:270px 226px!important;
-  gap:22px!important;
-  padding:10px 11px 14px!important;
-  border-radius:18px!important;
-  align-content:start!important;
+  position:static!important;display:flex!important;flex-direction:column!important;align-items:center!important;
+  width:142px!important;height:auto!important;gap:20px!important;margin:0!important;padding:12px 8px 16px!important;
+  border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
 }
 body.home-clean .sponsor-rail{
-  width:118px!important;
-  height:100%!important;
-  margin:0 auto!important;
-  padding:7px!important;
-  border-radius:14px!important;
+  width:112px!important;min-width:112px!important;margin:0 auto!important;padding:7px!important;border-radius:14px!important;
 }
+body.home-clean .sponsor-stack .sponsor-rail:first-child{height:290px!important;min-height:290px!important}
+body.home-clean .sponsor-stack .sponsor-placeholder{height:318px!important;min-height:318px!important}
 body.home-clean .sponsor-rail.has-image{
-  background-size:contain!important;
-  background-position:center!important;
-  background-repeat:no-repeat!important;
+  background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;
 }
-body.home-clean .sponsor-placeholder{min-height:226px!important}
 
-/* Keep the page content in one stable middle stage. */
+/* One changing middle stage. Embedded pages use the browser page scrollbar, never an inner scrollbar. */
 body.home-clean #serversPanel,
-body.home-clean #portalView{width:100%;min-width:0}
-body.home-clean #portalView{
-  position:relative!important;
-  margin:0!important;
-  padding:0!important;
-  min-height:0!important;
-  background:transparent!important;
-}
+body.home-clean #portalView{width:100%!important;min-width:0!important;margin:0!important}
+body.home-clean #portalView{position:relative!important;padding:0!important;min-height:0!important;background:transparent!important;overflow:visible!important}
 body.home-clean #portalView iframe{
-  display:block;
-  width:100%!important;
-  height:clamp(720px,calc(100vh - 205px),960px)!important;
-  min-height:720px!important;
-  border:1px solid var(--v5-edge)!important;
-  border-radius:16px!important;
-  background:#061419!important;
-  box-shadow:0 20px 50px rgba(0,0,0,.34)!important;
+  display:block!important;width:100%!important;height:760px;min-height:620px!important;
+  overflow:hidden!important;border:1px solid var(--v6-edge)!important;border-radius:16px!important;
+  background:#061419!important;box-shadow:0 20px 50px rgba(0,0,0,.34)!important;
 }
 body.home-clean #portalView.is-loading::before{
-  content:"İçerik yükleniyor…";
-  position:absolute;
-  inset:18px auto auto 50%;
-  z-index:2;
-  transform:translateX(-50%);
-  padding:8px 14px;
-  border:1px solid var(--v5-edge);
-  border-radius:999px;
-  color:#a9c5c1;
-  background:#07191e;
-  font:700 11px/1 system-ui,sans-serif;
+  content:"İçerik yükleniyor…";position:absolute;inset:18px auto auto 50%;z-index:2;
+  transform:translateX(-50%);padding:8px 14px;border:1px solid var(--v6-edge);border-radius:999px;
+  color:#a9c5c1;background:#07191e;font:700 11px/1 system-ui,sans-serif;
 }
 
-/* Make the bright second cover consistent with the other cards. */
-body.home-clean .rank-silver .server-cover{
-  background-color:#061216!important;
-  background-blend-mode:multiply!important;
-  filter:brightness(.52) saturate(1.08) contrast(1.22)!important;
-}
-
-/* Native selects elsewhere should never expose white option text on white panels. */
+/* More visible fantasy accents without changing layout. */
+body.home-clean .banner{box-shadow:inset 0 1px rgba(255,255,255,.07),0 22px 52px rgba(0,0,0,.34),0 0 34px rgba(82,209,195,.1)!important}
+body.home-clean .banner:hover{box-shadow:inset 0 1px rgba(255,255,255,.09),0 28px 64px rgba(0,0,0,.42),0 0 48px rgba(92,215,201,.18)!important}
+body.home-clean .sponsor-rail::before{animation-duration:7.5s!important}
+body.home-clean .rank-silver .server-cover{background-color:#061216!important;background-blend-mode:multiply!important;filter:brightness(.5) saturate(1.08) contrast(1.22)!important}
 body.home-clean select{color-scheme:dark}
 body.home-clean select option{color:#edf8f6;background:#07191e}
 
-@media(max-width:1540px) and (min-width:1181px){
-  body.home-clean .header-inner{grid-template-columns:205px minmax(0,1fr) 184px!important}
-  body.home-clean .site-logo{width:190px!important;height:126px!important}
-  body.home-clean .account-actions,body.home-clean .header-side{width:184px!important}
-  body.home-clean .header-language{width:160px!important}
-  body.home-clean .page-layout{grid-template-columns:126px minmax(0,1fr) 126px!important;gap:8px!important}
-  body.home-clean .sponsor-stack{width:126px!important;padding:9px!important}
-  body.home-clean .sponsor-rail{width:108px!important}
+@media(max-width:1660px) and (min-width:1181px){
+  body.home-clean .header-inner{grid-template-columns:224px minmax(0,1fr) 180px!important}
+  body.home-clean .site-logo{width:214px!important;height:144px!important}
+  body.home-clean .header-side,body.home-clean .account-actions,body.home-clean .account-menu,body.home-clean .account-menu-trigger,body.home-clean .header-language{width:172px!important}
+  body.home-clean .main-navigation{width:70%!important;min-width:560px!important}
+  body.home-clean .page-layout{grid-template-columns:130px minmax(0,1fr) 130px!important;gap:12px!important}
+  body.home-clean .sponsor-stack{width:130px!important;padding-inline:6px!important}
+  body.home-clean .sponsor-rail{width:108px!important;min-width:108px!important}
+  body.home-clean .filters{grid-template-columns:minmax(140px,1.45fr) minmax(108px,1fr) repeat(5,minmax(80px,.8fr)) 96px 90px 68px!important;gap:5px!important}
 }
 @media(max-width:1180px){
-  body.home-clean .header-inner{grid-template-columns:170px minmax(0,1fr) 180px!important}
-  body.home-clean .site-logo{width:160px!important;height:104px!important}
-  body.home-clean .account-actions,body.home-clean .header-side{width:180px!important}
-  body.home-clean .header-language{width:154px!important}
+  body.home-clean .header-inner{grid-template-columns:180px minmax(0,1fr) 172px!important;min-height:174px!important}
+  body.home-clean .site-logo{width:172px!important;height:116px!important}
+  body.home-clean .main-navigation{width:82%!important;min-width:0!important}
+  body.home-clean .header-center{grid-template-rows:44px 100px!important}
+  body.home-clean .banner{height:100px!important;min-height:100px!important}
+  body.home-clean .header-side,body.home-clean .account-actions,body.home-clean .account-menu,body.home-clean .account-menu-trigger,body.home-clean .header-language{width:166px!important}
   body.home-clean .page-layout{grid-template-columns:minmax(0,1fr)!important;padding-inline:0!important}
   body.home-clean .sponsor-stack{display:none!important}
+  body.home-clean .filters{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}
+  body.home-clean .filter-field:first-child{grid-column:span 2!important}
 }
 @media(max-width:820px){
-  body.home-clean .header-inner{grid-template-columns:1fr!important}
-  body.home-clean .header-center{width:100%!important}
-  body.home-clean .account-actions,body.home-clean .header-side{width:100%!important}
+  body.home-clean .header-inner{grid-template-columns:1fr!important;min-height:0!important}
+  body.home-clean .brand{min-height:105px!important;place-items:center!important;justify-items:center!important}
+  body.home-clean .site-logo{width:190px!important;height:112px!important}
+  body.home-clean .header-center{width:100%!important;grid-template-rows:auto 92px!important}
+  body.home-clean .main-navigation{width:100%!important;grid-template-columns:repeat(2,1fr)!important;height:auto!important}
+  body.home-clean .banner{height:92px!important;min-height:92px!important}
+  body.home-clean .header-side{width:100%!important;grid-template-columns:1fr 1fr!important;justify-items:stretch!important}
+  body.home-clean .account-actions,body.home-clean .account-menu,body.home-clean .account-menu-trigger{width:100%!important}
   body.home-clean .header-language{width:150px!important;justify-self:end!important}
-  body.home-clean #portalView iframe{height:78vh!important;min-height:620px!important}
+  body.home-clean .filters{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.home-clean .filter-field:first-child{grid-column:1/-1!important}
+}
+@media(max-width:520px){
+  body.home-clean .header-side{grid-template-columns:1fr!important}
+  body.home-clean .header-language{justify-self:stretch!important;width:100%!important}
+  body.home-clean .filters{grid-template-columns:1fr!important}
+  body.home-clean .filter-field:first-child{grid-column:auto!important}
 }
