@@ -1,0 +1,297 @@
+/* Requested aqua component fixes. Electric ranking borders are intentionally untouched. */
+:root{
+  --project-aqua-bg:#85d9d2;
+  --project-aqua-top:#bfeeea;
+  --project-aqua-bottom:#58bfb9;
+  --project-aqua-panel:#d9f4f1;
+  --project-aqua-panel-2:#b8e6e1;
+  --project-aqua-control:#eafaf8;
+  --project-aqua-ink:#073b40;
+  --project-aqua-muted:#32686b;
+  --project-aqua-line:rgba(5,91,97,.46);
+  --project-aqua-strong:#087f84;
+  --project-aqua-shadow:rgba(3,72,77,.22);
+}
+
+/* Shared page surface and scrolling for the requested inner pages. */
+html{background:var(--project-aqua-bg)!important}
+body.network-page,
+body.creator-page,
+body.application-page,
+body.dashboard-body,
+body.auth-page{
+  min-height:100vh!important;
+  height:auto!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  color:var(--project-aqua-ink)!important;
+  background:
+    radial-gradient(circle at 8% 4%,rgba(255,255,255,.46),transparent 30%),
+    radial-gradient(circle at 92% 8%,rgba(36,187,177,.26),transparent 32%),
+    linear-gradient(180deg,var(--project-aqua-top),var(--project-aqua-bg) 48%,var(--project-aqua-bottom))!important;
+  background-attachment:fixed!important;
+}
+html.embedded-view-root,
+body.embedded-view{
+  height:auto!important;
+  min-height:0!important;
+  overflow-x:hidden!important;
+  overflow-y:visible!important;
+}
+
+/* Homepage filters: replace the remaining dark controls. */
+body.home-clean .toolbar{
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(145deg,rgba(222,247,244,.96),rgba(169,222,217,.96))!important;
+  box-shadow:0 12px 30px var(--project-aqua-shadow),inset 0 1px rgba(255,255,255,.72)!important;
+}
+body.home-clean .filter-field>span{
+  color:var(--project-aqua-ink)!important;
+  font-weight:800!important;
+}
+body.home-clean .filters input[type="search"],
+body.home-clean .filters select,
+body.home-clean .filters button,
+body.home-clean .new-filter,
+body.home-clean .favorite-filter{
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(180deg,#effbf9,#c6ebe7)!important;
+  box-shadow:inset 0 1px #fff,0 4px 12px rgba(3,72,77,.10)!important;
+  color-scheme:light!important;
+}
+body.home-clean .filters select option{color:var(--project-aqua-ink)!important;background:#e6f7f4!important}
+body.home-clean .filters input::placeholder{color:#4d7779!important}
+body.home-clean .filters :is(input,select,button):focus,
+body.home-clean .new-filter:focus-within{
+  border-color:#05757b!important;
+  box-shadow:0 0 0 3px rgba(5,117,123,.18),0 6px 16px rgba(3,72,77,.14)!important;
+}
+
+/* Server detail opened by clicking a server. */
+body.home-clean .server-detail-dialog,
+body.home-clean .server-detail,
+body.home-clean .server-detail-content,
+body.home-clean .detail-info,
+body.home-clean .detail-info-body,
+body.home-clean .detail-community,
+body.home-clean .detail-tab-panel,
+body.home-clean .modal,
+body.home-clean .profile-dialog{
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(145deg,#e2f7f4,#b6e3de)!important;
+}
+body.home-clean .server-detail-dialog::backdrop,
+body.home-clean dialog::backdrop{background:rgba(3,41,45,.58)!important}
+body.home-clean .detail-tabs{
+  border-color:rgba(5,91,97,.24)!important;
+  background:rgba(190,230,226,.88)!important;
+}
+body.home-clean .detail-tabs button{
+  color:var(--project-aqua-ink)!important;
+  border-color:transparent!important;
+  background:transparent!important;
+}
+body.home-clean .detail-tabs button.active{
+  color:#032f33!important;
+  border-color:rgba(5,91,97,.38)!important;
+  background:linear-gradient(135deg,#62d4cb,#b5f1eb)!important;
+  box-shadow:0 5px 14px rgba(3,72,77,.15)!important;
+}
+body.home-clean :is(.detail-description,.detail-comment p,.owner-reply p,.modal-lead,.rating-label,.review-meta){color:var(--project-aqua-muted)!important}
+body.home-clean :is(.detail-info h2,.detail-community h3,.detail-score strong,.server-detail-dialog label){color:var(--project-aqua-ink)!important}
+body.home-clean :is(.detail-comment,.owner-reply,.review-thread,.similar-server-list article){
+  color:var(--project-aqua-ink)!important;
+  border-color:rgba(5,91,97,.28)!important;
+  background:rgba(235,250,248,.72)!important;
+}
+body.home-clean .server-detail-dialog :is(input,textarea,select){
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:#eefbf9!important;
+  color-scheme:light!important;
+}
+
+/* Header profile button and dropdown. */
+body.home-clean .account-menu-trigger{
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(145deg,#d8f2ef,#a9ddd8)!important;
+  box-shadow:0 9px 22px rgba(3,72,77,.16),inset 0 1px #fff!important;
+}
+body.home-clean .account-menu-trigger strong{color:#04383c!important;font-weight:800!important}
+body.home-clean .account-menu-trigger small{color:#285f63!important;font-size:11px!important;font-weight:700!important}
+body.home-clean .account-menu-trigger i{color:#245f63!important}
+body.home-clean .account-menu-panel{
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(145deg,rgba(222,246,243,.99),rgba(166,219,214,.99))!important;
+  box-shadow:0 20px 44px rgba(3,72,77,.28),inset 0 1px rgba(255,255,255,.72)!important;
+}
+body.home-clean .account-menu-panel .account-menu-item{
+  color:var(--project-aqua-ink)!important;
+  background:rgba(238,252,250,.36)!important;
+}
+body.home-clean .account-menu-panel .account-menu-item span{color:inherit!important}
+body.home-clean .account-menu-panel .account-menu-item:hover{
+  color:#032f33!important;
+  background:rgba(241,255,253,.78)!important;
+}
+
+/* Side advertisement image fills its complete upper canvas. */
+@media (min-width:1181px){
+  body.home-clean .sponsor-stack .sponsor-slot:first-child{padding:0!important;place-items:stretch!important}
+  body.home-clean #leftSponsor,
+  body.home-clean #rightSponsor{
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:100%!important;
+    margin:0!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:12px!important;
+    background-size:cover!important;
+    background-position:center top!important;
+    background-repeat:no-repeat!important;
+  }
+}
+
+/* Footer social buttons with an aqua 3D press effect. */
+body.home-clean .site-footer .socials a{
+  position:relative!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:88px!important;
+  min-height:36px!important;
+  padding:8px 14px!important;
+  color:#04383c!important;
+  font-weight:800!important;
+  text-decoration:none!important;
+  border:1px solid rgba(5,91,97,.52)!important;
+  border-radius:10px!important;
+  background:linear-gradient(180deg,#c9f2ee,#72cec6)!important;
+  box-shadow:0 6px 0 #08757a,0 10px 18px rgba(3,72,77,.18),inset 0 1px #fff!important;
+  transform:translateY(0)!important;
+  transition:transform .16s ease,box-shadow .16s ease,filter .16s ease!important;
+}
+body.home-clean .site-footer .socials a:hover{
+  filter:brightness(1.04)!important;
+  transform:translateY(-2px)!important;
+  box-shadow:0 8px 0 #08757a,0 14px 24px rgba(3,72,77,.22),inset 0 1px #fff!important;
+}
+body.home-clean .site-footer .socials a:active{
+  transform:translateY(5px)!important;
+  box-shadow:0 1px 0 #08757a,0 4px 9px rgba(3,72,77,.16),inset 0 1px #fff!important;
+}
+
+/* Creators, giveaways and application pages. */
+:is(body.network-page,body.creator-page,body.application-page) .network-header{
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(180deg,rgba(216,244,241,.98),rgba(159,216,211,.96))!important;
+  box-shadow:0 12px 32px rgba(3,72,77,.18)!important;
+}
+:is(body.network-page,body.creator-page,body.application-page) .network-header a{color:var(--project-aqua-ink)!important}
+:is(body.network-page,body.creator-page,body.application-page) .network-header nav a{
+  border-color:transparent!important;
+  background:transparent!important;
+}
+:is(body.network-page,body.creator-page,body.application-page) .network-header nav a:hover,
+:is(body.network-page,body.creator-page,body.application-page) .network-header nav a.active{
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(135deg,#70d8cf,#c1f3ee)!important;
+  box-shadow:0 6px 14px rgba(3,72,77,.14)!important;
+}
+:is(body.network-page,body.creator-page,body.application-page) :is(.network-hero,.network-toolbar,.giveaway-command,.network-trust,.application-intro,.application-card,.network-card,.network-dialog,.network-empty){
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(145deg,rgba(224,247,244,.97),rgba(170,222,217,.97))!important;
+  box-shadow:0 18px 42px rgba(3,72,77,.18),inset 0 1px rgba(255,255,255,.72)!important;
+}
+:is(body.network-page,body.creator-page,body.application-page) :is(h1,h2,h3,strong,b,label,p,span,small,em,time){color:var(--project-aqua-ink)!important}
+:is(body.network-page,body.creator-page,body.application-page) :is(.network-hero-copy>p,.creator-card-body>p,.creator-biography,.network-trust span,.application-intro>p,.review-meta,.network-count){color:var(--project-aqua-muted)!important}
+:is(body.network-page,body.creator-page,body.application-page) :is(input,select,textarea,.network-search){
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:var(--project-aqua-control)!important;
+  color-scheme:light!important;
+  box-shadow:inset 0 1px #fff!important;
+}
+:is(body.network-page,body.creator-page,body.application-page) option{color:var(--project-aqua-ink)!important;background:#e8f8f6!important}
+:is(body.network-page,body.creator-page,body.application-page) :is(.creator-card-body,.giveaway-card-body,.creator-detail-grid>section,.giveaway-detail-grid>section,.application-status,.application-benefits span,.network-trust>div){
+  color:var(--project-aqua-ink)!important;
+  border-color:rgba(5,91,97,.30)!important;
+  background:rgba(237,251,249,.55)!important;
+}
+:is(body.network-page,body.creator-page,body.application-page) :is(.card-open,.giveaway-tabs button,.network-hero-actions .outline){
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(180deg,#edf9f7,#b8e4e0)!important;
+}
+:is(body.network-page,body.creator-page,body.application-page) :is(.card-open:hover,.giveaway-tabs button.active,.network-hero-actions .outline:hover){
+  background:linear-gradient(135deg,#61d1c8,#b9f0eb)!important;
+}
+:is(body.network-page,body.creator-page,body.application-page) :is(.primary,.network-hero-actions .primary){
+  color:#033438!important;
+  border-color:rgba(255,255,255,.72)!important;
+  background:linear-gradient(135deg,#43c8bf,#9de8e1)!important;
+  box-shadow:0 7px 18px rgba(3,72,77,.18),inset 0 1px #fff!important;
+}
+:is(body.network-page,body.creator-page,body.application-page) :is(.network-radar,.reward-vault){
+  border-color:rgba(5,91,97,.38)!important;
+  background:radial-gradient(circle,rgba(232,251,249,.86),rgba(112,207,198,.28) 58%,transparent 60%)!important;
+}
+
+/* Profile and user panels. */
+body.dashboard-body :is(.dashboard-topbar,.dashboard-hero,.panel,.profile-main-card,.badge-panel,.compact-panel,.suggestion-card,.suggestion-history,.review-history-panel,.owner-workspace,.owner-review-workspace,.giveaway-studio){
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(145deg,rgba(224,247,244,.97),rgba(170,222,217,.97))!important;
+  box-shadow:0 18px 42px rgba(3,72,77,.18),inset 0 1px rgba(255,255,255,.72)!important;
+}
+body.dashboard-body :is(h1,h2,h3,strong,label,p,span,small,a,button){color:var(--project-aqua-ink)!important}
+body.dashboard-body :is(.profile-hero-copy>p:last-of-type,.profile-completion small,.panel-lead,.section-heading p,.badge-list p){color:var(--project-aqua-muted)!important}
+body.dashboard-body .dashboard-nav-link{
+  color:var(--project-aqua-ink)!important;
+  border-color:transparent!important;
+  background:transparent!important;
+}
+body.dashboard-body .dashboard-nav-link:hover,
+body.dashboard-body .dashboard-nav-link.active{
+  color:#032f33!important;
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(135deg,#69d3ca,#baf0eb)!important;
+  box-shadow:0 6px 14px rgba(3,72,77,.14)!important;
+}
+body.dashboard-body :is(input,select,textarea,.server-picker){
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:#edf9f7!important;
+  color-scheme:light!important;
+}
+body.dashboard-body option{color:var(--project-aqua-ink)!important;background:#e8f8f6!important}
+body.dashboard-body :is(.server-choice,.review-card-list article,.request-card,.badge-list article,.owner-server,.owner-review){
+  color:var(--project-aqua-ink)!important;
+  border-color:rgba(5,91,97,.30)!important;
+  background:rgba(237,251,249,.58)!important;
+}
+body.dashboard-body :is(.panel-icon,.selection-counter,.profile-avatar){
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(145deg,#d9f2ef,#a9ddd8)!important;
+}
+
+/* Login and registration match the same project surface. */
+body.auth-page .auth-card{
+  color:var(--project-aqua-ink)!important;
+  border-color:var(--project-aqua-line)!important;
+  background:linear-gradient(145deg,rgba(225,248,245,.98),rgba(169,222,217,.98))!important;
+  box-shadow:0 22px 55px rgba(3,72,77,.24),inset 0 1px #fff!important;
+}
+body.auth-page :is(h1,p,label,a,strong,span){color:var(--project-aqua-ink)!important}
+body.auth-page :is(input,select,textarea){color:var(--project-aqua-ink)!important;border-color:var(--project-aqua-line)!important;background:#eefaf8!important;color-scheme:light!important}
+
+@media(max-width:900px){
+  body.network-page,body.creator-page,body.application-page,body.dashboard-body,body.auth-page{background:linear-gradient(180deg,var(--project-aqua-top),var(--project-aqua-bottom))!important}
+}
