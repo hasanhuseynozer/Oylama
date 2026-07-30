@@ -134,6 +134,15 @@ body.home-clean .header-side .language-trigger{
   width:100%!important;
 }
 
+/* Widen only the logged-in profile button by 10px and keep it centered. */
+@media (min-width:1181px){
+  body.home-clean .header-side .account-menu-trigger{
+    width:calc(100% + 10px)!important;
+    margin-left:-5px!important;
+    justify-self:center!important;
+  }
+}
+
 @keyframes sro-menu-shine-96{
   0%{opacity:0;left:0}
   50%{opacity:1}
