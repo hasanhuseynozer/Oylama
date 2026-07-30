@@ -13,15 +13,15 @@
   const grid=document.getElementById('serverGrid');
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
-  const requestedStyleHref='/requested-ui-fixes-v3.css?v=20260730-2326';
+  const requestedStyleHref='/requested-ui-fixes-v4.css?v=20260731-0046';
   const fixedFrameHeight='clamp(680px, calc(100vh - 230px), 900px)';
 
   const ensureRequestedStyle=doc=>{
     if(!doc?.head)return;
-    let link=doc.querySelector('link[data-requested-ui-fixes]')||doc.querySelector('link[href*="requested-ui-fixes-v3.css"]');
+    let link=doc.querySelector('link[data-requested-ui-fixes]')||doc.querySelector('link[href*="requested-ui-fixes-v"]');
     if(link){
       link.dataset.requestedUiFixes='true';
-      if(!link.getAttribute('href')?.includes('20260730-2326'))link.href=requestedStyleHref;
+      if(link.getAttribute('href')!==requestedStyleHref)link.href=requestedStyleHref;
       return;
     }
     link=doc.createElement('link');
@@ -186,6 +186,12 @@
     languageMenu?.classList.add('hidden');
     languageTrigger?.setAttribute('aria-expanded','false');
   };
+  const closeProfileMenu=()=>{
+    const panel=document.querySelector('.account-menu-panel');
+    const trigger=document.querySelector('.account-menu-trigger');
+    panel?.classList.add('hidden');
+    trigger?.setAttribute('aria-expanded','false');
+  };
   const applyLanguage=locale=>{
     const value=languageNames[locale]?locale:'tr';
     localStorage.setItem('sro_locale',value);
@@ -200,9 +206,14 @@
     window.SROI18n?.apply?.(value);
   };
 
+  accountActions?.addEventListener('click',event=>{
+    if(event.target.closest('.account-menu-trigger'))closeLanguage();
+  },true);
+
   if(languageTrigger&&languageMenu){
     languageTrigger.addEventListener('click',event=>{
       event.stopPropagation();
+      closeProfileMenu();
       const opening=languageMenu.classList.contains('hidden');
       closeLanguage();
       if(opening){
