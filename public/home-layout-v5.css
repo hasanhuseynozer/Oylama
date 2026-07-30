@@ -91,34 +91,84 @@ body.home-clean .language-menu button{
 body.home-clean .language-menu button:hover,
 body.home-clean .language-menu button.active{color:#071316;background:linear-gradient(135deg,#b9fff5,#67cabf)}
 
-/* Remove the title/statistics row and keep filters as one thin desktop row. */
+/* Exactly one thin desktop filter row. */
 body.home-clean .toolbar{
-  gap:0!important;margin:0 0 14px!important;padding:8px 10px!important;min-height:58px!important;
-  border-radius:14px!important;overflow:visible!important;
+  gap:0!important;
+  margin:0 0 14px!important;
+  padding:7px 10px!important;
+  min-height:56px!important;
+  border-radius:14px!important;
+  overflow:visible!important;
 }
 body.home-clean .toolbar-heading,
 body.home-clean .fx-live-hud{display:none!important}
 body.home-clean .filters{
-  display:grid!important;
-  grid-template-columns:minmax(150px,1.55fr) minmax(118px,1fr) repeat(5,minmax(86px,.82fr)) minmax(102px,.85fr) minmax(94px,.78fr) 72px!important;
-  gap:6px!important;width:100%!important;align-items:end!important;margin:0!important;
+  display:flex!important;
+  flex-flow:row nowrap!important;
+  align-items:flex-end!important;
+  justify-content:stretch!important;
+  gap:6px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  overflow:visible!important;
+}
+body.home-clean .filters>*{
+  min-width:0!important;
+  margin:0!important;
+  grid-column:auto!important;
 }
 body.home-clean .filter-field{
-  display:grid!important;grid-template-rows:8px 34px!important;gap:3px!important;min-width:0!important;
-  margin:0!important;font-size:8px!important;line-height:1!important;letter-spacing:.1em!important;
+  display:grid!important;
+  grid-template-rows:8px 32px!important;
+  gap:3px!important;
+  flex:0.82 1 82px!important;
+  width:auto!important;
+  min-width:0!important;
+  margin:0!important;
+  font-size:8px!important;
+  line-height:1!important;
+  letter-spacing:.1em!important;
 }
+body.home-clean .filter-field:first-child{flex:1.55 1 145px!important}
+body.home-clean .filter-field:nth-child(2){flex:1.05 1 112px!important}
 body.home-clean .filter-field span{height:8px!important;line-height:8px!important;overflow:hidden!important}
 body.home-clean .filters input[type="search"],
 body.home-clean .filters select,
 body.home-clean .filters button,
 body.home-clean .new-filter{
-  height:34px!important;min-height:34px!important;padding:0 9px!important;border-radius:9px!important;
-  font-size:10px!important;line-height:1!important;grid-column:auto!important;align-self:end!important;
+  height:32px!important;
+  min-height:32px!important;
+  padding:0 8px!important;
+  border-radius:8px!important;
+  font-size:9px!important;
+  line-height:1!important;
+  align-self:flex-end!important;
 }
-body.home-clean .new-filter{display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;white-space:nowrap!important}
-body.home-clean .new-filter input{width:14px!important;height:14px!important;min-height:14px!important;padding:0!important}
-body.home-clean .favorite-filter,
-body.home-clean #clearFilters{display:grid!important;place-items:center!important;width:100%!important;white-space:nowrap!important}
+body.home-clean .new-filter{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:5px!important;
+  flex:0 1 98px!important;
+  width:auto!important;
+  white-space:nowrap!important;
+}
+body.home-clean .new-filter input{width:13px!important;height:13px!important;min-height:13px!important;padding:0!important}
+body.home-clean .favorite-filter{
+  display:grid!important;
+  place-items:center!important;
+  flex:0 1 90px!important;
+  width:auto!important;
+  white-space:nowrap!important;
+}
+body.home-clean #clearFilters{
+  display:grid!important;
+  place-items:center!important;
+  flex:0 0 66px!important;
+  width:66px!important;
+  white-space:nowrap!important;
+}
 
 /* Equal ad columns with real outer breathing room. */
 body.home-clean .page-layout{
@@ -162,7 +212,7 @@ body.home-clean .rank-silver .server-cover{background-color:#061216!important;ba
 body.home-clean select{color-scheme:dark}
 body.home-clean select option{color:#edf8f6;background:#07191e}
 
-@media(max-width:1660px) and (min-width:1181px){
+@media(max-width:1660px) and (min-width:901px){
   body.home-clean .header-inner{grid-template-columns:224px minmax(0,1fr) 180px!important}
   body.home-clean .site-logo{width:214px!important;height:144px!important}
   body.home-clean .header-side,body.home-clean .account-actions,body.home-clean .account-menu,body.home-clean .account-menu-trigger,body.home-clean .header-language{width:172px!important}
@@ -170,9 +220,14 @@ body.home-clean select option{color:#edf8f6;background:#07191e}
   body.home-clean .page-layout{grid-template-columns:130px minmax(0,1fr) 130px!important;gap:12px!important}
   body.home-clean .sponsor-stack{width:130px!important;padding-inline:6px!important}
   body.home-clean .sponsor-rail{width:108px!important;min-width:108px!important}
-  body.home-clean .filters{grid-template-columns:minmax(140px,1.45fr) minmax(108px,1fr) repeat(5,minmax(80px,.8fr)) 96px 90px 68px!important;gap:5px!important}
+  body.home-clean .filter-field{flex-basis:74px!important}
+  body.home-clean .filter-field:first-child{flex-basis:132px!important}
+  body.home-clean .filter-field:nth-child(2){flex-basis:100px!important}
+  body.home-clean .new-filter{flex-basis:90px!important}
+  body.home-clean .favorite-filter{flex-basis:84px!important}
+  body.home-clean #clearFilters{flex-basis:62px!important;width:62px!important}
 }
-@media(max-width:1180px){
+@media(max-width:1180px) and (min-width:901px){
   body.home-clean .header-inner{grid-template-columns:180px minmax(0,1fr) 172px!important;min-height:174px!important}
   body.home-clean .site-logo{width:172px!important;height:116px!important}
   body.home-clean .main-navigation{width:82%!important;min-width:0!important}
@@ -181,20 +236,19 @@ body.home-clean select option{color:#edf8f6;background:#07191e}
   body.home-clean .header-side,body.home-clean .account-actions,body.home-clean .account-menu,body.home-clean .account-menu-trigger,body.home-clean .header-language{width:166px!important}
   body.home-clean .page-layout{grid-template-columns:minmax(0,1fr)!important;padding-inline:0!important}
   body.home-clean .sponsor-stack{display:none!important}
-  body.home-clean .filters{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}
-  body.home-clean .filter-field:first-child{grid-column:span 2!important}
 }
-@media(max-width:820px){
+@media(max-width:900px){
   body.home-clean .header-inner{grid-template-columns:1fr!important;min-height:0!important}
   body.home-clean .brand{min-height:105px!important;place-items:center!important;justify-items:center!important}
   body.home-clean .site-logo{width:190px!important;height:112px!important}
   body.home-clean .header-center{width:100%!important;grid-template-rows:auto 92px!important}
-  body.home-clean .main-navigation{width:100%!important;grid-template-columns:repeat(2,1fr)!important;height:auto!important}
+  body.home-clean .main-navigation{width:100%!important;min-width:0!important;grid-template-columns:repeat(2,1fr)!important;height:auto!important}
   body.home-clean .banner{height:92px!important;min-height:92px!important}
   body.home-clean .header-side{width:100%!important;grid-template-columns:1fr 1fr!important;justify-items:stretch!important}
   body.home-clean .account-actions,body.home-clean .account-menu,body.home-clean .account-menu-trigger{width:100%!important}
   body.home-clean .header-language{width:150px!important;justify-self:end!important}
-  body.home-clean .filters{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  body.home-clean .filters{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+  body.home-clean .filter-field,body.home-clean .filter-field:first-child,body.home-clean .filter-field:nth-child(2),body.home-clean .new-filter,body.home-clean .favorite-filter,body.home-clean #clearFilters{width:100%!important;flex:none!important}
   body.home-clean .filter-field:first-child{grid-column:1/-1!important}
 }
 @media(max-width:520px){
