@@ -8,17 +8,12 @@
   let isArranging=false;
 
   const calculateTopThree=servers=>{
-    const list=Array.isArray(servers)?servers:[];
+    const list=(Array.isArray(servers)?servers:[]).filter(server=>
+      Math.max(0,Number(server.vote_count)||0)>0&&Math.max(0,Number(server.average_rating)||0)>0
+    );
     if(!list.length)return [];
-    const maxVotes=Math.max(1,...list.map(server=>Math.max(0,Number(server.vote_count)||0)));
-    const score=server=>{
-      const rating=Math.max(0,Math.min(5,Number(server.average_rating)||0))/5;
-      const votes=Math.max(0,Number(server.vote_count)||0);
-      const engagement=Math.log1p(votes)/Math.log1p(maxVotes);
-      return rating*.75+engagement*.25;
-    };
     return [...list]
-      .sort((a,b)=>score(b)-score(a)||Number(b.average_rating||0)-Number(a.average_rating||0)||Number(b.vote_count||0)-Number(a.vote_count||0)||Number(a.id)-Number(b.id))
+      .sort((a,b)=>Number(b.average_rating||0)-Number(a.average_rating||0)||Number(b.vote_count||0)-Number(a.vote_count||0)||Number(a.id)-Number(b.id))
       .slice(0,3)
       .map(server=>Number(server.id));
   };
@@ -35,7 +30,12 @@
     }catch{
       rankingReady=true;
       const cards=[...document.querySelectorAll('#serverGrid .server-card:not(.server-card-skeleton)')];
-      topThree=cards.slice(0,3).map(card=>Number(card.dataset.server)).filter(Boolean);
+      topThree=cards
+        .filter(card=>Number(card.dataset.votes)>0&&Number(card.dataset.rating)>0)
+        .sort((a,b)=>Number(b.dataset.rating)-Number(a.dataset.rating)||Number(b.dataset.votes)-Number(a.dataset.votes)||Number(a.dataset.server)-Number(b.dataset.server))
+        .slice(0,3)
+        .map(card=>Number(card.dataset.server))
+        .filter(Boolean);
       decorateCards();
       restartAnimations();
     }

@@ -277,9 +277,7 @@ function serverCard(server,index){
   const [statusClass,statusText]=statusInfo(server);
   const event=nextEvent(server);
   const cover=server.image_url?`<div class="server-cover" style="background-image:url('${esc(server.image_url)}')"></div>`:'<div class="server-cover server-cover-placeholder"><span>SRO RATING</span></div>';
-  const rank=index<3?["rank-gold","rank-silver","rank-bronze"][index]:"";
-  return `<article class="server-card rating-${ratingTier} ${rank}" data-server="${server.id}" tabindex="0" aria-label="${esc(server.name)} için oy ver">
-    ${rank?`<span class="rank-ribbon" aria-label="${index+1}. sıra">#${index+1}</span>`:""}
+  return `<article class="server-card rating-${ratingTier}" data-server="${server.id}" data-rating="${rating}" data-votes="${Number(server.vote_count||0)}" tabindex="0" aria-label="${esc(server.name)} için oy ver">
     <button class="favorite-button ${server.is_favorite?"active":""}" data-favorite="${server.id}" type="button" aria-pressed="${Boolean(server.is_favorite)}" aria-label="${server.is_favorite?"Favorilerden çıkar":"Favorilere ekle"}">♥</button>
     <div class="server-status ${statusClass}" title="${esc(server.status_note||statusText)}"><i></i>${statusText}</div>
     ${cover}<div class="server-card-body"><div class="server-badges"><span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span>${fresh?'<span class="fresh">Yeni</span>':""}</div>
