@@ -1,136 +1,63 @@
 @import url('/filter-bar-premium-v1.css?v=20260731-0255');
 
-/* Unified typography and premium effects for every filter control. */
+/* Larger, equal filter typography. Scoped only to the homepage toolbar. */
 body.home-clean .toolbar{
-  --filter-control-font-size:10px;
-  --filter-control-text:#0a3033;
-  --filter-control-edge:rgba(38,145,151,.58);
-  --filter-control-glow:rgba(52,224,216,.36);
+  --filter-control-font-size:13px!important;
+  --filter-label-font-size:14px!important;
 }
-
-body.home-clean .toolbar .filters input[type='search'],
-body.home-clean .toolbar .filters select,
-body.home-clean .toolbar .filters button,
-body.home-clean .toolbar .new-filter{
-  font-family:inherit!important;
-  font-size:var(--filter-control-font-size)!important;
-  font-weight:800!important;
-  line-height:1!important;
-  color:var(--filter-control-text)!important;
-  text-align:center!important;
-  text-shadow:0 1px 0 rgba(255,255,255,.68)!important;
+body.home-clean .toolbar .filter-field{
+  grid-template-rows:17px 42px!important;
+  gap:5px!important;
 }
-
 body.home-clean .toolbar .filter-field>span{
-  font-family:inherit!important;
-  font-size:var(--filter-control-font-size)!important;
-  font-weight:800!important;
-}
-
-/* Give search and every dropdown the same 3D aqua surface as the action buttons. */
-body.home-clean .toolbar .filters input[type='search'],
-body.home-clean .toolbar .filters select{
-  border-color:var(--filter-control-edge)!important;
-  background:
-    linear-gradient(115deg,transparent 0 34%,rgba(255,255,255,.52) 46%,transparent 58%) -170% 0/42% 100% no-repeat,
-    linear-gradient(180deg,rgba(255,255,255,.94) 0%,rgba(216,249,246,.92) 48%,rgba(172,226,224,.9) 100%)!important;
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.95),
-    inset 0 -2px 0 rgba(38,125,130,.16),
-    0 3px 0 rgba(44,126,131,.32),
-    0 7px 13px rgba(18,92,97,.14)!important;
-  transform:translateY(0) perspective(180px) rotateX(0deg)!important;
-  transform-origin:50% 100%!important;
-  transition:
-    transform .2s cubic-bezier(.2,.8,.2,1),
-    box-shadow .2s ease,
-    border-color .2s ease,
-    background-position .56s cubic-bezier(.2,.75,.25,1),
-    filter .2s ease!important;
-}
-
-body.home-clean .toolbar .filters input[type='search']:hover,
-body.home-clean .toolbar .filters select:hover{
-  border-color:rgba(24,173,181,.88)!important;
-  background-position:270% 0,0 0!important;
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,1),
-    inset 0 -2px 0 rgba(25,133,140,.2),
-    0 5px 0 rgba(35,132,138,.4),
-    0 10px 19px rgba(24,153,160,.22),
-    0 0 14px var(--filter-control-glow)!important;
-  filter:saturate(1.07) brightness(1.025)!important;
-  transform:translateY(-2px) perspective(180px) rotateX(3deg)!important;
-}
-
-body.home-clean .toolbar .filters input[type='search']:focus,
-body.home-clean .toolbar .filters select:focus{
-  border-color:#16b9bd!important;
-  background-position:270% 0,0 0!important;
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,1),
-    inset 0 -2px 0 rgba(5,120,126,.18),
-    0 4px 0 rgba(11,121,127,.46),
-    0 9px 18px rgba(14,156,163,.24),
-    0 0 18px rgba(71,255,246,.48)!important;
-  filter:saturate(1.08)!important;
-  transform:translateY(-1px) perspective(180px) rotateX(2deg)!important;
-}
-
-body.home-clean .toolbar .filters input[type='search']:active,
-body.home-clean .toolbar .filters select:active{
-  box-shadow:
-    inset 0 3px 6px rgba(20,91,96,.2),
-    inset 0 1px 0 rgba(255,255,255,.68),
-    0 1px 0 rgba(37,112,117,.38),
-    0 3px 7px rgba(16,82,87,.16)!important;
-  transform:translateY(2px) perspective(180px) rotateX(-2deg) scale(.992)!important;
-}
-
-/* Keep menu text and browser options consistent with Favorilerim. */
-body.home-clean .toolbar .filters select,
-body.home-clean .toolbar .filters select option{
-  font-family:inherit!important;
-  font-size:var(--filter-control-font-size)!important;
-  font-weight:800!important;
-}
-body.home-clean .toolbar .filters select option{
-  color:#0a3033!important;
-  background:#dff8f5!important;
+  height:17px!important;
+  line-height:17px!important;
+  font-size:var(--filter-label-font-size)!important;
+  font-weight:900!important;
+  letter-spacing:.035em!important;
   text-align:center!important;
 }
-
-/* Apply the same animated light sweep to every clickable action control. */
+body.home-clean .toolbar .filters input[type='search'],
+body.home-clean .toolbar .filters select,
 body.home-clean .toolbar .filters button,
-body.home-clean .toolbar .new-filter{
-  font-size:var(--filter-control-font-size)!important;
-}
-body.home-clean .toolbar .filters button:not(.favorite-filter):not(#clearFilters),
 body.home-clean .toolbar .new-filter,
 body.home-clean .toolbar .favorite-filter,
 body.home-clean .toolbar #clearFilters{
-  background:
-    linear-gradient(115deg,transparent 0 34%,rgba(255,255,255,.72) 46%,transparent 58%) -170% 0/42% 100% no-repeat,
-    linear-gradient(180deg,rgba(253,255,255,.94) 0%,rgba(207,246,243,.92) 48%,rgba(161,221,219,.9) 100%)!important;
-  transition:
-    transform .2s cubic-bezier(.2,.8,.2,1),
-    box-shadow .2s ease,
-    border-color .2s ease,
-    background-position .56s cubic-bezier(.2,.75,.25,1),
-    filter .2s ease!important;
+  height:42px!important;
+  min-height:42px!important;
+  padding-left:8px!important;
+  padding-right:8px!important;
+  font-family:inherit!important;
+  font-size:var(--filter-control-font-size)!important;
+  font-weight:900!important;
+  line-height:1!important;
+  letter-spacing:.01em!important;
+  text-align:center!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.72)!important;
 }
-body.home-clean .toolbar .filters button:hover,
-body.home-clean .toolbar .new-filter:hover{
-  background-position:270% 0,0 0!important;
+body.home-clean .toolbar .filters input[type='search']::placeholder{
+  font-size:var(--filter-control-font-size)!important;
+  font-weight:900!important;
 }
-
-@media(max-width:1180px) and (min-width:901px){
-  body.home-clean .toolbar{--filter-control-font-size:9px}
+body.home-clean .toolbar .filters select,
+body.home-clean .toolbar .filters select option{
+  font-size:var(--filter-control-font-size)!important;
+  font-weight:900!important;
+  text-align:center!important;
+  text-align-last:center!important;
 }
-
-@media(prefers-reduced-motion:reduce){
-  body.home-clean .toolbar .filters input[type='search'],
-  body.home-clean .toolbar .filters select,
-  body.home-clean .toolbar .filters button,
-  body.home-clean .toolbar .new-filter{transition:none!important}
+body.home-clean .toolbar .new-filter{flex-basis:124px!important;width:124px!important}
+body.home-clean .toolbar .favorite-filter{flex-basis:116px!important;width:116px!important}
+body.home-clean .toolbar #clearFilters{flex-basis:80px!important;width:80px!important}
+@media(max-width:1400px) and (min-width:901px){
+  body.home-clean .toolbar{--filter-control-font-size:12px!important;--filter-label-font-size:13px!important}
+  body.home-clean .toolbar .new-filter{flex-basis:116px!important;width:116px!important}
+  body.home-clean .toolbar .favorite-filter{flex-basis:108px!important;width:108px!important}
+  body.home-clean .toolbar #clearFilters{flex-basis:76px!important;width:76px!important}
+}
+@media(max-width:900px){
+  body.home-clean .toolbar{--filter-control-font-size:13px!important;--filter-label-font-size:14px!important}
+  body.home-clean .toolbar .new-filter,
+  body.home-clean .toolbar .favorite-filter,
+  body.home-clean .toolbar #clearFilters{width:100%!important}
 }
