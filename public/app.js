@@ -327,19 +327,35 @@ async function openServer(id,focusForm=false,focusReviewId=0){
   const server=data.server;
   const rating=Number(server.average_rating||0);
   const [statusClass,statusText]=statusInfo(server);
+  const openingDateValue=server.opened_at||server.created_at;
+  const openingDate=openingDateValue?new Date(openingDateValue).toLocaleDateString("tr-TR",{day:"2-digit",month:"long",year:"numeric"}):"Belirtilmedi";
   const mine=data.reviews.find(review=>Number(review.user_id)===Number(state.user?.id));
   $("#serverDetailName").textContent=server.name;
   $("#serverDetailDescription").textContent=compactDescription(server.description,300);
   $("#serverDetailHero").className=`server-detail-hero${server.image_url?"":" placeholder"}`;
   $("#serverDetailHero").style.backgroundImage=server.image_url?`url("${String(server.image_url).replaceAll('"',"%22")}")`:"";
   $("#serverDetailHero").innerHTML=server.image_url?"":'<div><strong>Sunucu görseli bekleniyor</strong></div>';
-  $("#serverDetailBadges").innerHTML=`<span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span><span class="detail-status-indicator ${statusClass}" title="${esc(server.status_note||statusText)}" aria-label="Sunucu durumu: ${statusText}"><i></i><b class="sr-only">${statusText}</b></span>`;
+  const detailBadges=$("#serverDetailBadges");
+  let openingDateBadge=$("#serverOpeningDate");
+  if(!openingDateBadge){
+    openingDateBadge=document.createElement("div");
+    openingDateBadge.id="serverOpeningDate";
+    openingDateBadge.className="server-opening-date";
+    detailBadges.before(openingDateBadge);
+  }
+  openingDateBadge.innerHTML=`<span>Açılış tarihi</span><strong>${openingDate}</strong>`;
+  detailBadges.innerHTML=`<span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span><span class="detail-status-indicator ${statusClass}" title="${esc(server.status_note||statusText)}" aria-label="Sunucu durumu: ${statusText}"><i></i><b class="sr-only">${statusText}</b></span>`;
   const links=[["Web Sitesi",server.website_url],["Discord",server.discord_url],["Tanıtım",server.promo_url]].filter(([,url])=>url);
   $("#serverDetailLinks").innerHTML=links.map(([name,url])=>`<a class="outline" href="${esc(url)}" target="_blank" rel="noopener nofollow">${name} ↗</a>`).join("");
   $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars detail-stars">${stars(rating)}</span><small>${data.reviews.length} yorum</small>`;
-  $("#serverDetailOverview").innerHTML=`<div class="detail-fact-grid"><article><small>Sunucu türü</small><strong>${esc(server.server_type)}</strong></article><article><small>Seviye sınırı</small><strong>CAP ${server.cap}</strong></article><article><small>Durum</small><strong>${statusText}</strong></article><article><small>Açılış</small><strong>${server.opened_at?new Date(server.opened_at).toLocaleDateString("tr-TR"):"Belirtilmedi"}</strong></article></div>${server.status_note?`<div class="detail-note"><strong>Güncel durum notu</strong><p>${esc(server.status_note)}</p></div>`:""}`;
+  $("#serverDetailOverview").innerHTML=`<section class="overview-intro"><div class="overview-heading"><div><small>SUNUCU DOSYASI</small><h3>${esc(server.name)}</h3></div><span class="overview-rating"><strong>${rating.toFixed(1)}</strong><i>★</i></span></div><div class="overview-description"><small>TAM AÇIKLAMA</small><p>${esc(server.description||"Bu sunucu için henüz açıklama eklenmemiş.")}</p></div></section><div class="detail-fact-grid"><article><small>Sunucu türü</small><strong>${esc(server.server_type)}</strong></article><article><small>Seviye sınırı</small><strong>CAP ${server.cap}</strong></article><article><small>Durum</small><strong>${statusText}</strong></article><article><small>Açılış tarihi</small><strong>${openingDate}</strong></article></div>${server.status_note?`<div class="detail-note"><strong>Güncel durum notu</strong><p>${esc(server.status_note)}</p></div>`:""}`;
   const similar=state.servers.filter(item=>Number(item.id)!==id&&(item.server_type===server.server_type||Number(item.cap)===Number(server.cap))).slice(0,4);
-  $("#serverSimilarList").innerHTML=similar.length?similar.map(item=>`<button type="button" data-similar-server="${item.id}"><span>${esc(item.name)}</span><small>${esc(item.server_type)} · CAP ${item.cap} · ${Number(item.average_rating||0).toFixed(1)} ★</small></button>`).join(""):'<p class="empty-state">Benzer sunucu bulunamadı.</p>';
+  $("#serverSimilarList").innerHTML=similar.length?`<div class="similar-section-head"><div><small>AKILLI EŞLEŞME</small><h3>Benzer Sunucular</h3></div><span>${similar.length} öneri</span></div>${similar.map((item,index)=>{
+    const itemRating=Number(item.average_rating||0);
+    const [itemStatusClass,itemStatusText]=statusInfo(item);
+    const matches=[item.server_type===server.server_type?"Aynı tür":"",Number(item.cap)===Number(server.cap)?"Aynı CAP":""].filter(Boolean);
+    return `<button class="similar-server-card" type="button" data-similar-server="${item.id}"><span class="similar-server-index">${String(index+1).padStart(2,"0")}</span><span class="similar-server-copy"><strong>${esc(item.name)}</strong><span class="similar-match-pills">${matches.map(match=>`<i>${match}</i>`).join("")}</span><small>${esc(item.server_type)} · CAP ${item.cap} · <b class="${itemStatusClass}">${itemStatusText}</b></small></span><span class="similar-server-rating"><strong>${itemRating.toFixed(1)}</strong><i>★</i></span><span class="similar-server-arrow" aria-hidden="true">→</span></button>`;
+  }).join("")}`:'<div class="similar-empty"><strong>Benzer sunucu bulunamadı</strong><p>Aynı tür veya CAP değerine sahip başka bir sunucu henüz yok.</p></div>';
   $("#serverDetailCount").innerHTML='<label class="comment-sort-label">Sırala <select id="commentSort"><option value="ratingDesc">Puan: yüksekten düşüğe</option><option value="ratingAsc">Puan: düşükten yükseğe</option><option value="likes">En çok beğenilen</option><option value="dislikes">En çok beğenilmeyen</option><option value="newest">En yeni</option></select></label>';
   renderReviewList(data.reviews,"ratingDesc");
   $("#commentSort").onchange=event=>renderReviewList(data.reviews,event.target.value);
