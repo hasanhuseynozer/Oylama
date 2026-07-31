@@ -99,7 +99,7 @@ body.home-clean .server-detail-dialog .inline-detail-review>div:last-of-type>sma
 
 body.home-clean .server-detail-dialog .inline-detail-review .primary{
   flex:0 0 auto;
-  margin-left:15px;
+  margin-left:0;
 }
 
 body.home-clean .server-detail-dialog .detail-comment{
