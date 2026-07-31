@@ -141,6 +141,127 @@ body.home-clean .server-detail-dialog .detail-comment time{
   color:#285f66!important;
 }
 
+body.home-clean .server-detail-dialog .user-link{
+  position:relative;
+  min-width:76px;
+  min-height:32px;
+  overflow:hidden;
+  padding:6px 10px!important;
+  border:1px solid rgba(112,15,42,.2)!important;
+  border-radius:10px;
+  background:linear-gradient(145deg,rgba(255,255,255,.5),rgba(137,221,216,.42))!important;
+  color:#74142d!important;
+  text-decoration:none!important;
+  box-shadow:0 3px 0 rgba(79,142,145,.35),0 7px 13px rgba(7,75,82,.08);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+
+body.home-clean .server-detail-dialog .user-link::after{
+  content:"Profili incele";
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  border-radius:inherit;
+  background:rgba(231,251,248,.9);
+  color:#74142d;
+  font-weight:800;
+  opacity:0;
+  transform:translateY(7px);
+  transition:opacity .18s ease,transform .18s ease;
+}
+
+body.home-clean .server-detail-dialog .user-link:hover{
+  transform:translateY(-2px);
+  text-decoration:none!important;
+  box-shadow:0 5px 0 rgba(79,142,145,.38),0 11px 18px rgba(7,75,82,.13);
+}
+
+body.home-clean .server-detail-dialog .user-link:hover::after{
+  opacity:1;
+  transform:translateY(0);
+}
+
+.review-removal-dialog{
+  width:min(460px,calc(100% - 28px));
+  padding:0;
+  overflow:hidden;
+  border:1px solid rgba(9,102,111,.4);
+  border-radius:22px;
+  background:linear-gradient(145deg,#e9fffc,#9de3de);
+  color:#073f48;
+  box-shadow:0 30px 90px rgba(3,48,55,.42),inset 0 1px #fff;
+}
+
+.review-removal-dialog::backdrop{
+  background:rgba(3,31,36,.68);
+  backdrop-filter:blur(7px);
+}
+
+.review-removal-dialog form{
+  display:grid;
+  justify-items:center;
+  padding:30px;
+  text-align:center;
+}
+
+.review-removal-icon{
+  display:grid;
+  place-items:center;
+  width:54px;
+  height:54px;
+  margin-bottom:14px;
+  border-radius:17px;
+  background:#0b525a;
+  color:#ffc44c;
+  font-size:25px;
+  box-shadow:0 6px 0 #06353c,0 13px 24px rgba(3,55,62,.22);
+}
+
+.review-removal-dialog small{
+  color:#21777e;
+  font-weight:800;
+  letter-spacing:.14em;
+}
+
+.review-removal-dialog h2{
+  margin:8px 0;
+  color:#073f48;
+}
+
+.review-removal-dialog p{
+  margin:0;
+  color:#315f65;
+  line-height:1.6;
+}
+
+.review-removal-dialog form>div{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  width:100%;
+  margin-top:24px;
+}
+
+.review-removal-dialog button{
+  min-height:42px;
+  padding:9px 15px;
+  border-radius:12px;
+  font-weight:800;
+}
+
+.review-remove-confirm{
+  border:1px solid #8d263e;
+  background:linear-gradient(145deg,#bd4660,#7d1831);
+  color:#fff;
+  box-shadow:0 5px 0 #571021,0 11px 20px rgba(96,18,38,.22);
+}
+
+.review-remove-confirm:hover{
+  transform:translateY(-2px);
+  filter:brightness(1.08);
+}
+
 body.home-clean .server-detail-dialog .reaction-button{
   position:relative;
   min-width:132px!important;

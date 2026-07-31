@@ -372,6 +372,9 @@ async function openServer(id,focusForm=false,focusReviewId=0){
   const dialog=$("#serverDialog");
   if(!dialog.open)dialog.showModal();
   requestAnimationFrame(()=>{
+    dialog.scrollTop=0;
+    dialog.querySelector(".detail-info-body")?.scrollTo({top:0,left:0,behavior:"instant"});
+    dialog.querySelectorAll(".detail-tab-panel").forEach(panel=>panel.scrollTop=0);
     if(focusForm){
       actions.classList.add("review-target");
       actions.scrollIntoView({behavior:"smooth",block:"center"});
@@ -409,7 +412,7 @@ function bindInlineReview(serverId,mine){
   form.querySelector("[data-rating-reset]").onclick=async event=>{
     const resetButton=event.currentTarget;
     if(!mine){choose(0);return}
-    if(!confirm("Oyunuz ve yorumunuz kalıcı olarak kaldırılsın mı?"))return;
+    if(!(await confirmReviewRemoval()))return;
     const message=form.querySelector(".inline-review-message");
     resetButton.disabled=true;
     message.textContent="Oy ve yorum kaldırılıyor…";
@@ -504,6 +507,22 @@ function showActionToast(text,tone="good"){
   toast.textContent=text;
   clearTimeout(showActionToast.timer);
   showActionToast.timer=setTimeout(()=>toast.classList.remove("visible"),3200);
+}
+
+function confirmReviewRemoval(){
+  let dialog=$("#reviewRemovalDialog");
+  if(!dialog){
+    dialog=document.createElement("dialog");
+    dialog.id="reviewRemovalDialog";
+    dialog.className="review-removal-dialog";
+    dialog.innerHTML=`<form method="dialog"><span class="review-removal-icon" aria-hidden="true">★</span><small>DEĞERLENDİRME YÖNETİMİ</small><h2>Oy ve yorum kaldırılsın mı?</h2><p>Bu sunucuya verdiğiniz puan ve yazdığınız yorum kalıcı olarak silinecek.</p><div><button value="cancel" class="outline" type="submit">Vazgeç</button><button value="confirm" class="review-remove-confirm" type="submit">Oyumu ve yorumumu kaldır</button></div></form>`;
+    document.body.append(dialog);
+    dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close("cancel")});
+  }
+  return new Promise(resolve=>{
+    dialog.addEventListener("close",()=>resolve(dialog.returnValue==="confirm"),{once:true});
+    dialog.showModal();
+  });
 }
 
 async function openProfile(id){
