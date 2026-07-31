@@ -1,7 +1,7 @@
 /* Four identical desktop sponsor slots: Sol 1, Sol 2, Sağ 1, Sağ 2. */
 @media (min-width:1501px){
   body.home-clean .page-layout{
-    grid-template-columns:350px minmax(0,1fr) 350px!important;
+    grid-template-columns:250px minmax(0,1fr) 250px!important;
     column-gap:16px!important;
     align-items:start!important;
     padding-top:18px!important;
@@ -11,9 +11,9 @@
     position:static!important;
     box-sizing:border-box!important;
     display:grid!important;
-    grid-template-rows:250px 250px!important;
-    width:350px!important;
-    height:512px!important;
+    grid-template-rows:350px 350px!important;
+    width:250px!important;
+    height:712px!important;
     gap:12px!important;
     margin:0!important;
     padding:0!important;
@@ -29,10 +29,10 @@
   body.home-clean .sponsor-slot{
     box-sizing:border-box!important;
     display:block!important;
-    width:350px!important;
-    height:250px!important;
-    min-width:350px!important;
-    min-height:250px!important;
+    width:250px!important;
+    height:350px!important;
+    min-width:250px!important;
+    min-height:350px!important;
     margin:0!important;
     padding:0!important;
     overflow:hidden!important;
@@ -46,12 +46,12 @@
     box-sizing:border-box!important;
     position:relative!important;
     display:block!important;
-    width:350px!important;
-    height:250px!important;
-    min-width:350px!important;
-    min-height:250px!important;
-    max-width:350px!important;
-    max-height:250px!important;
+    width:250px!important;
+    height:350px!important;
+    min-width:250px!important;
+    min-height:350px!important;
+    max-width:250px!important;
+    max-height:350px!important;
     margin:0!important;
     padding:0!important;
     overflow:hidden!important;
