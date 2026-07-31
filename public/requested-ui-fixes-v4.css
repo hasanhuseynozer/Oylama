@@ -222,6 +222,20 @@ body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon{
 body.home-clean .server-card[data-global-rank='3'] > .stable-rank-ribbon::after{content:'3'!important}
 
 /* Publishers and giveaways use a light aqua network canvas, not the old dark shell. */
+body.home-clean{
+  background-color:#70cdc6!important;
+  background-image:none!important;
+}
+body.home-clean::after{
+  background:none!important;
+}
+body.home-clean #serverView,
+body.home-clean #serverView>.content,
+body.home-clean #portalView,
+body.home-clean #portalView iframe{
+  background-color:#70cdc6!important;
+  background-image:none!important;
+}
 body.network-page .network-shell,
 body.embedded-view .network-shell{
   width:100%!important;
