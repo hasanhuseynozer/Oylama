@@ -423,5 +423,5 @@ function statusText(value){return({online:"Çevrimiçi",maintenance:"Bakımda",o
 function show(text,className){$("#adminMessage").className=`message admin-toast ${className}`;$("#adminMessage").textContent=text}
 function esc(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]))}
 
-document.querySelectorAll(".brand").forEach(element=>element.innerHTML='<img class="admin-brand-logo" src="/sro-rating-logo.png" alt="SRO RATING">');
+document.querySelectorAll(".brand").forEach(element=>element.innerHTML='<img class="admin-brand-logo" src="/sro-rating-logo-v2.png" alt="SRO RATING">');
 load();

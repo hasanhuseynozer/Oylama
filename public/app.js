@@ -81,7 +81,7 @@ function syncStickyHeaderOffset(){
 
 function applySettings(){
   const settings=state.settings;
-  const logo="/sro-rating-logo.png";
+  const logo="/sro-rating-logo-v2.png";
   $("#siteLogo").src=logo;
   setVisual($("#banner"),settings.banner_image);
   configureSponsor($("#banner"),settings.banner_image,settings.banner_text,settings.banner_url);
@@ -121,7 +121,7 @@ function renderAccount(){
   const badge=state.user.role==="owner"?"♛ Sunucu Sahibi":state.user.role==="creator"?"◆ Onaylı Yayıncı":"✦ Üye";
   box.innerHTML=`<div class="account-menu">
     <button class="account-menu-trigger" type="button" aria-expanded="false" aria-haspopup="menu">
-      <img src="/sro-rating-logo.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span><i>⌄</i>
+      <img src="/sro-rating-logo-v2.png" alt=""><span><strong>${esc(state.user.displayName)}</strong><small>${badge}</small></span><i>⌄</i>
     </button>
     <div class="account-menu-panel hidden" role="menu">
       <a class="account-menu-item" href="/profil/" role="menuitem"><span>👤</span><span>Profilim</span></a>
@@ -591,7 +591,7 @@ async function openProfile(id){
   $("#serverDialog").close();
   const data=await api(`/api/users/${id}/profile`),profile=data.profile,stats=data.stats;
   const badges=["Topluluk Üyesi",Number(stats.reviews)>=1&&"İlk Değerlendirme",Number(stats.reviews)>=5&&"Deneyimli Yorumcu",profile.account_role==="owner"&&"Sunucu Sahibi"].filter(Boolean);
-  $("#profilePreviewContent").innerHTML=`<div class="profile-preview-cover"><div class="profile-preview-head"><div class="profile-preview-avatar"><img src="/sro-rating-logo.png" alt=""></div><div><p class="eyebrow">${profile.account_role==="owner"?"SUNUCU SAHİBİ":"TOPLULUK ÜYESİ"}</p><h2>${esc(profile.display_name)}</h2><small>Topluluğa ${new Date(profile.created_at).toLocaleDateString("tr-TR")} tarihinde katıldı</small></div></div></div>
+  $("#profilePreviewContent").innerHTML=`<div class="profile-preview-cover"><div class="profile-preview-head"><div class="profile-preview-avatar"><img src="/sro-rating-logo-v2.png" alt=""></div><div><p class="eyebrow">${profile.account_role==="owner"?"SUNUCU SAHİBİ":"TOPLULUK ÜYESİ"}</p><h2>${esc(profile.display_name)}</h2><small>Topluluğa ${new Date(profile.created_at).toLocaleDateString("tr-TR")} tarihinde katıldı</small></div></div></div>
     <div class="profile-preview-body">${profile.bio?`<p class="profile-bio">${esc(profile.bio)}</p>`:'<p class="profile-bio muted">Henüz profil açıklaması eklenmedi.</p>'}<div class="badge-wall">${badges.map(badge=>`<span class="profile-badge">✦ ${badge}</span>`).join("")}</div>
     <div class="profile-preview-section"><div class="section-heading"><h3>Oynadığı Sunucular</h3><span>${data.servers.length} sunucu</span></div><div class="public-server-list">${data.servers.length?data.servers.map(server=>`<article><span>${esc(server.name)}</span><strong>${esc(server.character_name||"Karakter adı paylaşılmadı")}</strong></article>`).join(""):"<p>Henüz sunucu seçmedi.</p>"}</div></div>
     <div class="profile-stats"><span><strong>${stats.reviews}</strong><small>Değerlendirme</small></span><span><strong>${stats.likes}</strong><small>Toplam Beğeni</small></span></div></div>`;
