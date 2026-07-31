@@ -42,7 +42,7 @@
         <img class="sponsor-preview is-empty" data-sponsor-preview="${key}" alt="${label} reklam önizleme">
         <div class="sponsor-upload-actions">
           <label>Reklam görseli<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-sponsor-upload="${key}"></label>
-          <small>PNG, JPG, WebP veya GIF. Görsel sitede 350×250 px olarak gösterilir.</small>
+          <small>PNG, JPG, WebP veya GIF. En fazla 2 MB.</small>
           <button class="outline tiny" type="button" data-sponsor-remove="${key}">Görseli kaldır</button>
         </div>
       </div>
@@ -96,7 +96,7 @@
 
   const readImage=file=>new Promise((resolve,reject)=>{
     if(!file?.type?.startsWith('image/'))return reject(new Error('Lütfen bir görsel dosyası seçin.'));
-    if(file.size>600*1024)return reject(new Error('Reklam görseli en fazla 600 KB olabilir.'));
+    if(file.size>2*1024*1024)return reject(new Error('Reklam görseli en fazla 2 MB olabilir.'));
     const reader=new FileReader();
     reader.onload=()=>resolve(String(reader.result||''));
     reader.onerror=()=>reject(new Error('Görsel okunamadı.'));
