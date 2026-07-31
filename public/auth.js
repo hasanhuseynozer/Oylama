@@ -59,7 +59,8 @@ form.onsubmit=async event=>{
     button.disabled=true;
     button.textContent="İşleniyor…";
     await api(`/api/auth/${mode}`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
-    location.href=mode==="register"?"/profil/":"/";
+    if(mode==="register")location.assign("/profil/");
+    else location.replace(new URL("/",location.origin).href);
   }catch(error){
     msg.textContent=error.message;
     msg.className="message bad";

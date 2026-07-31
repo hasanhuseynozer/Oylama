@@ -314,7 +314,7 @@ function renderServers(){
       (!state.favoriteOnly||Boolean(server.is_favorite));
   });
   const sort=$("#sortSelect").value;
-  servers.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):
+  servers.sort((a,b)=>sort==="comments"?Number(b.comment_count)-Number(a.comment_count):
     sort==="newest"?(serverOpeningTimestamp(b)||-Infinity)-(serverOpeningTimestamp(a)||-Infinity):
     Number(b.average_rating)-Number(a.average_rating)||Number(b.vote_count)-Number(a.vote_count));
   const filtered=Boolean(query||cap||type||status||minRating||tag||newOnly||state.favoriteOnly);
@@ -339,7 +339,7 @@ function serverCard(server,index){
     ${cover}<div class="server-card-body"><div class="server-badges"><span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span>${fresh?'<span class="fresh">Yeni</span>':""}${event?`<time class="countdown card-event-countdown" data-date="${esc(event[1])}" datetime="${esc(event[1])}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></time>`:cardOpeningDate?`<time class="card-opening-date" datetime="${esc(cardOpeningValue)}">${cardOpeningDate}</time>`:""}</div>
     <h2>${esc(server.name)}</h2>
     <p class="desc card-summary">${esc(compactDescription(server.description,110))}</p>
-    <div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${server.vote_count} değerlendirme</small></div><div class="stars card-stars">${stars(rating)}</div></div>
+    <div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${Number(server.comment_count||0)} yorum yapıldı · ${Number(server.vote_count||0)} kez oylandı</small></div><div class="stars card-stars">${stars(rating)}</div></div>
     <div class="card-actions"><button class="primary" data-review="${server.id}">Oy Ver</button></div></div>
   </article>`;
 }
@@ -401,7 +401,7 @@ async function openServer(id,focusForm=false,focusReviewId=0){
   detailBadges.innerHTML=`<span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span><span class="detail-status-indicator ${statusClass}" title="${esc(server.status_note||statusText)}" aria-label="Sunucu durumu: ${statusText}"><i></i><b class="sr-only">${statusText}</b></span>`;
   const links=[["Web Sitesi",server.website_url],["Discord",server.discord_url],["Tanıtım",server.promo_url]].filter(([,url])=>url);
   $("#serverDetailLinks").innerHTML=links.map(([name,url])=>`<a class="outline" href="${esc(url)}" target="_blank" rel="noopener nofollow">${name} ↗</a>`).join("");
-  $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars detail-stars">${stars(rating)}</span><small>${data.reviews.length} yorum</small>`;
+  $("#serverDetailScore").innerHTML=`<strong>${rating.toFixed(1)}</strong><span class="stars detail-stars">${stars(rating)}</span><small>${Number(server.comment_count||0)} yorum · ${Number(server.vote_count||0)} oy</small>`;
   $("#serverDetailOverview").innerHTML=`<section class="overview-intro"><div class="overview-heading"><div><h3>${esc(server.name)}</h3></div><span class="overview-rating"><strong>${rating.toFixed(1)}</strong><i>★</i></span></div><div class="overview-description"><small>TAM AÇIKLAMA</small><p>${esc(server.description||"Bu sunucu için henüz açıklama eklenmemiş.")}</p></div></section><div class="detail-fact-grid"><article><small>Sunucu türü</small><strong class="overview-value overview-type">${esc(server.server_type)}</strong></article><article><small>Seviye sınırı</small><strong class="overview-value overview-cap">CAP ${server.cap}</strong></article><article><small>Durum</small><strong class="overview-value overview-status ${statusClass}"><i></i>${statusText}</strong></article><article><small>Açılış tarihi</small><strong class="overview-value overview-date">${openingDate}</strong></article></div>${server.status_note?`<div class="detail-note"><strong>Güncel durum notu</strong><p>${esc(server.status_note)}</p></div>`:""}`;
   const similar=state.servers.filter(item=>Number(item.id)!==id&&(item.server_type===server.server_type||Number(item.cap)===Number(server.cap))).slice(0,4);
   $("#serverSimilarList").innerHTML=similar.length?`<div class="similar-section-head"><div><small>AKILLI EŞLEŞME</small><h3>Benzer Sunucular</h3></div><span>${similar.length} öneri</span></div>${similar.map((item,index)=>{
@@ -411,8 +411,8 @@ async function openServer(id,focusForm=false,focusReviewId=0){
     return `<button class="similar-server-card" type="button" data-similar-server="${item.id}"><span class="similar-server-index">${String(index+1).padStart(2,"0")}</span><span class="similar-server-copy"><strong>${esc(item.name)}</strong><span class="similar-match-pills">${matches.map(match=>`<i>${match}</i>`).join("")}</span><small>${esc(item.server_type)} · CAP ${item.cap} · <b class="${itemStatusClass}">${itemStatusText}</b></small></span><span class="similar-server-rating"><strong>${itemRating.toFixed(1)}</strong><i>★</i></span><span class="similar-server-arrow" aria-hidden="true">→</span></button>`;
   }).join("")}`:'<div class="similar-empty"><strong>Benzer sunucu bulunamadı</strong><p>Aynı tür veya CAP değerine sahip başka bir sunucu henüz yok.</p></div>';
   $("#serverDetailCount").innerHTML='<label class="comment-sort-label">Sırala <select id="commentSort"><option value="ratingDesc">Puan: yüksekten düşüğe</option><option value="ratingAsc">Puan: düşükten yükseğe</option><option value="likes">En çok beğenilen</option><option value="dislikes">En çok beğenilmeyen</option><option value="newest">En yeni</option></select></label>';
-  renderReviewList(data.reviews,"ratingDesc");
-  $("#commentSort").onchange=event=>renderReviewList(data.reviews,event.target.value);
+  renderReviewList(data.reviews.filter(review=>String(review.comment||"").trim().length>=10),"ratingDesc");
+  $("#commentSort").onchange=event=>renderReviewList(data.reviews.filter(review=>String(review.comment||"").trim().length>=10),event.target.value);
   $$('[data-detail-tab]').forEach(button=>button.onclick=()=>{
     $$('[data-detail-tab]').forEach(item=>item.classList.toggle("active",item===button));
     $$('[data-detail-panel]').forEach(panel=>panel.classList.toggle("active",panel.dataset.detailPanel===button.dataset.detailTab));
@@ -450,8 +450,8 @@ async function openServer(id,focusForm=false,focusReviewId=0){
 function detailReviewForm(mine){
   return `<form id="inlineDetailReview" class="inline-detail-review">
     <div class="inline-rating" data-inline-rating data-rating-value="${Number(mine?.rating||0)}" role="radiogroup" aria-label="Sunucu puanı">${[1,2,3,4,5].map(value=>`<button type="button" role="radio" aria-checked="${Number(mine?.rating||0)===value}" data-value="${value}" class="${Number(mine?.rating||0)>=value?"active":""}" aria-label="${value} yıldız ver">★</button>`).join("")}</div><div class="rating-selection"><span data-rating-selection>${mine?`Seçilen puan: ${mine.rating}/5`:"Puan seçilmedi"}</span><button type="button" data-rating-reset>Puanı temizle</button></div>
-    <textarea minlength="10" maxlength="500" required aria-describedby="inlineReviewHelp" placeholder="Bu sunucu hakkındaki deneyiminiz…">${esc(mine?.comment||"")}</textarea>
-    <div><small id="inlineReviewHelp">En az 10 karakter · <span data-review-count>${String(mine?.comment||"").length}</span>/500</small><button class="primary">${mine?"Puan ve Yorumu Güncelle":"Oy Ver ve Yorumla"}</button></div>
+    <textarea maxlength="500" aria-describedby="inlineReviewHelp" placeholder="Yorum isteğe bağlıdır; deneyiminizi paylaşabilirsiniz…">${esc(String(mine?.comment||"").trim())}</textarea>
+    <div><small id="inlineReviewHelp">İsteğe bağlı · Yazılırsa en az 10 karakter · <span data-review-count>${String(mine?.comment||"").trim().length}</span>/500</small><button class="primary">${mine?"Puanı Güncelle":"Puanı Kaydet"}</button></div>
     <p class="inline-review-message" role="status"></p>
   </form>`;
 }
@@ -494,7 +494,7 @@ function bindInlineReview(serverId,mine){
     const comment=form.querySelector("textarea").value.trim();
     if(!serverId){message.textContent="Önce bir sunucu seçin.";return}
     if(!chosen){message.textContent="Bir puan seçin.";return}
-    if(comment.length<10){message.textContent="Yorum en az 10 karakter olmalıdır.";form.querySelector("textarea").focus();return}
+    if(comment.length>0&&comment.length<10){message.textContent="Yorum yazacaksanız en az 10 karakter olmalıdır.";form.querySelector("textarea").focus();return}
     const submit=form.querySelector("button[type=submit],button.primary");
     submit.disabled=true;message.textContent="Kaydediliyor…";
     try{

@@ -66,7 +66,8 @@ async function serverPageResponse(request,env,url){
   const match=url.pathname.match(/-(\d+)\/?$/),id=Number(match?.[1]||0);
   const server=id?await env.DB.prepare(`SELECT s.id,s.name,s.description,s.cap,s.server_type,s.opened_at,s.operational_status,s.status_note,s.website_url,s.discord_url,s.promo_url,s.updated_at,
     CASE WHEN EXISTS(SELECT 1 FROM site_settings WHERE setting_key='server_image_'||s.id AND setting_value!='') THEN '/media/server/'||s.id ELSE '' END image_url,
-    COALESCE(ROUND(AVG(r.rating),1),0) average_rating,COUNT(r.id) vote_count
+    COALESCE(ROUND(AVG(r.rating),1),0) average_rating,COUNT(r.id) vote_count,
+    COALESCE(SUM(CASE WHEN length(trim(r.comment)) >= 10 THEN 1 ELSE 0 END),0) comment_count
     FROM servers s LEFT JOIN reviews r ON r.server_id=s.id AND NOT EXISTS(SELECT 1 FROM hidden_reviews h WHERE h.review_id=r.id) WHERE s.id=? AND s.is_active=1 GROUP BY s.id`).bind(id).first():null;
   if(!server)return new Response("<!doctype html><html lang=\"tr\"><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex\"><title>Sunucu bulunamadı — SRO RATING</title><body><main><h1>Sunucu bulunamadı</h1><a href=\"/\">Ana sayfaya dön</a></main></body></html>",{status:404,headers:{"content-type":"text/html; charset=utf-8"}});
   const canonicalPath=`/sunucular/${slugify(server.name)}-${server.id}`;
@@ -75,9 +76,9 @@ async function serverPageResponse(request,env,url){
   const origin=publicOrigin(request,env),canonical=`${origin}${canonicalPath}`,title=`${server.name} — SRO RATING`,description=String(server.description||`${server.name} sunucu değerlendirmeleri`).slice(0,155),image=server.image_url?`${origin}${server.image_url}`:`${origin}/sro-rating-logo-v2.png`;
   const links=[["Web sitesi",server.website_url],["Discord",server.discord_url],["Tanıtım",server.promo_url]].filter(([,href])=>href).map(([label,href])=>`<a href="${htmlEscape(href)}" rel="noopener nofollow" target="_blank">${label}</a>`).join("");
   const statusClass=server.operational_status==="online"?"online":server.operational_status==="maintenance"?"maintenance":"offline",statusLabel=statusClass==="online"?"Çevrimiçi":statusClass==="maintenance"?"Bakımda":"Kapalı";
-  const comments=(reviews.results||[]).map(review=>`<article><header><strong>${htmlEscape(review.display_name)}</strong><span aria-label="${review.rating} yıldız">${"★".repeat(review.rating)}${"☆".repeat(5-review.rating)}</span></header><p>${htmlEscape(review.comment)}</p><time>${htmlEscape(String(review.created_at).slice(0,16))}</time></article>`).join("")||"<div class=\"empty\"><h2>Henüz yorum yok</h2><p>İlk değerlendirmeyi siz yapabilirsiniz.</p></div>";
+  const comments=(reviews.results||[]).filter(review=>String(review.comment||"").trim().length>=10).map(review=>`<article><header><strong>${htmlEscape(review.display_name)}</strong><span aria-label="${review.rating} yıldız">${"★".repeat(review.rating)}${"☆".repeat(5-review.rating)}</span></header><p>${htmlEscape(review.comment)}</p><time>${htmlEscape(String(review.created_at).slice(0,16))}</time></article>`).join("")||"<div class=\"empty\"><h2>Henüz yorum yok</h2><p>İlk değerlendirmeyi siz yapabilirsiniz.</p></div>";
   const schema=JSON.stringify({"@context":"https://schema.org","@type":"Product",name:server.name,description,aggregateRating:Number(server.vote_count)?{"@type":"AggregateRating",ratingValue:Number(server.average_rating),reviewCount:Number(server.vote_count),bestRating:5,worstRating:1}:undefined}).replace(/</g,"\\u003c");
-  const html=`<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="description" content="${htmlEscape(description)}"><link rel="canonical" href="${htmlEscape(canonical)}"><meta property="og:type" content="website"><meta property="og:title" content="${htmlEscape(title)}"><meta property="og:description" content="${htmlEscape(description)}"><meta property="og:url" content="${htmlEscape(canonical)}"><meta property="og:image" content="${htmlEscape(image)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${htmlEscape(title)}"><meta name="twitter:description" content="${htmlEscape(description)}"><meta name="twitter:image" content="${htmlEscape(image)}"><link rel="icon" href="/sro-rating-logo-v2.png"><link rel="stylesheet" href="/styles.css?v=20260728-6"><script type="application/ld+json">${schema}</script></head><body class="server-page-body"><header class="server-page-header"><a href="/"><img src="/sro-rating-logo-v2.png" alt="SRO RATING"></a><a class="outline" href="/">Tüm Sunucular</a></header><main class="server-page"><section class="server-page-summary"><img src="${htmlEscape(image)}" alt="${htmlEscape(server.name)} sunucu görseli"><div><div class="server-badges"><span>${htmlEscape(server.server_type)}</span><span>CAP ${Number(server.cap)||"—"}</span><span class="detail-status-indicator ${statusClass}" title="${htmlEscape(server.status_note||statusLabel)}" aria-label="Sunucu durumu: ${statusLabel}"><i></i><b class="sr-only">${statusLabel}</b></span></div><h1>${htmlEscape(server.name)}</h1><p>${htmlEscape(server.description)}</p><div class="server-page-score"><strong>${Number(server.average_rating||0).toFixed(1)}</strong><span>${"★".repeat(Math.round(Number(server.average_rating||0)))}${"☆".repeat(5-Math.round(Number(server.average_rating||0)))}</span><small>${Number(server.vote_count)} değerlendirme</small></div><nav>${links}</nav><a class="primary" href="/?server=${server.id}">Oy Ver ve Yorumla</a></div></section><section class="server-page-reviews"><header><div><small>TOPLULUK GÖRÜŞLERİ</small><h2>Yorumlar</h2></div><strong>${Number(server.vote_count)}</strong></header>${comments}</section></main><script src="/server-page.js?v=20260728-6" defer></script></body></html>`;
+  const html=`<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${htmlEscape(title)}</title><meta name="description" content="${htmlEscape(description)}"><link rel="canonical" href="${htmlEscape(canonical)}"><meta property="og:type" content="website"><meta property="og:title" content="${htmlEscape(title)}"><meta property="og:description" content="${htmlEscape(description)}"><meta property="og:url" content="${htmlEscape(canonical)}"><meta property="og:image" content="${htmlEscape(image)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${htmlEscape(title)}"><meta name="twitter:description" content="${htmlEscape(description)}"><meta name="twitter:image" content="${htmlEscape(image)}"><link rel="icon" href="/sro-rating-logo-v2.png"><link rel="stylesheet" href="/styles.css?v=20260728-6"><script type="application/ld+json">${schema}</script></head><body class="server-page-body"><header class="server-page-header"><a href="/"><img src="/sro-rating-logo-v2.png" alt="SRO RATING"></a><a class="outline" href="/">Tüm Sunucular</a></header><main class="server-page"><section class="server-page-summary"><img src="${htmlEscape(image)}" alt="${htmlEscape(server.name)} sunucu görseli"><div><div class="server-badges"><span>${htmlEscape(server.server_type)}</span><span>CAP ${Number(server.cap)||"—"}</span><span class="detail-status-indicator ${statusClass}" title="${htmlEscape(server.status_note||statusLabel)}" aria-label="Sunucu durumu: ${statusLabel}"><i></i><b class="sr-only">${statusLabel}</b></span></div><h1>${htmlEscape(server.name)}</h1><p>${htmlEscape(server.description)}</p><div class="server-page-score"><strong>${Number(server.average_rating||0).toFixed(1)}</strong><span>${"★".repeat(Math.round(Number(server.average_rating||0)))}${"☆".repeat(5-Math.round(Number(server.average_rating||0)))}</span><small>${Number(server.comment_count)} yorum · ${Number(server.vote_count)} oy</small></div><nav>${links}</nav><a class="primary" href="/?server=${server.id}">Puan Ver</a></div></section><section class="server-page-reviews"><header><div><small>TOPLULUK GÖRÜŞLERİ</small><h2>Yorumlar</h2></div><strong>${Number(server.comment_count)}</strong></header>${comments}</section></main><script src="/server-page.js?v=20260728-6" defer></script></body></html>`;
   return new Response(html,{headers:{"content-type":"text/html; charset=utf-8","cache-control":"public, max-age=120, stale-while-revalidate=600"}});
 }
 
@@ -103,6 +104,7 @@ async function handleApi(request, env, url) {
         s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
         COUNT(r.id) AS vote_count,
+        COALESCE(SUM(CASE WHEN length(trim(r.comment)) >= 10 THEN 1 ELSE 0 END),0) AS comment_count,
         EXISTS(SELECT 1 FROM user_favorite_servers f WHERE f.server_id=s.id AND f.user_id=?) AS is_favorite,
         ROUND(((COALESCE(AVG(r.rating),3.5)*COUNT(r.id)+17.5)/(COUNT(r.id)+5))+(s.is_verified*0.35),2) AS trust_score
       FROM servers s
@@ -138,7 +140,8 @@ async function handleApi(request, env, url) {
           THEN '/media/server/'||s.id||'?v='||COALESCE((SELECT strftime('%s',updated_at) FROM site_settings WHERE setting_key='server_image_'||s.id),'0') ELSE '' END image_url,
         s.created_at,
         COALESCE(ROUND(AVG(r.rating), 1), 0) AS average_rating,
-        COUNT(r.id) AS vote_count
+        COUNT(r.id) AS vote_count,
+        COALESCE(SUM(CASE WHEN length(trim(r.comment)) >= 10 THEN 1 ELSE 0 END),0) AS comment_count
       FROM servers s LEFT JOIN reviews r ON r.server_id = s.id AND NOT EXISTS(SELECT 1 FROM hidden_reviews h WHERE h.review_id=r.id)
       WHERE s.id = ? AND s.is_active = 1 GROUP BY s.id
     `).bind(id).first();
@@ -708,12 +711,12 @@ async function handleApi(request, env, url) {
     verifyOrigin(request);requireJson(request);
     const user=await requireUser(request,env.DB),reviewId=Number(reviewUpdate[1]),body=await readJson(request),rating=Number(body.rating),comment=cleanText(body.comment);
     if(!Number.isInteger(rating)||rating<1||rating>5)return json({error:"1–5 arasında puan seçin."},400);
-    if(comment.length<10||comment.length>500)return json({error:"Yorum 10–500 karakter arasında olmalıdır."},400);
-    if(hasProfanity(comment))return json({error:"Küfür, hakaret ve aşağılayıcı ifadeler yasaktır."},400);
+    if((comment.length>0&&comment.length<10)||comment.length>500)return json({error:"Yorum boş bırakılmalı veya 10–500 karakter arasında olmalıdır."},400);
+    if(comment&&hasProfanity(comment))return json({error:"Küfür, hakaret ve aşağılayıcı ifadeler yasaktır."},400);
     const old=await env.DB.prepare("SELECT rating,comment FROM reviews WHERE id=? AND user_id=?").bind(reviewId,user.id).first();
     if(!old)return json({error:"Bu yorumu düzenleme yetkiniz yok."},403);
     if(!(await rateLimit(env.DB,`review-edit:${reviewId}`,String(user.id),5,10*60)))return json({error:"Yorumunuzu çok sık güncelliyorsunuz."},429);
-    await env.DB.prepare("UPDATE reviews SET rating=?,comment=? WHERE id=?").bind(rating,comment,reviewId).run();
+    await env.DB.prepare("UPDATE reviews SET rating=?,comment=? WHERE id=?").bind(rating,comment||"   ",reviewId).run();
     await addAuditEvent(env.DB,request,"user",user.id,"review.update","review",reviewId,{oldRating:old.rating,newRating:rating,commentChanged:old.comment!==comment});
     return json({message:"Puanınız ve yorumunuz güncellendi."});
   }
@@ -733,8 +736,8 @@ async function handleApi(request, env, url) {
     const rating = Number(body.rating);
     const comment = cleanText(body.comment);
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) return json({ error: "1–5 arasında puan seçin." }, 400);
-    if (comment.length < 10 || comment.length > 500) return json({ error: "Yorum 10–500 karakter arasında olmalıdır." }, 400);
-    if (hasProfanity(comment)) return json({ error: "Küfür, hakaret ve aşağılayıcı ifadeler yasaktır." }, 400);
+    if ((comment.length > 0 && comment.length < 10) || comment.length > 500) return json({ error: "Yorum boş bırakılmalı veya 10–500 karakter arasında olmalıdır." }, 400);
+    if (comment && hasProfanity(comment)) return json({ error: "Küfür, hakaret ve aşağılayıcı ifadeler yasaktır." }, 400);
 
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const allowed = await rateLimit(env.DB, "review", await keyedHash(env, ip), 8, 10 * 60);
@@ -744,7 +747,7 @@ async function handleApi(request, env, url) {
 
     const existing=await env.DB.prepare("SELECT id,rating,comment FROM reviews WHERE server_id=? AND user_id=?").bind(serverId,user.id).first();
     if(existing){
-      await env.DB.prepare("UPDATE reviews SET rating=?,comment=? WHERE id=?").bind(rating,comment,existing.id).run();
+      await env.DB.prepare("UPDATE reviews SET rating=?,comment=? WHERE id=?").bind(rating,comment||"   ",existing.id).run();
       await addAuditEvent(env.DB,request,"user",user.id,"review.update","review",existing.id,{oldRating:existing.rating,newRating:rating,commentChanged:existing.comment!==comment});
       return json({message:"Puanınız ve yorumunuz güncellendi."});
     }
@@ -759,12 +762,12 @@ async function handleApi(request, env, url) {
       const createdReview=await env.DB.prepare(`
         INSERT INTO reviews(server_id, email_hash, email_masked, rating, comment, ip_hash, user_id)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).bind(serverId, emailHash, maskEmail(user.email), rating, comment, await keyedHash(env, ip), user.id).run();
+      `).bind(serverId, emailHash, maskEmail(user.email), rating, comment||"   ", await keyedHash(env, ip), user.id).run();
       const recentFromIp=await env.DB.prepare("SELECT COUNT(*) count FROM reviews WHERE ip_hash=? AND datetime(created_at)>=datetime('now','-1 hour')").bind(await keyedHash(env,ip)).first();
       const recentAccount=await env.DB.prepare("SELECT COUNT(*) count FROM reviews WHERE user_id=? AND datetime(created_at)>=datetime('now','-24 hours')").bind(user.id).first();
       const reasons=[],ipCount=Number(recentFromIp?.count||0),accountCount=Number(recentAccount?.count||0);
-      if(ipCount>=4)reasons.push("Aynı ağdan yoğun oy");if(accountCount>=6)reasons.push("Hesaptan yoğun oy");if(comment.length<12)reasons.push("Çok kısa yorum");
-      const riskScore=Math.min(100,(ipCount>=4?45:0)+(accountCount>=6?35:0)+(comment.length<12?15:0));
+      if(ipCount>=4)reasons.push("Aynı ağdan yoğun oy");if(accountCount>=6)reasons.push("Hesaptan yoğun oy");
+      const riskScore=Math.min(100,(ipCount>=4?45:0)+(accountCount>=6?35:0));
       await env.DB.prepare("INSERT INTO vote_security_events(review_id,user_id,server_id,ip_hash,user_agent_hash,risk_score,risk_reasons) VALUES(?,?,?,?,?,?,?)")
         .bind(Number(createdReview.meta.last_row_id),user.id,serverId,await keyedHash(env,ip),await keyedHash(env,request.headers.get("user-agent")||"unknown"),riskScore,reasons.join(", ")).run();
       await addAuditEvent(env.DB,request,"user",user.id,"review.create","review",Number(createdReview.meta.last_row_id),{serverId,rating,riskScore});

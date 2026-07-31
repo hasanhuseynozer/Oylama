@@ -25,7 +25,7 @@ body.auth-page .auth-card::before{
 body.auth-page .auth-card>*{position:relative;z-index:1}
 body.auth-page .auth-brand{display:inline-flex;text-decoration:none}
 body.auth-page .auth-logo{width:150px;height:78px;object-fit:contain;object-position:left center;filter:drop-shadow(0 8px 16px rgba(3,72,77,.22))}
-body.auth-page .auth-logo-login{width:210px;height:105px;margin:-12px 0 -3px}
+body.auth-page .auth-logo-login{width:210px;height:105px;margin:-12px 0 -3px;transform:translateX(-15px)}
 body.auth-page h1{margin:8px 0 18px;color:#073b40;font-family:"Patrick Hand SC",Marcellus,serif;font-size:38px}
 body.auth-page label{color:#073b40;font-weight:700}
 body.auth-page input{
