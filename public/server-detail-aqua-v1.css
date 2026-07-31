@@ -89,6 +89,68 @@ body.home-clean .server-detail-dialog .inline-detail-review{
   box-shadow:0 7px 0 rgba(54,147,150,.4),0 16px 30px rgba(6,76,84,.12),inset 0 1px #fff;
 }
 
+body.home-clean .server-detail-dialog .inline-rating{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  min-height:62px;
+  padding:7px 12px;
+  perspective:600px;
+}
+
+body.home-clean .server-detail-dialog .inline-rating button{
+  appearance:none;
+  position:relative;
+  width:44px;
+  height:48px;
+  min-width:44px;
+  padding:0!important;
+  overflow:visible;
+  border:0!important;
+  border-radius:0!important;
+  outline:0;
+  background:transparent!important;
+  color:#39777d!important;
+  box-shadow:none!important;
+  font-size:40px!important;
+  line-height:48px!important;
+  text-align:center;
+  text-shadow:0 2px 0 #174b51,0 5px 8px rgba(6,64,71,.24);
+  filter:none!important;
+  transform:translateZ(0) rotateY(0) scale(1);
+  transform-origin:center;
+  transition:color .18s ease,transform .2s cubic-bezier(.2,.8,.2,1),text-shadow .2s ease,filter .2s ease;
+}
+
+body.home-clean .server-detail-dialog .inline-rating button.active{
+  color:#ffc33e!important;
+  text-shadow:0 2px 0 #a76808,0 5px 8px rgba(145,88,0,.3),0 0 12px rgba(255,193,47,.48);
+  filter:drop-shadow(0 6px 4px rgba(119,76,0,.22))!important;
+}
+
+body.home-clean .server-detail-dialog .inline-rating button:hover,
+body.home-clean .server-detail-dialog .inline-rating button:focus-visible{
+  z-index:3;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  color:#ffe06e!important;
+  box-shadow:none!important;
+  text-shadow:0 2px 0 #a76808,0 8px 10px rgba(130,78,0,.3),0 0 20px #ffc43d;
+  filter:drop-shadow(0 9px 6px rgba(116,70,0,.28))!important;
+  transform:translateY(-7px) translateZ(24px) rotateY(-13deg) rotateZ(4deg) scale(1.18);
+}
+
+body.home-clean .server-detail-dialog .inline-rating button:active{
+  transform:translateY(1px) translateZ(5px) rotateY(5deg) scale(.96);
+  text-shadow:0 1px 0 #a76808,0 3px 5px rgba(130,78,0,.25);
+}
+
+body.home-clean .server-detail-dialog .inline-rating button:nth-child(even):hover{
+  transform:translateY(-7px) translateZ(24px) rotateY(13deg) rotateZ(-4deg) scale(1.18);
+}
+
 body.home-clean .server-detail-dialog .inline-detail-review textarea{
   border:1px solid rgba(8,106,116,.3)!important;
   background:rgba(246,255,253,.9)!important;
