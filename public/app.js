@@ -369,13 +369,19 @@ async function openServer(id,focusForm=false,focusReviewId=0){
   bindInlineReview(id,mine);
   const dialog=$("#serverDialog");
   if(!dialog.open)dialog.showModal();
-  requestAnimationFrame(()=>{
+  const resetDetailScroll=()=>{
     dialog.scrollTop=0;
-    dialog.querySelector(".detail-info-body")?.scrollTo({top:0,left:0,behavior:"instant"});
+    const infoBody=dialog.querySelector(".detail-info-body");
+    if(infoBody)infoBody.scrollTop=0;
     dialog.querySelectorAll(".detail-tab-panel").forEach(panel=>panel.scrollTop=0);
+  };
+  resetDetailScroll();
+  requestAnimationFrame(()=>{
+    resetDetailScroll();
+    requestAnimationFrame(resetDetailScroll);
+    setTimeout(resetDetailScroll,80);
     if(focusForm){
       actions.classList.add("review-target");
-      actions.scrollIntoView({behavior:"smooth",block:"center"});
       actions.querySelector("textarea,button,a")?.focus({preventScroll:true});
       setTimeout(()=>actions.classList.remove("review-target"),1400);
     }else if(focusReviewId){
