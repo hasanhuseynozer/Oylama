@@ -266,6 +266,30 @@ body.embedded-view .network-grid{
   background-image:none!important;
   box-shadow:none!important;
 }
+html.embedded-view-root,
+html.embedded-view-root body.embedded-view{
+  height:auto!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  background:transparent!important;
+  background-image:none!important;
+}
+body.home-clean #portalView{
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+  background:transparent!important;
+}
+body.home-clean #portalView iframe{
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
 
 /* Embedded community pages inherit the homepage canvas instead of painting a second page background. */
 html.embedded-view-root,
