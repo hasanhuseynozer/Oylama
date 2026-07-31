@@ -1,0 +1,21 @@
+/* Shared logo scale; server-card artwork is intentionally excluded. */
+.site-logo{width:255px!important;max-width:255px!important;height:166px!important}
+.auth-logo{width:170px!important;height:90px!important}
+.auth-logo.auth-logo-login{width:230px!important;height:116px!important}
+.profile-brand-logo{width:240px!important;max-width:240px!important;height:80px!important}
+.dashboard-brand{min-width:240px!important}
+.admin-brand-logo{width:210px!important;height:68px!important}
+.admin-app #dashboard>.topbar .brand{width:235px!important;height:70px!important}
+.site-footer .footer-logo{width:265px!important;max-width:100%!important;height:auto!important}
+.server-page-header img{width:245px!important;height:88px!important;object-fit:contain!important}
+
+@media(max-width:1660px) and (min-width:1181px){body.home-clean .site-logo{width:235px!important;max-width:235px!important;height:156px!important}}
+@media(max-width:1180px) and (min-width:901px){body.home-clean .site-logo{width:190px!important;max-width:190px!important;height:128px!important}}
+@media(max-width:900px){body.home-clean .site-logo{width:210px!important;max-width:210px!important;height:124px!important}}
+@media(max-width:560px){
+  .auth-logo{width:160px!important;height:84px!important}
+  .auth-logo.auth-logo-login{width:195px!important;height:98px!important}
+  .profile-brand-logo{width:185px!important;max-width:185px!important;height:60px!important}
+  .dashboard-brand{min-width:185px!important}
+  .site-footer .footer-logo{width:225px!important}
+}
