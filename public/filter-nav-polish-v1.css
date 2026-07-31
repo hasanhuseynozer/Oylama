@@ -1,0 +1,103 @@
+@import url('/filter-bar-premium-v3.css?v=20260731-0318');
+
+/* Ensure the enlarged filter controls are painted edge-to-edge. */
+body.home-clean .toolbar .filters input[type='search'],
+body.home-clean .toolbar .filters select{
+  height:42px!important;
+  min-height:42px!important;
+  border-radius:10px!important;
+  background-origin:border-box!important;
+  background-clip:border-box!important;
+  background-repeat:no-repeat!important;
+  background-color:#ccefeb!important;
+}
+
+body.home-clean .toolbar .filters input[type='search']{
+  padding:0 12px!important;
+  background-image:
+    linear-gradient(115deg,transparent 0 34%,rgba(255,255,255,.62) 46%,transparent 58%),
+    linear-gradient(180deg,#fbffff 0%,#d9f8f5 46%,#a9dedc 100%)!important;
+  background-size:42% 100%,100% 100%!important;
+  background-position:-170% 0,0 0!important;
+}
+
+body.home-clean .toolbar .filters select{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  padding:0 34px 0 12px!important;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%23082f33' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"),
+    linear-gradient(115deg,transparent 0 34%,rgba(255,255,255,.62) 46%,transparent 58%),
+    linear-gradient(180deg,#fbffff 0%,#d9f8f5 46%,#a9dedc 100%)!important;
+  background-size:12px 8px,42% 100%,100% 100%!important;
+  background-position:right 12px center,-170% 0,0 0!important;
+}
+
+body.home-clean .toolbar .filters input[type='search']:hover,
+body.home-clean .toolbar .filters input[type='search']:focus{
+  background-position:270% 0,0 0!important;
+}
+
+body.home-clean .toolbar .filters select:hover,
+body.home-clean .toolbar .filters select:focus{
+  background-position:right 12px center,270% 0,0 0!important;
+}
+
+body.home-clean .toolbar .filters select option{
+  color:#082f33!important;
+  background:#d9f8f5!important;
+}
+
+/* Burgundy 3D treatment for the complete top navigation. */
+body.home-clean .main-navigation a{
+  color:#7b1734!important;
+  border:1px solid rgba(135,31,61,.62)!important;
+  background:linear-gradient(180deg,#fff9f8 0%,#f5dcdf 48%,#dbaab4 100%)!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.92),0 2px 2px rgba(83,8,31,.18)!important;
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.96),
+    inset 0 -2px 0 rgba(111,23,48,.18),
+    0 3px 0 #7b243e,
+    0 8px 14px rgba(78,14,36,.22)!important;
+  transform:translateY(0) perspective(180px) rotateX(0deg)!important;
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s ease,border-color .2s ease,background .2s ease,color .2s ease!important;
+}
+
+body.home-clean .main-navigation a:hover{
+  color:#681128!important;
+  border-color:#a72b50!important;
+  background:linear-gradient(180deg,#fff 0%,#f8e7e9 42%,#e3b8c1 100%)!important;
+  box-shadow:
+    inset 0 2px 0 #fff,
+    inset 0 -2px 0 rgba(111,23,48,.2),
+    0 5px 0 #7b243e,
+    0 12px 20px rgba(91,15,40,.28),
+    0 0 15px rgba(146,30,65,.22)!important;
+  transform:translateY(-2px) perspective(180px) rotateX(4deg)!important;
+}
+
+body.home-clean .main-navigation a.active{
+  color:#630f29!important;
+  border-color:#8e1d40!important;
+  background:linear-gradient(180deg,#fff6f7 0%,#efcbd2 45%,#cb8998 100%)!important;
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.96),
+    inset 0 -2px 0 rgba(93,13,39,.22),
+    0 4px 0 #68172f,
+    0 10px 18px rgba(91,15,40,.3),
+    0 0 16px rgba(142,29,64,.25)!important;
+}
+
+body.home-clean .main-navigation a:active{
+  color:#590c24!important;
+  box-shadow:
+    inset 0 3px 7px rgba(91,15,40,.22),
+    inset 0 1px 0 rgba(255,255,255,.72),
+    0 1px 0 #68172f,
+    0 3px 7px rgba(91,15,40,.2)!important;
+  transform:translateY(2px) perspective(180px) rotateX(-3deg) scale(.985)!important;
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.home-clean .main-navigation a{transition:none!important}
+}
