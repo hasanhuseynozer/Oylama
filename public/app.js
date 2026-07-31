@@ -393,7 +393,7 @@ async function openServer(id,focusForm=false,focusReviewId=0){
 
 function detailReviewForm(mine){
   return `<form id="inlineDetailReview" class="inline-detail-review">
-    <div class="inline-rating" data-inline-rating role="radiogroup" aria-label="Sunucu puanı">${[1,2,3,4,5].map(value=>`<button type="button" role="radio" aria-checked="${Number(mine?.rating||0)===value}" data-value="${value}" class="${Number(mine?.rating||0)>=value?"active":""}" aria-label="${value} yıldız ver">★</button>`).join("")}</div><div class="rating-selection"><span data-rating-selection>${mine?`Seçilen puan: ${mine.rating}/5`:"Puan seçilmedi"}</span><button type="button" data-rating-reset>Puanı temizle</button></div>
+    <div class="inline-rating" data-inline-rating data-rating-value="${Number(mine?.rating||0)}" role="radiogroup" aria-label="Sunucu puanı">${[1,2,3,4,5].map(value=>`<button type="button" role="radio" aria-checked="${Number(mine?.rating||0)===value}" data-value="${value}" class="${Number(mine?.rating||0)>=value?"active":""}" aria-label="${value} yıldız ver">★</button>`).join("")}</div><div class="rating-selection"><span data-rating-selection>${mine?`Seçilen puan: ${mine.rating}/5`:"Puan seçilmedi"}</span><button type="button" data-rating-reset>Puanı temizle</button></div>
     <textarea minlength="10" maxlength="500" required aria-describedby="inlineReviewHelp" placeholder="Bu sunucu hakkındaki deneyiminiz…">${esc(mine?.comment||"")}</textarea>
     <div><small id="inlineReviewHelp">En az 10 karakter · <span data-review-count>${String(mine?.comment||"").length}</span>/500</small><button class="primary">${mine?"Puan ve Yorumu Güncelle":"Oy Ver ve Yorumla"}</button></div>
     <p class="inline-review-message" role="status"></p>
@@ -406,6 +406,7 @@ function bindInlineReview(serverId,mine){
   let chosen=Number(mine?.rating||0);
   const choose=value=>{
     chosen=value;
+    form.querySelector("[data-inline-rating]").dataset.ratingValue=String(chosen);
     form.querySelectorAll("[data-value]").forEach(item=>{item.classList.toggle("active",Number(item.dataset.value)<=chosen);item.setAttribute("aria-checked",String(Number(item.dataset.value)===chosen))});
     form.querySelector("[data-rating-selection]").textContent=chosen?`Seçilen puan: ${chosen}/5`:"Puan seçilmedi";
   };

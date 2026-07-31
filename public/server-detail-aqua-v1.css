@@ -129,6 +129,31 @@ body.home-clean .server-detail-dialog .inline-rating button.active{
   filter:drop-shadow(0 6px 4px rgba(119,76,0,.22))!important;
 }
 
+body.home-clean .server-detail-dialog .inline-rating[data-rating-value="1"] button.active{
+  color:#ef4f5f!important;
+  text-shadow:0 2px 0 #8b1728,0 5px 8px rgba(139,23,40,.3),0 0 14px rgba(239,79,95,.55);
+}
+
+body.home-clean .server-detail-dialog .inline-rating[data-rating-value="2"] button.active{
+  color:#f28b38!important;
+  text-shadow:0 2px 0 #98410e,0 5px 8px rgba(152,65,14,.28),0 0 14px rgba(242,139,56,.55);
+}
+
+body.home-clean .server-detail-dialog .inline-rating[data-rating-value="3"] button.active{
+  color:#f5c83f!important;
+  text-shadow:0 2px 0 #9d7208,0 5px 8px rgba(157,114,8,.28),0 0 14px rgba(245,200,63,.58);
+}
+
+body.home-clean .server-detail-dialog .inline-rating[data-rating-value="4"] button.active{
+  color:#8ed64d!important;
+  text-shadow:0 2px 0 #477e18,0 5px 8px rgba(71,126,24,.28),0 0 14px rgba(142,214,77,.58);
+}
+
+body.home-clean .server-detail-dialog .inline-rating[data-rating-value="5"] button.active{
+  color:#39c97b!important;
+  text-shadow:0 2px 0 #167346,0 5px 8px rgba(22,115,70,.28),0 0 15px rgba(57,201,123,.62);
+}
+
 body.home-clean .server-detail-dialog .inline-rating button:hover,
 body.home-clean .server-detail-dialog .inline-rating button:focus-visible{
   z-index:3;
