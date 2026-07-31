@@ -11,16 +11,6 @@
   <link data-requested-ui-fixes rel="stylesheet" href="/requested-ui-fixes-v4.css?v=20260731-3">
 </head>
 <body class="network-page">
-  <header class="network-header">
-    <a class="network-brand" href="/"><img src="/sro-rating-logo.png" alt="SRO RATING"></a>
-    <nav aria-label="Topluluk menüsü">
-      <a href="/">Sunucular</a>
-      <a class="active" href="/yayinclar/">Yayıncılar</a>
-      <a href="/cekilisler/">Çekilişler</a>
-      <a id="creatorPanelLink" class="hidden" href="/yayinclar/panel.html">Yayıncı Panelim</a>
-      <a href="/profil/">Profilim</a>
-    </nav>
-  </header>
   <main class="network-shell">
     <section class="network-hero creator-network-hero">
       <div class="network-hero-copy">
@@ -28,7 +18,7 @@
         <h1>Yayıncıları keşfet.<br><em>Doğru iş birliğini kur.</em></h1>
         <p>Aktif yayıncıları, içerik kanallarını ve yalnızca doğrulanmış sunucu sahiplerinin verdiği iş birliği puanlarını tek yerde karşılaştır.</p>
         <div class="network-hero-actions">
-          <a class="primary" href="/yayinci-basvuru/">Yayıncı olarak başvur</a>
+          <a class="primary" data-parent-home-view="application" href="/yayinci-basvuru/">Yayıncı olarak başvur</a>
         </div>
       </div>
       <div class="network-radar" aria-hidden="true"><i></i><i></i><i></i><span>LIVE</span><strong>CREATOR<br>NETWORK</strong></div>
@@ -49,6 +39,6 @@
     <button id="closeCreator" class="network-close" aria-label="Kapat">×</button>
     <div id="creatorDetail"></div>
   </dialog>
-  <script src="/yayinclar/creators.js?v=20260728-2" defer></script>
+  <script src="/yayinclar/creators.js?v=20260731-1" defer></script>
 </body>
 </html>

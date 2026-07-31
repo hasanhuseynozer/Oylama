@@ -80,6 +80,11 @@ async function loadCreators(){
 
 $("#creatorSearch").oninput=render;
 $("#creatorSort").onchange=render;
+document.querySelector("[data-parent-home-view='application']")?.addEventListener("click",event=>{
+  if(window.parent===window||typeof window.parent.switchHomeView!=="function")return;
+  event.preventDefault();
+  window.parent.switchHomeView("application","/yayinci-basvuru/?embed=1",true);
+});
 $("#closeCreator").onclick=()=>$("#creatorDialog").close();
 $("#creatorDialog").onclick=event=>{if(event.target===$("#creatorDialog"))event.target.close()};
 loadCreators();
