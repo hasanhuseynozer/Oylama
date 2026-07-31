@@ -361,6 +361,11 @@ body.home-clean .server-detail-dialog .detail-note p{
   color:#397078!important;
 }
 
+body.home-clean .server-detail-dialog .detail-fact-grid article>strong{
+  color:#063e47!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.75);
+}
+
 body.home-clean .server-detail-dialog .similar-server-list{
   display:grid;
   gap:12px;
