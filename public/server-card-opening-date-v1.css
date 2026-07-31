@@ -1,0 +1,53 @@
+body.home-clean .server-card .server-badges{
+  align-items:center;
+}
+
+body.home-clean .server-card .card-opening-date{
+  position:relative;
+  z-index:3;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:27px;
+  margin-left:auto;
+  padding:5px 9px;
+  border:1px solid #a86b13;
+  border-radius:10px;
+  background:linear-gradient(145deg,#ffe68a,#d39325 58%,#9d5c0b);
+  color:#4c2b02;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+  white-space:nowrap;
+  text-shadow:0 1px rgba(255,255,255,.62);
+  box-shadow:0 4px 0 #7d4a0c,0 8px 15px rgba(116,70,5,.24),inset 0 1px rgba(255,255,255,.7);
+  transform:perspective(420px) rotateX(3deg) translateZ(8px);
+  transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;
+}
+
+body.home-clean .server-card .card-opening-date::before{
+  content:"";
+  width:6px;
+  height:6px;
+  margin-right:6px;
+  border-radius:50%;
+  background:#fff4ae;
+  box-shadow:0 0 8px #fff1a0,0 0 0 3px rgba(255,244,174,.2);
+}
+
+body.home-clean .server-card:hover .card-opening-date{
+  transform:perspective(420px) rotateX(0) translateY(-2px) translateZ(16px);
+  box-shadow:0 6px 0 #754308,0 12px 20px rgba(116,70,5,.3),0 0 14px rgba(255,200,62,.28),inset 0 1px rgba(255,255,255,.8);
+  filter:brightness(1.05);
+}
+
+@media(max-width:560px){
+  body.home-clean .server-card .card-opening-date{
+    flex-basis:auto;
+    margin-left:0;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.home-clean .server-card .card-opening-date{transition:none}
+}
