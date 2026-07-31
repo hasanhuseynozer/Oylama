@@ -1,8 +1,8 @@
 /* Four identical desktop sponsor slots: Sol 1, Sol 2, Sağ 1, Sağ 2. */
 @media (min-width:1501px){
   body.home-clean .page-layout{
-    grid-template-columns:270px minmax(0,1fr) 270px!important;
-    column-gap:16px!important;
+    grid-template-columns:255px minmax(0,1fr) 255px!important;
+    column-gap:0!important;
     align-items:start!important;
     padding-top:18px!important;
   }
@@ -11,12 +11,12 @@
     position:static!important;
     box-sizing:border-box!important;
     display:grid!important;
-    grid-template-rows:350px 350px!important;
-    width:270px!important;
-    height:762px!important;
-    gap:12px!important;
+    grid-template-rows:850px 850px!important;
+    width:255px!important;
+    height:1700px!important;
+    gap:0!important;
     margin:0!important;
-    padding:25px 10px!important;
+    padding:0!important;
     justify-self:center!important;
     align-self:start!important;
     overflow:visible!important;
@@ -29,15 +29,15 @@
   body.home-clean .sponsor-slot{
     box-sizing:border-box!important;
     display:block!important;
-    width:250px!important;
-    height:350px!important;
-    min-width:250px!important;
-    min-height:350px!important;
+    width:255px!important;
+    height:850px!important;
+    min-width:255px!important;
+    min-height:850px!important;
     margin:0!important;
     padding:0!important;
-    overflow:hidden!important;
+    overflow:visible!important;
     border:0!important;
-    border-radius:10px!important;
+    border-radius:0!important;
     background:transparent!important;
     box-shadow:none!important;
   }
@@ -46,13 +46,13 @@
     box-sizing:border-box!important;
     position:relative!important;
     display:block!important;
-    width:250px!important;
-    height:350px!important;
-    min-width:250px!important;
-    min-height:350px!important;
-    max-width:250px!important;
-    max-height:350px!important;
-    margin:0!important;
+    width:225px!important;
+    height:800px!important;
+    min-width:225px!important;
+    min-height:800px!important;
+    max-width:225px!important;
+    max-height:800px!important;
+    margin:25px 15px!important;
     padding:0!important;
     overflow:hidden!important;
     border:1px solid rgba(42,145,145,.58)!important;
