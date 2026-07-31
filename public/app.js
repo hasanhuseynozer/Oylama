@@ -406,7 +406,23 @@ function bindInlineReview(serverId,mine){
     button.onclick=()=>choose(Number(button.dataset.value));
     button.onkeydown=event=>{if(["ArrowLeft","ArrowDown","ArrowRight","ArrowUp"].includes(event.key)){event.preventDefault();const next=Math.min(5,Math.max(1,Number(button.dataset.value)+(event.key==="ArrowRight"||event.key==="ArrowUp"?1:-1)));choose(next);form.querySelector(`[data-value="${next}"]`).focus()}}
   });
-  form.querySelector("[data-rating-reset]").onclick=()=>choose(0);
+  form.querySelector("[data-rating-reset]").onclick=async event=>{
+    const resetButton=event.currentTarget;
+    if(!mine){choose(0);return}
+    if(!confirm("Oyunuz ve yorumunuz kalıcı olarak kaldırılsın mı?"))return;
+    const message=form.querySelector(".inline-review-message");
+    resetButton.disabled=true;
+    message.textContent="Oy ve yorum kaldırılıyor…";
+    try{
+      const result=await api(`/api/reviews/${mine.id}`,{method:"DELETE"});
+      showActionToast(result.message||"Oyunuz ve yorumunuz kaldırıldı.");
+      await loadServers();
+      await openServer(serverId);
+    }catch(error){
+      message.textContent=error.message;
+      resetButton.disabled=false;
+    }
+  };
   form.querySelector("textarea").oninput=event=>form.querySelector("[data-review-count]").textContent=event.target.value.length;
   form.onsubmit=async event=>{
     event.preventDefault();

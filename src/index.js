@@ -653,6 +653,17 @@ async function handleApi(request, env, url) {
   }
 
   const reactionMatch=path.match(/^\/api\/reviews\/(\d+)\/reaction$/);
+  const ownReviewMatch=path.match(/^\/api\/reviews\/(\d+)$/);
+  if(method==="DELETE"&&ownReviewMatch){
+    verifyOrigin(request);
+    const user=await requireUser(request,env.DB),reviewId=Number(ownReviewMatch[1]);
+    const review=await env.DB.prepare("SELECT id,server_id FROM reviews WHERE id=? AND user_id=?").bind(reviewId,user.id).first();
+    if(!review)return json({error:"Yorum bulunamadı veya bu yorumu kaldırma yetkiniz yok."},404);
+    await env.DB.prepare("DELETE FROM reviews WHERE id=? AND user_id=?").bind(reviewId,user.id).run();
+    await addAuditEvent(env.DB,request,"user",user.id,"review.delete.own","review",reviewId,{server_id:review.server_id});
+    return json({message:"Oyunuz ve yorumunuz kaldırıldı."});
+  }
+
   if(method==="POST"&&reactionMatch){
     verifyOrigin(request);requireJson(request);
     const user=await requireUser(request,env.DB),reviewId=Number(reactionMatch[1]),body=await readJson(request),reaction=["like","dislike"].includes(body.reaction)?body.reaction:"";
