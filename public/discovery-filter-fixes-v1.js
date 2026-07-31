@@ -18,7 +18,7 @@
   };
 
   const isNewServer=server=>{
-    const timestamp=parseServerDate(server?.opened_at||server?.created_at);
+    const timestamp=parseServerDate(server?.opened_at);
     if(!Number.isFinite(timestamp))return false;
     const age=Date.now()-timestamp;
     return age>=0&&age<NEW_WINDOW_MS;

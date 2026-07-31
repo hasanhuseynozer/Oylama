@@ -303,19 +303,19 @@ function renderServers(){
   const query=state.query.toLocaleLowerCase("tr-TR").trim();
   const cap=$("#capFilter").value,type=$("#typeFilter").value,status=$("#statusFilter").value;
   const minRating=Number($("#ratingFilter").value||0),tag=$("#tagFilter").value;
-  const newOnly=$("#newOnly").checked,cutoff=Date.now()-7*86400000;
+  const newOnly=$("#newOnly").checked;
   let servers=state.servers.filter(server=>{
     const tags=serverTags(server);
     const text=`${server.name} ${server.description} ${server.cap} ${server.server_type} ${tags.join(" ")}`.toLocaleLowerCase("tr-TR");
     return (!query||query.split(/\s+/).every(token=>text.includes(token)))&&
       (!cap||String(server.cap)===cap)&&(!type||server.server_type===type)&&
       (!status||server.operational_status===status)&&(!minRating||Number(server.average_rating)>=minRating)&&
-      (!tag||tags.includes(tag))&&(!newOnly||new Date((server.opened_at||server.created_at)+"Z").getTime()>=cutoff)&&
+      (!tag||tags.includes(tag))&&(!newOnly||isRecentlyOpened(server))&&
       (!state.favoriteOnly||Boolean(server.is_favorite));
   });
   const sort=$("#sortSelect").value;
   servers.sort((a,b)=>sort==="comments"?Number(b.vote_count)-Number(a.vote_count):
-    sort==="newest"?new Date(b.opened_at||b.created_at)-new Date(a.opened_at||a.created_at):
+    sort==="newest"?(serverOpeningTimestamp(b)||-Infinity)-(serverOpeningTimestamp(a)||-Infinity):
     Number(b.average_rating)-Number(a.average_rating)||Number(b.vote_count)-Number(a.vote_count));
   const filtered=Boolean(query||cap||type||status||minRating||tag||newOnly||state.favoriteOnly);
   $("#serverGrid").innerHTML=servers.length?servers.map(serverCard).join(""):state.servers.length===0?'<div class="panel empty-results"><h3>Henüz yayımlanmış sunucu yok</h3><p>Yeni sunucular eklendiğinde burada görünecek.</p></div>':`<div class="panel empty-results"><h3>Sonuç bulunamadı</h3><p>Seçili filtrelerle eşleşen sunucu yok.</p>${filtered?'<button class="outline" type="button" data-clear-empty>Filtreleri Temizle</button>':""}</div>`;
@@ -327,8 +327,8 @@ function renderServers(){
 function serverCard(server,index){
   const rating=Number(server.average_rating||0);
   const ratingTier=rating>=4.5?"legendary":rating>=3.5?"elite":rating>=2?"standard":"newcomer";
-  const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<7*86400000;
-  const cardOpeningValue=server.opened_at||server.created_at;
+  const fresh=isRecentlyOpened(server);
+  const cardOpeningValue=server.opened_at;
   const cardOpeningDate=cardOpeningValue?new Date(cardOpeningValue).toLocaleDateString("tr-TR",{day:"2-digit",month:"short",year:"numeric"}):"";
   const [statusClass,statusText]=statusInfo(server);
   const event=nextEvent(server);
@@ -381,7 +381,7 @@ async function openServer(id,focusForm=false,focusReviewId=0){
   const server=data.server;
   const rating=Number(server.average_rating||0);
   const [statusClass,statusText]=statusInfo(server);
-  const openingDateValue=server.opened_at||server.created_at;
+  const openingDateValue=server.opened_at;
   const openingDate=openingDateValue?new Date(openingDateValue).toLocaleDateString("tr-TR",{day:"2-digit",month:"long",year:"numeric"}):"Belirtilmedi";
   const mine=data.reviews.find(review=>Number(review.user_id)===Number(state.user?.id));
   $("#serverDetailName").textContent=server.name;
@@ -599,8 +599,22 @@ async function openProfile(id){
 }
 
 function serverTags(server){
-  const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<7*86400000;
+  const fresh=isRecentlyOpened(server);
   return [server.server_type,`cap-${server.cap}`,server.operational_status,fresh&&"new",Number(server.vote_count)>=5&&"popular",Number(server.average_rating)>=4&&"high",server.is_favorite&&"favorite"].filter(Boolean).map(value=>String(value).toLocaleLowerCase("tr-TR"));
+}
+
+function serverOpeningTimestamp(server){
+  if(!server?.opened_at)return NaN;
+  const raw=String(server.opened_at).trim();
+  const normalized=raw.includes("T")?raw:raw.replace(" ","T");
+  return Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(normalized)?normalized:`${normalized}Z`);
+}
+
+function isRecentlyOpened(server){
+  const timestamp=serverOpeningTimestamp(server);
+  if(!Number.isFinite(timestamp))return false;
+  const age=Date.now()-timestamp;
+  return age>=0&&age<7*86400000;
 }
 function statusInfo(server){return({online:["online","Çevrimiçi"],maintenance:["maintenance","Bakımda"],offline:["offline","Kapalı"]})[server.operational_status]||["offline","Kapalı"]}
 function nextEvent(server){return [["Beta",server.beta_at],["Açılış",server.launch_at]].filter(([,date])=>date&&new Date(date).getTime()>Date.now()).sort((a,b)=>new Date(a[1])-new Date(b[1]))[0]||null}
