@@ -1,0 +1,118 @@
+/* Homepage performance pass: keep the 3D look while removing continuous GPU-heavy work. */
+body.home-clean.performance-optimized{
+  background-attachment:scroll!important;
+}
+
+body.home-clean.performance-optimized .fx-particle-canvas,
+body.home-clean.performance-optimized .fx-cursor-aura{
+  display:none!important;
+}
+
+body.home-clean.performance-optimized::before,
+body.home-clean.performance-optimized::after,
+body.home-clean.performance-optimized .brand::before,
+body.home-clean.performance-optimized .main-navigation::after,
+body.home-clean.performance-optimized .banner::before,
+body.home-clean.performance-optimized .banner::after,
+body.home-clean.performance-optimized .fx-hero-emblem,
+body.home-clean.performance-optimized .fx-hero-emblem::after,
+body.home-clean.performance-optimized .fx-card-rune::before,
+body.home-clean.performance-optimized .fx-card-rune::after{
+  animation:none!important;
+}
+
+body.home-clean.performance-optimized .site-header{
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+
+body.home-clean.performance-optimized .server-card:not([data-global-rank]){
+  content-visibility:auto;
+  contain:layout paint style;
+  contain-intrinsic-size:410px;
+}
+
+body.home-clean.performance-optimized .server-card[data-global-rank]{
+  contain:layout style;
+}
+
+body.home-clean.performance-optimized .server-card{
+  will-change:auto!important;
+  box-shadow:0 14px 28px rgba(3,72,77,.20),inset 0 1px rgba(255,255,255,.66)!important;
+}
+
+body.home-clean.performance-optimized .server-card::before{
+  mix-blend-mode:normal!important;
+  opacity:.32!important;
+}
+
+body.home-clean.performance-optimized .server-card::after{
+  filter:blur(10px)!important;
+  opacity:.55!important;
+}
+
+body.home-clean.performance-optimized .server-cover{
+  filter:none!important;
+}
+
+body.home-clean.performance-optimized .server-card:hover,
+body.home-clean.performance-optimized .server-card:focus-within{
+  box-shadow:0 22px 44px rgba(3,72,77,.28),0 0 18px rgba(22,151,145,.16),inset 0 1px rgba(255,255,255,.72)!important;
+}
+
+body.home-clean.performance-optimized .electric-border-line,
+body.home-clean.performance-optimized .electric-border-glow,
+body.home-clean.performance-optimized .electric-border-sparks,
+body.home-clean.performance-optimized .electric-card-frame,
+body.home-clean.performance-optimized .electric-card-frame::before,
+body.home-clean.performance-optimized .electric-card-frame::after{
+  animation:none!important;
+  will-change:auto!important;
+}
+
+body.home-clean.performance-optimized .electric-border-glow{
+  opacity:.28!important;
+  filter:blur(4px)!important;
+}
+
+body.home-clean.performance-optimized .electric-border-sparks{
+  opacity:.72!important;
+  filter:drop-shadow(0 0 3px currentColor)!important;
+  transform:rotate(18deg) translateZ(0)!important;
+}
+
+@media (hover:hover) and (pointer:fine){
+  body.home-clean.performance-optimized.servers-electric-active .server-card[data-global-rank]:hover .electric-border-sparks,
+  body.home-clean.performance-optimized.servers-electric-active .server-card[data-global-rank]:focus-within .electric-border-sparks{
+    animation:electric-border-spin 5.5s linear infinite!important;
+  }
+}
+
+body.home-clean.performance-optimized .server-card[data-global-rank] > .stable-rank-ribbon{
+  animation:none!important;
+  filter:drop-shadow(0 0 2px rgba(var(--energy-rgb),.72)) drop-shadow(0 4px 4px rgba(2,34,37,.28))!important;
+}
+
+@media (max-width:1600px),(hover:none),(pointer:coarse){
+  body.home-clean.performance-optimized .server-card{
+    --rx:0deg!important;
+    --ry:0deg!important;
+  }
+
+  body.home-clean.performance-optimized .server-card:hover,
+  body.home-clean.performance-optimized .server-card:focus-within{
+    transform:translateY(-4px) translateZ(0)!important;
+  }
+
+  body.home-clean.performance-optimized .electric-border-sparks{
+    animation:none!important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.home-clean.performance-optimized *,
+  body.home-clean.performance-optimized *::before,
+  body.home-clean.performance-optimized *::after{
+    scroll-behavior:auto!important;
+  }
+}
