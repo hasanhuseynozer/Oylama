@@ -16,6 +16,6 @@
     const size=card.querySelector('header span');
     const hint=card.querySelector('.sponsor-upload-actions small');
     if(size)size.textContent='225 × 800 px';
-    if(hint)hint.textContent='PNG, JPG, WebP veya GIF. Görsel sitede 225 px genişlik ve 800 px yükseklikte gösterilir.';
+    if(hint)hint.textContent='PNG, JPG, WebP veya GIF. En fazla 2 MB. Görsel sitede 225 px genişlik ve 800 px yükseklikte gösterilir.';
   });
 })();
