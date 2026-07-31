@@ -249,7 +249,7 @@ function renderServers(){
   const query=state.query.toLocaleLowerCase("tr-TR").trim();
   const cap=$("#capFilter").value,type=$("#typeFilter").value,status=$("#statusFilter").value;
   const minRating=Number($("#ratingFilter").value||0),tag=$("#tagFilter").value;
-  const newOnly=$("#newOnly").checked,cutoff=Date.now()-45*86400000;
+  const newOnly=$("#newOnly").checked,cutoff=Date.now()-7*86400000;
   let servers=state.servers.filter(server=>{
     const tags=serverTags(server);
     const text=`${server.name} ${server.description} ${server.cap} ${server.server_type} ${tags.join(" ")}`.toLocaleLowerCase("tr-TR");
@@ -273,7 +273,7 @@ function renderServers(){
 function serverCard(server,index){
   const rating=Number(server.average_rating||0);
   const ratingTier=rating>=4.5?"legendary":rating>=3.5?"elite":rating>=2?"standard":"newcomer";
-  const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<45*86400000;
+  const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<7*86400000;
   const [statusClass,statusText]=statusInfo(server);
   const event=nextEvent(server);
   const cover=server.image_url?`<div class="server-cover" style="background-image:url('${esc(server.image_url)}')"></div>`:'<div class="server-cover server-cover-placeholder"><span>SRO RATING</span></div>';
@@ -543,7 +543,7 @@ async function openProfile(id){
 }
 
 function serverTags(server){
-  const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<45*86400000;
+  const fresh=Date.now()-new Date((server.opened_at||server.created_at)+"Z").getTime()<7*86400000;
   return [server.server_type,`cap-${server.cap}`,server.operational_status,fresh&&"new",Number(server.vote_count)>=5&&"popular",Number(server.average_rating)>=4&&"high",server.is_favorite&&"favorite"].filter(Boolean).map(value=>String(value).toLocaleLowerCase("tr-TR"));
 }
 function statusInfo(server){return({online:["online","Çevrimiçi"],maintenance:["maintenance","Bakımda"],offline:["offline","Kapalı"]})[server.operational_status]||["offline","Kapalı"]}

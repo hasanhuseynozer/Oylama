@@ -5,7 +5,7 @@
   if(typeof originalRender!=='function'||originalRender.__discoveryFilterFixed)return;
 
   const serverMeta=new Map();
-  const NEW_WINDOW_MS=45*24*60*60*1000;
+  const NEW_WINDOW_MS=7*24*60*60*1000;
 
   const parseServerDate=value=>{
     if(!value)return NaN;
