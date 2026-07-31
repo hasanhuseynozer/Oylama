@@ -336,8 +336,8 @@ function serverCard(server,index){
   return `<article class="server-card rating-${ratingTier}" data-server="${server.id}" data-rating="${rating}" data-votes="${Number(server.vote_count||0)}" tabindex="0" aria-label="${esc(server.name)} için oy ver">
     <button class="favorite-button ${server.is_favorite?"active":""}" data-favorite="${server.id}" type="button" aria-pressed="${Boolean(server.is_favorite)}" aria-label="${server.is_favorite?"Favorilerden çıkar":"Favorilere ekle"}">♥</button>
     <div class="server-status ${statusClass}" title="${esc(server.status_note||statusText)}"><i></i>${statusText}</div>
-    ${cover}<div class="server-card-body"><div class="server-badges"><span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span>${fresh?'<span class="fresh">Yeni</span>':""}${cardOpeningDate?`<time class="card-opening-date" datetime="${esc(cardOpeningValue)}">${cardOpeningDate}</time>`:""}</div>
-    <h2>${esc(server.name)}</h2>${event?`<div class="countdown" data-date="${esc(event[1])}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></div>`:""}
+    ${cover}<div class="server-card-body"><div class="server-badges"><span>${esc(server.server_type)}</span><span>CAP ${server.cap}</span>${fresh?'<span class="fresh">Yeni</span>':""}${event?`<time class="countdown card-event-countdown" data-date="${esc(event[1])}" datetime="${esc(event[1])}"><strong>${event[0]}</strong><span>${formatCountdown(event[1])}</span></time>`:cardOpeningDate?`<time class="card-opening-date" datetime="${esc(cardOpeningValue)}">${cardOpeningDate}</time>`:""}</div>
+    <h2>${esc(server.name)}</h2>
     <p class="desc card-summary">${esc(compactDescription(server.description,110))}</p>
     <div class="score-row"><div><div class="score">${rating.toFixed(1)}</div><small>${server.vote_count} değerlendirme</small></div><div class="stars card-stars">${stars(rating)}</div></div>
     <div class="card-actions"><button class="primary" data-review="${server.id}">Oy Ver</button></div></div>

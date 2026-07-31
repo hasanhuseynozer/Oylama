@@ -27,6 +27,56 @@ body.home-clean .server-card .card-opening-date{
   transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;
 }
 
+body.home-clean .server-card .card-event-countdown{
+  position:relative;
+  z-index:3;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  min-height:29px;
+  margin:0 0 0 auto!important;
+  padding:4px 8px!important;
+  border:1px solid #987020!important;
+  border-radius:10px!important;
+  background:linear-gradient(145deg,#fff1a2,#d69b29 58%,#925b0d)!important;
+  color:#4b2a00!important;
+  font-family:Arial,"Segoe UI",sans-serif!important;
+  font-size:10px!important;
+  line-height:1!important;
+  white-space:nowrap;
+  box-shadow:0 4px 0 #704609,0 8px 15px rgba(101,61,4,.24),inset 0 1px rgba(255,255,255,.75)!important;
+  transform:perspective(420px) rotateX(3deg) translateZ(8px);
+  transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;
+}
+
+body.home-clean .server-card .card-event-countdown strong{
+  color:#593300!important;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+body.home-clean .server-card .server-badges .card-event-countdown span{
+  min-width:0;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#163f44!important;
+  font-family:Arial,"Segoe UI",sans-serif!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:0!important;
+  box-shadow:none!important;
+}
+
+body.home-clean .server-card:hover .card-event-countdown{
+  transform:perspective(420px) rotateX(0) translateY(-2px) translateZ(16px);
+  box-shadow:0 6px 0 #684005,0 12px 20px rgba(101,61,4,.3),0 0 14px rgba(255,200,62,.3),inset 0 1px rgba(255,255,255,.85)!important;
+  filter:brightness(1.06);
+}
+
 body.home-clean .server-card .card-opening-date::before{
   content:"";
   width:6px;
@@ -44,7 +94,8 @@ body.home-clean .server-card:hover .card-opening-date{
 }
 
 @media(max-width:560px){
-  body.home-clean .server-card .card-opening-date{
+  body.home-clean .server-card .card-opening-date,
+  body.home-clean .server-card .card-event-countdown{
     flex-basis:auto;
     margin-left:0;
   }
