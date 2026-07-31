@@ -145,7 +145,7 @@ body.home-clean .server-detail-dialog .user-link{
   position:relative;
   min-width:76px;
   min-height:32px;
-  overflow:hidden;
+  overflow:visible;
   padding:6px 10px!important;
   border:1px solid rgba(112,15,42,.2)!important;
   border-radius:10px;
@@ -159,15 +159,26 @@ body.home-clean .server-detail-dialog .user-link{
 body.home-clean .server-detail-dialog .user-link::after{
   content:"Profili incele";
   position:absolute;
-  inset:0;
-  display:grid;
-  place-items:center;
-  border-radius:inherit;
-  background:rgba(231,251,248,.9);
+  z-index:12;
+  top:calc(100% + 9px);
+  left:50%;
+  display:block;
+  width:max-content;
+  padding:7px 11px;
+  border:1px solid rgba(116,20,45,.2);
+  border-radius:999px 999px 999px 7px;
+  background:rgba(232,252,249,.78);
+  backdrop-filter:blur(8px);
   color:#74142d;
+  font-size:11px;
   font-weight:800;
+  line-height:1;
+  white-space:nowrap;
+  box-shadow:0 7px 18px rgba(7,74,82,.16),inset 0 1px rgba(255,255,255,.8);
   opacity:0;
-  transform:translateY(7px);
+  pointer-events:none;
+  transform:translate(-50%,-5px) scale(.92);
+  transform-origin:top center;
   transition:opacity .18s ease,transform .18s ease;
 }
 
@@ -179,7 +190,7 @@ body.home-clean .server-detail-dialog .user-link:hover{
 
 body.home-clean .server-detail-dialog .user-link:hover::after{
   opacity:1;
-  transform:translateY(0);
+  transform:translate(-50%,0) scale(1);
 }
 
 .review-removal-dialog{
