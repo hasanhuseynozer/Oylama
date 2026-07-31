@@ -14,6 +14,7 @@
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
   const requestedStyleHref='/requested-ui-fixes-v6.css?v=20260731-0138';
+  const menuCubeStyleHref='/header-menu-cube-v1.css?v=20260731-0930';
   const fixedFrameHeight='clamp(680px, calc(100vh - 230px), 900px)';
 
   const ensureRequestedStyle=doc=>{
@@ -31,6 +32,47 @@
     doc.head.append(link);
   };
   ensureRequestedStyle(document);
+
+  const ensureMenuCubeStyle=()=>{
+    if(!document.head)return;
+    let link=document.querySelector('link[data-header-menu-cube]');
+    if(!link){
+      link=document.createElement('link');
+      link.rel='stylesheet';
+      link.dataset.headerMenuCube='true';
+      document.head.append(link);
+    }
+    if(link.getAttribute('href')!==menuCubeStyleHref)link.href=menuCubeStyleHref;
+  };
+
+  const prepareMenuCubes=()=>{
+    ensureMenuCubeStyle();
+    document.querySelectorAll('.main-navigation a[data-home-view]').forEach(link=>{
+      if(link.dataset.menuCubeReady==='true')return;
+      const key=link.dataset.i18n||'';
+      const label=link.textContent.trim();
+      link.removeAttribute('data-i18n');
+      link.classList.add('menu-cube-173');
+      link.dataset.menuCubeReady='true';
+      link.setAttribute('aria-label',label);
+      link.textContent='';
+      for(let index=0;index<4;index+=1){
+        const face=document.createElement('span');
+        face.className='menu-cube-face';
+        face.textContent=label;
+        face.setAttribute('aria-hidden','true');
+        if(key)face.dataset.i18n=key;
+        link.append(face);
+      }
+      const syncLabel=()=>{
+        const text=link.querySelector('.menu-cube-face')?.textContent.trim();
+        if(text)link.setAttribute('aria-label',text);
+      };
+      syncLabel();
+      if(window.MutationObserver)new MutationObserver(syncLabel).observe(link,{subtree:true,childList:true,characterData:true});
+    });
+  };
+  prepareMenuCubes();
 
   /* Preserve configured ad images; only clean truly empty placeholders. */
   const sideAds=[document.getElementById('leftSponsor'),document.getElementById('rightSponsor')].filter(Boolean);
