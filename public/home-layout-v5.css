@@ -194,9 +194,9 @@ body.home-clean #serversPanel,
 body.home-clean #portalView{width:100%!important;min-width:0!important;margin:0!important}
 body.home-clean #portalView{position:relative!important;padding:0!important;min-height:0!important;background:transparent!important;overflow:visible!important}
 body.home-clean #portalView iframe{
-  display:block!important;width:100%!important;height:760px;min-height:620px!important;
-  overflow:hidden!important;border:1px solid var(--v6-edge)!important;border-radius:16px!important;
-  background:#061419!important;box-shadow:0 20px 50px rgba(0,0,0,.34)!important;
+  display:block!important;width:100%!important;min-height:0!important;
+  overflow:hidden!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;
 }
 body.home-clean #portalView.is-loading::before{
   content:"İçerik yükleniyor…";position:absolute;inset:18px auto auto 50%;z-index:2;

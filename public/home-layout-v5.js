@@ -15,7 +15,7 @@
   const frame=document.getElementById('portalFrame');
   const requestedStyleHref='/requested-ui-fixes-v6.css?v=20260731-0138';
   const menuCubeStyleHref='/header-menu-cube-v1.css?v=20260731-0930';
-  const fixedFrameHeight='clamp(680px, calc(100vh - 230px), 900px)';
+  const initialFrameHeight=680;
 
   const ensureRequestedStyle=doc=>{
     if(!doc?.head)return;
@@ -96,9 +96,9 @@
   if(content&&portal&&portal.parentElement!==content)content.append(portal);
   if(frame){
     frame.removeAttribute('style');
-    frame.setAttribute('scrolling','yes');
-    frame.style.overflow='auto';
-    frame.style.height=fixedFrameHeight;
+    frame.setAttribute('scrolling','no');
+    frame.style.overflow='hidden';
+    frame.style.setProperty('height',`${initialFrameHeight}px`,'important');
   }
 
   const setActiveView=view=>{
@@ -127,8 +127,8 @@
       style=doc.createElement('style');
       style.id='sro-parent-embed-fix';
       style.textContent=`
-        html{height:100%!important;min-height:100%!important;overflow:hidden!important;width:100%!important;max-width:100%!important;background:transparent!important}
-        body{height:100%!important;min-height:100%!important;overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;width:100%!important;max-width:100%!important;padding:0!important;background:transparent!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
+        html{height:auto!important;min-height:0!important;overflow:hidden!important;width:100%!important;max-width:100%!important;background:transparent!important}
+        body{height:auto!important;min-height:0!important;overflow:hidden!important;width:100%!important;max-width:100%!important;margin:0!important;padding:0!important;background:transparent!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
         html::-webkit-scrollbar,body::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
         body.embedded-view>.site-header,
         body.embedded-view>.site-footer,
@@ -147,7 +147,42 @@
       `;
       doc.head?.append(style);
     }
-    frame.style.height=fixedFrameHeight;
+
+    let resizeRaf=0;
+    let lastHeight=0;
+    const syncFrameHeight=()=>{
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf=requestAnimationFrame(()=>{
+        if(!frame?.isConnected||frame.contentDocument!==doc)return;
+        const height=Math.ceil(Math.max(
+          doc.body.scrollHeight,
+          doc.body.offsetHeight,
+          doc.documentElement.scrollHeight,
+          doc.documentElement.offsetHeight
+        ));
+        const nextHeight=Math.max(320,height);
+        if(Math.abs(nextHeight-lastHeight)<2)return;
+        lastHeight=nextHeight;
+        frame.style.setProperty('height',`${nextHeight}px`,'important');
+      });
+    };
+    const resizeObserver=window.ResizeObserver?new ResizeObserver(syncFrameHeight):null;
+    resizeObserver?.observe(doc.documentElement);
+    resizeObserver?.observe(doc.body);
+    const mutationObserver=window.MutationObserver?new MutationObserver(syncFrameHeight):null;
+    mutationObserver?.observe(doc.body,{subtree:true,childList:true,characterData:true,attributes:true});
+    const assetLoaded=()=>syncFrameHeight();
+    doc.addEventListener('load',assetLoaded,true);
+    doc.fonts?.ready.then(syncFrameHeight).catch(()=>{});
+    syncFrameHeight();
+    requestAnimationFrame(syncFrameHeight);
+
+    frameCleanup=()=>{
+      cancelAnimationFrame(resizeRaf);
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+      doc.removeEventListener('load',assetLoaded,true);
+    };
   };
 
   let viewRequest=0;
@@ -189,7 +224,7 @@
     const requestId=++viewRequest;
     portal.classList.add('is-loading');
     frame.setAttribute('aria-busy','true');
-    frame.style.height=fixedFrameHeight;
+    frame.style.setProperty('height',`${initialFrameHeight}px`,'important');
     frame.onload=()=>finishFrameLoad(requestId,view);
 
     if(frame.dataset.view!==view||!frameMatchesView(view)){
