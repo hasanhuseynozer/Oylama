@@ -266,6 +266,14 @@ body.embedded-view .network-grid{
   background-image:none!important;
   box-shadow:none!important;
 }
+body.network-page :is(.network-empty,.network-loading),
+body.embedded-view :is(.network-empty,.network-loading){
+  min-height:190px!important;
+  border:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
+}
 html.embedded-view-root,
 html.embedded-view-root body.embedded-view{
   height:auto!important;

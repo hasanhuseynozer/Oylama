@@ -13,7 +13,7 @@
   const grid=document.getElementById('serverGrid');
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
-  const requestedStyleHref='/requested-ui-fixes-v6.css?v=20260731-2';
+  const requestedStyleHref='/requested-ui-fixes-v6.css?v=20260731-3';
   const menuCubeStyleHref='/header-menu-cube-v1.css?v=20260731-0930';
   const initialFrameHeight=680;
 
@@ -173,6 +173,32 @@
     mutationObserver?.observe(doc.body,{subtree:true,childList:true,characterData:true,attributes:true});
     const assetLoaded=()=>syncFrameHeight();
     doc.addEventListener('load',assetLoaded,true);
+
+    /* A wheel event does not bubble across an iframe boundary. Forward it to the
+       homepage so embedded views behave like the native Servers section. */
+    const forwardWheel=event=>{
+      if(!event.deltaY&&!event.deltaX)return;
+      event.preventDefault();
+      window.scrollBy({top:event.deltaY,left:event.deltaX,behavior:'auto'});
+    };
+    let lastTouchY=null;
+    const rememberTouch=event=>{lastTouchY=event.touches?.[0]?.clientY??null};
+    const forwardTouch=event=>{
+      const currentY=event.touches?.[0]?.clientY;
+      if(lastTouchY===null||currentY===undefined)return;
+      const deltaY=lastTouchY-currentY;
+      lastTouchY=currentY;
+      if(!deltaY)return;
+      event.preventDefault();
+      window.scrollBy({top:deltaY,left:0,behavior:'auto'});
+    };
+    const clearTouch=()=>{lastTouchY=null};
+    doc.addEventListener('wheel',forwardWheel,{passive:false});
+    doc.addEventListener('touchstart',rememberTouch,{passive:true});
+    doc.addEventListener('touchmove',forwardTouch,{passive:false});
+    doc.addEventListener('touchend',clearTouch,{passive:true});
+    doc.addEventListener('touchcancel',clearTouch,{passive:true});
+
     doc.fonts?.ready.then(syncFrameHeight).catch(()=>{});
     syncFrameHeight();
     requestAnimationFrame(syncFrameHeight);
@@ -182,6 +208,11 @@
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
       doc.removeEventListener('load',assetLoaded,true);
+      doc.removeEventListener('wheel',forwardWheel);
+      doc.removeEventListener('touchstart',rememberTouch);
+      doc.removeEventListener('touchmove',forwardTouch);
+      doc.removeEventListener('touchend',clearTouch);
+      doc.removeEventListener('touchcancel',clearTouch);
     };
   };
 
