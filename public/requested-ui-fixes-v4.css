@@ -233,6 +233,19 @@ body.embedded-view .network-shell{
   background:transparent!important;
   box-shadow:none!important;
 }
+body.network-page,
+body.network-page.embedded-view{
+  background:transparent!important;
+  background-image:none!important;
+}
+body.network-page::before,
+body.network-page::after,
+body.network-page.embedded-view::before,
+body.network-page.embedded-view::after{
+  display:none!important;
+  content:none!important;
+  background:none!important;
+}
 body.network-page .network-shell::before,
 body.network-page .network-shell::after,
 body.embedded-view .network-shell::before,
@@ -241,11 +254,17 @@ body.embedded-view .network-shell::after{
   content:none!important;
 }
 body.network-page .network-toolbar,
-body.network-page .network-grid,
 body.embedded-view .network-toolbar,
-body.embedded-view .network-grid{
+body.embedded-view .network-toolbar{
   border-color:rgba(31,119,123,.26)!important;
   background-color:rgba(235,252,249,.62)!important;
+}
+body.network-page .network-grid,
+body.embedded-view .network-grid{
+  border:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  box-shadow:none!important;
 }
 
 /* Embedded community pages inherit the homepage canvas instead of painting a second page background. */
