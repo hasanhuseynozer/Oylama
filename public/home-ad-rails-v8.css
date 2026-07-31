@@ -1,7 +1,7 @@
 /* Four identical desktop sponsor slots: Sol 1, Sol 2, Sağ 1, Sağ 2. */
 @media (min-width:1501px){
   body.home-clean .page-layout{
-    grid-template-columns:250px minmax(0,1fr) 250px!important;
+    grid-template-columns:270px minmax(0,1fr) 270px!important;
     column-gap:16px!important;
     align-items:start!important;
     padding-top:18px!important;
@@ -12,11 +12,11 @@
     box-sizing:border-box!important;
     display:grid!important;
     grid-template-rows:350px 350px!important;
-    width:250px!important;
-    height:712px!important;
+    width:270px!important;
+    height:762px!important;
     gap:12px!important;
     margin:0!important;
-    padding:0!important;
+    padding:25px 10px!important;
     justify-self:center!important;
     align-self:start!important;
     overflow:visible!important;
