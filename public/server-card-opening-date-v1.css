@@ -15,11 +15,13 @@ body.home-clean .server-card .card-opening-date{
   border-radius:10px;
   background:linear-gradient(145deg,#ffe68a,#d39325 58%,#9d5c0b);
   color:#4c2b02;
-  font-size:11px;
-  font-weight:900;
+  font-family:Arial,"Segoe UI",sans-serif!important;
+  font-size:12px;
+  font-weight:900!important;
+  letter-spacing:.15px;
   line-height:1;
   white-space:nowrap;
-  text-shadow:0 1px rgba(255,255,255,.62);
+  text-shadow:0 1px 0 rgba(255,255,255,.78);
   box-shadow:0 4px 0 #7d4a0c,0 8px 15px rgba(116,70,5,.24),inset 0 1px rgba(255,255,255,.7);
   transform:perspective(420px) rotateX(3deg) translateZ(8px);
   transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;
