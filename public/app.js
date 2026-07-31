@@ -154,17 +154,71 @@ function setupCalendar(){
   button.innerHTML="<span>📅</span><span>Sunucu Takvimi</span>";
   panel.insertBefore(button,panel.querySelector(".notification-menu-item"));
   const dialog=document.createElement("dialog");
-  dialog.className="calendar-dialog";
-  dialog.innerHTML='<button class="close" type="button" aria-label="Kapat">×</button><p class="eyebrow">SUNUCU TAKVİMİ</p><h2>Beta ve Açılış Takvimi</h2><p class="panel-lead">Tarihler yerel saatinize göre gösterilir.</p><div class="calendar-events"></div>';
+  dialog.className="calendar-dialog server-calendar-dialog";
+  dialog.innerHTML=`<button class="close" type="button" aria-label="Kapat">×</button><header class="calendar-heading"><div><p class="eyebrow">SUNUCU TAKVİMİ</p><h2>Beta ve Açılış Takvimi</h2><p>Tarihler yerel saatinize göre gösterilir.</p></div><div class="calendar-legend"><span><i class="upcoming"></i>Yaklaşan</span><span><i class="completed"></i>Açılmış</span></div></header><section class="calendar-surface"><div class="calendar-toolbar"><button type="button" data-calendar-prev aria-label="Önceki ay">←</button><strong data-calendar-title></strong><button type="button" data-calendar-next aria-label="Sonraki ay">→</button></div><div class="calendar-weekdays" aria-hidden="true">${["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"].map(day=>`<span>${day}</span>`).join("")}</div><div class="calendar-grid" role="grid"></div></section><section class="calendar-selection"><div class="calendar-selection-heading"><div><small>SEÇİLİ TARİH</small><h3 data-calendar-selection-title></h3></div><span data-calendar-selection-count></span></div><div class="calendar-day-events"></div></section>`;
   document.body.append(dialog);
+  let calendarEvents=[],viewDate=new Date(),selectedKey="";
+  const dateKey=value=>{
+    const date=new Date(value);
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+  };
+  const renderSelectedEvents=()=>{
+    const selected=calendarEvents.filter(event=>dateKey(event.date)===selectedKey);
+    const selectedDate=selectedKey?new Date(`${selectedKey}T12:00:00`):new Date();
+    dialog.querySelector("[data-calendar-selection-title]").textContent=selectedDate.toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"});
+    dialog.querySelector("[data-calendar-selection-count]").textContent=`${selected.length} etkinlik`;
+    dialog.querySelector(".calendar-day-events").innerHTML=selected.length?selected.map(event=>{
+      const eventDate=new Date(event.date),upcoming=eventDate.getTime()>Date.now();
+      return `<button class="calendar-event-card ${upcoming?"upcoming":"completed"}" type="button" data-calendar-server="${event.serverId}"><span class="calendar-event-type">${esc(event.type)}</span><span class="calendar-event-copy"><strong>${esc(event.server)}</strong><small>${eventDate.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"})} · ${upcoming?formatCountdown(event.date):"Açıldı"}</small></span><span class="calendar-event-arrow" aria-hidden="true">→</span></button>`;
+    }).join(""):'<div class="calendar-empty-day"><strong>Bu tarihte etkinlik yok</strong><p>Bildirim bulunan bir güne tıklayabilirsiniz.</p></div>';
+    dialog.querySelectorAll("[data-calendar-server]").forEach(card=>card.onclick=()=>{
+      const serverId=Number(card.dataset.calendarServer);
+      dialog.close();
+      requestAnimationFrame(()=>openServer(serverId));
+    });
+  };
+  const renderCalendar=()=>{
+    const year=viewDate.getFullYear(),month=viewDate.getMonth();
+    dialog.querySelector("[data-calendar-title]").textContent=new Date(year,month,1).toLocaleDateString("tr-TR",{month:"long",year:"numeric"});
+    const firstDay=(new Date(year,month,1).getDay()+6)%7;
+    const daysInMonth=new Date(year,month+1,0).getDate();
+    const todayKey=dateKey(new Date());
+    const cells=[];
+    for(let index=0;index<firstDay;index++)cells.push('<span class="calendar-day-spacer" aria-hidden="true"></span>');
+    for(let day=1;day<=daysInMonth;day++){
+      const key=`${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+      const dayEvents=calendarEvents.filter(event=>dateKey(event.date)===key);
+      const upcomingCount=dayEvents.filter(event=>new Date(event.date).getTime()>Date.now()).length;
+      const completedCount=dayEvents.length-upcomingCount;
+      const classes=["calendar-day",dayEvents.length&&"has-events",key===selectedKey&&"selected",key===todayKey&&"today"].filter(Boolean).join(" ");
+      cells.push(`<button type="button" class="${classes}" data-calendar-day="${key}" aria-label="${day} ${new Date(year,month,day).toLocaleDateString("tr-TR",{month:"long"})}, ${dayEvents.length} etkinlik"><span>${day}</span>${dayEvents.length?`<b>${dayEvents.length}</b><i>${upcomingCount?'<em class="upcoming"></em>':""}${completedCount?'<em class="completed"></em>':""}</i>`:""}</button>`);
+    }
+    dialog.querySelector(".calendar-grid").innerHTML=cells.join("");
+    dialog.querySelectorAll("[data-calendar-day]").forEach(day=>day.onclick=()=>{
+      selectedKey=day.dataset.calendarDay;
+      dialog.querySelectorAll("[data-calendar-day]").forEach(item=>item.classList.toggle("selected",item===day));
+      renderSelectedEvents();
+    });
+    renderSelectedEvents();
+  };
   button.onclick=()=>{
     panel.classList.add("hidden");
-    const events=state.servers.flatMap(server=>[["Beta",server.beta_at],["Açılış",server.launch_at]]
-      .filter(([,date])=>date).map(([type,date])=>({server:server.name,type,date})))
+    calendarEvents=state.servers.flatMap(server=>{
+      const openingDate=server.launch_at||server.opened_at;
+      return [["Beta",server.beta_at],["Açılış",openingDate]]
+        .filter(([,date])=>date)
+        .map(([type,date])=>({serverId:Number(server.id),server:server.name,type,date}));
+    })
       .sort((a,b)=>new Date(a.date)-new Date(b.date));
-    dialog.querySelector(".calendar-events").innerHTML=events.length?events.map(event=>`<article><time>${new Date(event.date).toLocaleString("tr-TR")}</time><div><strong>${esc(event.server)}</strong><span>${event.type} · ${formatCountdown(event.date)}</span></div></article>`).join(""):'<div class="empty-state">Takvime eklenmiş etkinlik yok.</div>';
+    const firstUpcoming=calendarEvents.find(event=>new Date(event.date).getTime()>=Date.now());
+    const initialEvent=firstUpcoming||calendarEvents.at(-1);
+    viewDate=initialEvent?new Date(initialEvent.date):new Date();
+    selectedKey=initialEvent?dateKey(initialEvent.date):dateKey(new Date());
+    renderCalendar();
     dialog.showModal();
   };
+  dialog.querySelector("[data-calendar-prev]").onclick=()=>{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderCalendar()};
+  dialog.querySelector("[data-calendar-next]").onclick=()=>{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderCalendar()};
   dialog.querySelector(".close").onclick=()=>dialog.close();
   dialog.onclick=event=>{if(event.target===dialog)dialog.close()};
   setInterval(updateCountdowns,60000);
