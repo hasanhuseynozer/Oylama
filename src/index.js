@@ -174,14 +174,14 @@ async function handleApi(request, env, url) {
     const password = String(body.password || "");
     const accountType = body.accountType === "owner" ? "owner" : "user";
     const discord = cleanText(body.discord).slice(0,80);
-    const contactEmail = normalizeEmail(body.contactEmail || user.email);
+    const contactEmail = normalizeEmail(body.contactEmail || email);
     const introduction = cleanText(body.introduction).slice(0,500);
     const twitchUrl=cleanUrl(body.twitchUrl),kickUrl=cleanUrl(body.kickUrl),youtubeUrl=cleanUrl(body.youtubeUrl),tiktokUrl=cleanUrl(body.tiktokUrl);
 
     if (!isValidEmail(email)) return json({ error: "Geçerli bir e-posta adresi yazın." }, 400);
-    if (displayName.length < 2 || displayName.length > 40) return json({ error: "Kullanıcı adı 2–40 karakter olmalıdır." }, 400);
+    if (displayName.length < 3 || displayName.length > 18) return json({ error: "Kullanıcı adı 3–18 karakter olmalıdır." }, 400);
     if (hasProfanity(displayName)) return json({ error: "Kullanıcı adında yasaklı ifade kullanılamaz." }, 400);
-    if (!isValidPassword(password)) return json({ error: "Şifre en az 8 karakter olmalı ve harf ile rakam içermelidir." }, 400);
+    if (!isValidPassword(password)) return json({ error: "Şifre 8–18 karakter olmalı ve harf ile rakam içermelidir." }, 400);
     if(accountType!=="user"&&!discord&&!introduction)return json({error:"Başvuru için Discord veya kısa bir açıklama gereklidir."},400);
 
     const nameExists = await env.DB.prepare("SELECT id FROM users WHERE lower(display_name)=lower(?)").bind(displayName).first();
@@ -1148,7 +1148,7 @@ async function verifyPassword(password, salt, expected, iterations=PBKDF2_ITERAT
   return constantTimeEqual(await hashPassword(password, salt, iterations), expected);
 }
 function isValidPassword(password) {
-  return password.length >= 8 && password.length <= 72 && /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(password) && /\d/.test(password);
+  return password.length >= 8 && password.length <= 18 && /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(password) && /\d/.test(password);
 }
 
 async function keyedHash(env, value) {
