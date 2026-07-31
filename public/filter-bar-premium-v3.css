@@ -1,0 +1,76 @@
+@import url('/filter-bar-premium-v2.css?v=20260731-0304');
+
+/* Larger, equal filter typography. Scoped only to the homepage toolbar. */
+body.home-clean .toolbar{
+  --filter-control-font-size:13px!important;
+  --filter-label-font-size:14px!important;
+}
+
+body.home-clean .toolbar .filter-field{
+  grid-template-rows:17px 42px!important;
+  gap:5px!important;
+}
+
+body.home-clean .toolbar .filter-field>span{
+  height:17px!important;
+  line-height:17px!important;
+  font-size:var(--filter-label-font-size)!important;
+  font-weight:900!important;
+  letter-spacing:.035em!important;
+  text-align:center!important;
+}
+
+body.home-clean .toolbar .filters input[type='search'],
+body.home-clean .toolbar .filters select,
+body.home-clean .toolbar .filters button,
+body.home-clean .toolbar .new-filter,
+body.home-clean .toolbar .favorite-filter,
+body.home-clean .toolbar #clearFilters{
+  height:42px!important;
+  min-height:42px!important;
+  padding-left:8px!important;
+  padding-right:8px!important;
+  font-size:var(--filter-control-font-size)!important;
+  font-weight:900!important;
+  line-height:1!important;
+  letter-spacing:.01em!important;
+  text-align:center!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.72)!important;
+}
+
+body.home-clean .toolbar .filters input[type='search']::placeholder{
+  font-size:var(--filter-control-font-size)!important;
+  font-weight:900!important;
+}
+
+body.home-clean .toolbar .filters select,
+body.home-clean .toolbar .filters select option{
+  font-size:var(--filter-control-font-size)!important;
+  font-weight:900!important;
+  text-align:center!important;
+  text-align-last:center!important;
+}
+
+body.home-clean .toolbar .new-filter{flex-basis:124px!important;width:124px!important}
+body.home-clean .toolbar .favorite-filter{flex-basis:116px!important;width:116px!important}
+body.home-clean .toolbar #clearFilters{flex-basis:80px!important;width:80px!important}
+
+@media(max-width:1400px) and (min-width:901px){
+  body.home-clean .toolbar{
+    --filter-control-font-size:12px!important;
+    --filter-label-font-size:13px!important;
+  }
+  body.home-clean .toolbar .new-filter{flex-basis:116px!important;width:116px!important}
+  body.home-clean .toolbar .favorite-filter{flex-basis:108px!important;width:108px!important}
+  body.home-clean .toolbar #clearFilters{flex-basis:76px!important;width:76px!important}
+}
+
+@media(max-width:900px){
+  body.home-clean .toolbar{
+    --filter-control-font-size:13px!important;
+    --filter-label-font-size:14px!important;
+  }
+  body.home-clean .toolbar .new-filter,
+  body.home-clean .toolbar .favorite-filter,
+  body.home-clean .toolbar #clearFilters{width:100%!important}
+}
