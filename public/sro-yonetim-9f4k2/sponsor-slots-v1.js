@@ -20,11 +20,11 @@
     .sponsor-slot-card{display:grid;gap:10px;padding:16px;border:1px solid rgba(78,185,178,.38);border-radius:16px;background:linear-gradient(180deg,rgba(228,255,252,.72),rgba(174,231,226,.45));box-shadow:inset 0 1px rgba(255,255,255,.86),0 8px 18px rgba(4,68,72,.09)}
     .sponsor-slot-card header{display:flex;align-items:center;justify-content:space-between;gap:12px}.sponsor-slot-card header strong{font-size:18px}.sponsor-slot-card header span{font-size:12px;font-weight:800;opacity:.65}
     .sponsor-slot-card label{display:grid;gap:6px}.sponsor-slot-card input[type=text],.sponsor-slot-card input[type=url]{width:100%}
-    .sponsor-upload{display:grid;grid-template-columns:200px minmax(0,1fr);gap:14px;align-items:start}
-    .sponsor-preview{width:200px;height:305px;object-fit:cover;border:1px solid rgba(45,151,148,.45);border-radius:14px;background:#071b20;box-shadow:0 8px 18px rgba(3,48,53,.18)}
-    .sponsor-preview.is-empty{object-fit:none;background:linear-gradient(180deg,#0a2930,#061a20)}
+    .sponsor-upload{display:grid;grid-template-columns:350px minmax(0,1fr);gap:14px;align-items:start}
+    .sponsor-preview{width:350px;height:250px;object-fit:cover;border:1px solid rgba(45,151,148,.45);border-radius:10px;background:transparent;box-shadow:none}
+    .sponsor-preview.is-empty{object-fit:none;background:transparent}
     .sponsor-upload-actions{display:grid;gap:10px}.sponsor-upload-actions small{line-height:1.4;opacity:.72}.sponsor-upload-actions button{justify-self:start}
-    @media(max-width:900px){.sponsor-slot-editor{grid-template-columns:1fr}.sponsor-upload{grid-template-columns:1fr}.sponsor-preview{width:100%;max-width:200px}}
+    @media(max-width:1100px){.sponsor-slot-editor{grid-template-columns:1fr}.sponsor-upload{grid-template-columns:1fr}.sponsor-preview{width:100%;max-width:350px;height:auto;aspect-ratio:7/5}}
   `;
   document.head.append(style);
 
@@ -37,16 +37,16 @@
   editor.innerHTML=['left1','left2','right1','right2'].map(key=>{
     const label={left1:'Sol 1',left2:'Sol 2',right1:'Sağ 1',right2:'Sağ 2'}[key];
     return `<article class="sponsor-slot-card" data-sponsor-card="${key}">
-      <header><strong>${label}</strong><span>200 × 305 px</span></header>
+      <header><strong>${label}</strong><span>350 × 250 px</span></header>
       <div class="sponsor-upload">
         <img class="sponsor-preview is-empty" data-sponsor-preview="${key}" alt="${label} reklam önizleme">
         <div class="sponsor-upload-actions">
           <label>Reklam görseli<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-sponsor-upload="${key}"></label>
-          <small>PNG, JPG, WebP veya GIF. Görsel sitede 200×305 px olarak gösterilir.</small>
+          <small>PNG, JPG, WebP veya GIF. Görsel sitede 350×250 px olarak gösterilir.</small>
           <button class="outline tiny" type="button" data-sponsor-remove="${key}">Görseli kaldır</button>
         </div>
       </div>
-      <label>Reklam yazısı<input type="text" maxlength="80" data-sponsor-text="${key}" placeholder="Görsel yoksa gösterilir"></label>
+      <label>Reklam yazısı<input type="text" maxlength="80" data-sponsor-text="${key}" placeholder="İsteğe bağlı"></label>
       <label>Reklam bağlantısı<input type="url" data-sponsor-url="${key}" placeholder="https://"></label>
     </article>`;
   }).join('');
