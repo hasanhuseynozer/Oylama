@@ -288,6 +288,18 @@ body.embedded-view :is(.network-empty,.network-loading){
   background-image:none!important;
   box-shadow:none!important;
 }
+/* Remove the wide aqua halo that looked like a second background around
+   creator, giveaway and application panels. Keep only the subtle inset edge. */
+:is(body.network-page,body.application-page) :is(
+  .network-hero,
+  .network-toolbar,
+  .giveaway-command,
+  .network-trust,
+  .application-intro,
+  .application-card
+){
+  box-shadow:inset 0 1px rgba(255,255,255,.72)!important;
+}
 html.embedded-view-root,
 html.embedded-view-root body.embedded-view{
   height:auto!important;

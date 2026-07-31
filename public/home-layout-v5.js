@@ -13,7 +13,7 @@
   const grid=document.getElementById('serverGrid');
   const portal=document.getElementById('portalView');
   const frame=document.getElementById('portalFrame');
-  const requestedStyleHref='/requested-ui-fixes-v6.css?v=20260731-4';
+  const requestedStyleHref='/requested-ui-fixes-v6.css?v=20260731-5';
   const menuCubeStyleHref='/header-menu-cube-v1.css?v=20260731-0930';
   const initialFrameHeight=680;
 
